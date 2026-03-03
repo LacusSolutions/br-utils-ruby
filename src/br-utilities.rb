@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require "cpf-utils"
-require "cnpj-utils"
-require_relative "br-utilities/version"
+require 'cpf-utils'
+require 'cnpj-utils'
+require_relative 'br-utilities/version'
 
 module BrUtils
   def self.hello
-    "br-utilities"
+    'br-utilities'
   end
 end
