@@ -26,15 +26,15 @@ jobs:
     name: Validate
     runs-on: ubuntu-latest
     outputs:
-      gem_name: ${{ steps.outputs.gem_name }}
-      version: ${{ steps.outputs.version }}
-      tag: ${{ steps.outputs.tag }}
-      dir: ${{ steps.outputs.dir }}
+      gem_name: ${{ steps.vars.outputs.gem_name }}
+      version: ${{ steps.vars.outputs.version }}
+      tag: ${{ steps.vars.outputs.tag }}
+      dir: ${{ steps.vars.outputs.dir }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
-      - id: outputs
+      - id: vars
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             GEM_NAME="${{ inputs.gem_name }}"
@@ -62,11 +62,11 @@ jobs:
       id-token: write
     environment: release
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
 
-      - uses: ruby/setup-ruby@v1
+      - uses: ruby/setup-ruby@09a7688d3b55cf0e976497ff046b70949eeaccfd # v1.288.0
         with:
           ruby-version: "3.2"
           bundler-cache: true
@@ -95,7 +95,7 @@ jobs:
           ls -la *.gem
 
       - name: Publish to RubyGems (OIDC)
-        uses: rubygems/release-gem@v1
+        uses: rubygems/release-gem@1c162a739e8b4cb21a676e97b087e8268d8fc40b # v1.1.2
         with:
           gem-file: "packages/${{ needs.validate.outputs.dir }}/${{ needs.validate.outputs.gem_name }}-${{ needs.validate.outputs.version }}.gem"
 
