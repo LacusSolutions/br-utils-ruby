@@ -1,0 +1,29 @@
+# Single source of truth: gem name (hyphenated) => dir + internal dependencies.
+# Order: leaves first. Rake and CI use this for build order and cycle detection.
+
+gems:
+  cpf-dv:
+    dir: cpf-dv
+  cpf-fmt:
+    dir: cpf-fmt
+  cpf-gen:
+    dir: cpf-gen
+  cpf-val:
+    dir: cpf-val
+  cnpj-dv:
+    dir: cnpj-dv
+  cnpj-fmt:
+    dir: cnpj-fmt
+  cnpj-gen:
+    dir: cnpj-gen
+  cnpj-val:
+    dir: cnpj-val
+  cpf-utils:
+    dir: cpf-utils
+    dependencies: [cpf-fmt, cpf-gen, cpf-val]
+  cnpj-utils:
+    dir: cnpj-utils
+    dependencies: [cnpj-fmt, cnpj-gen, cnpj-val]
+  br-utilities:
+    dir: br-utilities
+    dependencies: [cpf-utils, cnpj-utils]

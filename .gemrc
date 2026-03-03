@@ -1,0 +1,2 @@
+# Monorepo: install from local when path is present; no doc/ri in CI
+--no-document

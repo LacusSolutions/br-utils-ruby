@@ -1,0 +1,51 @@
+PATH
+  remote: ../cpf-dv
+  specs:
+    cpf_dv (1.0.0)
+
+PATH
+  remote: ../cpf-fmt
+  specs:
+    cpf_fmt (1.0.0)
+
+PATH
+  remote: ../cpf-gen
+  specs:
+    cpf_gen (1.0.0)
+      cpf_dv (>= 1.0, < 2)
+
+PATH
+  remote: ../cpf-val
+  specs:
+    cpf_val (1.0.0)
+      cpf_dv (>= 1.0, < 2)
+
+PATH
+  remote: .
+  specs:
+    cpf_utils (1.0.0)
+      cpf_fmt (>= 1.0, < 2)
+      cpf_gen (>= 1.0, < 2)
+      cpf_val (>= 1.0, < 2)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    minitest (5.27.0)
+    rake (13.3.1)
+
+PLATFORMS
+  ruby
+  x86_64-linux
+
+DEPENDENCIES
+  cpf_dv!
+  cpf_fmt!
+  cpf_gen!
+  cpf_utils!
+  cpf_val!
+  minitest (~> 5.22)
+  rake (~> 13.2)
+
+BUNDLED WITH
+   2.7.1

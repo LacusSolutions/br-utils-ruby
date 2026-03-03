@@ -1,0 +1,23 @@
+AllCops:
+  NewCops: enable
+  TargetRubyVersion: 3.2
+  Exclude:
+    - vendor/**/*
+    - pkg/**/*
+
+Layout/LineLength:
+  Max: 120
+
+Style/FrozenStringLiteralComment:
+  EnforcedStyle: always
+
+Style/Documentation:
+  Enabled: false
+
+Metrics/BlockLength:
+  Exclude:
+    - Rakefile
+    - "**/Rakefile"
+    - "**/*.rake"
+    - "**/spec/**/*"
+    - "**/test/**/*"

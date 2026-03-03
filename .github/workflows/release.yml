@@ -1,0 +1,102 @@
+# Release: publish a single gem to RubyGems via tag. Uses Trusted Publishing (OIDC).
+# Tag format: <gem_name>@<version>  e.g. cpf-dv@1.0.1 or br-utilities@2.1.0
+# Only the tagged gem is built and pushed; dependencies must already be on RubyGems.
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      gem_name:
+        description: "Gem name (RubyGems, e.g. cpf-dv)"
+        required: true
+        type: string
+      version:
+        description: "Version (semver, e.g. 1.0.1)"
+        required: true
+        type: string
+  push:
+    tags:
+      - "*@*"   # e.g. cpf-dv@1.0.1
+
+env:
+  BUNDLE_DEPLOYMENT: "true"
+
+jobs:
+  validate:
+    name: Validate
+    runs-on: ubuntu-latest
+    outputs:
+      gem_name: ${{ steps.outputs.gem_name }}
+      version: ${{ steps.outputs.version }}
+      tag: ${{ steps.outputs.tag }}
+      dir: ${{ steps.outputs.dir }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: outputs
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            GEM_NAME="${{ inputs.gem_name }}"
+            VERSION="${{ inputs.version }}"
+          else
+            TAG="${GITHUB_REF#refs/tags/}"
+            GEM_NAME="${TAG%%@*}"
+            VERSION="${TAG#*@}"
+          fi
+          DIR="$GEM_NAME"
+          [ -d "packages/$DIR" ] || { echo "::error::Package packages/$DIR not found"; exit 1; }
+          [ -f "packages/$DIR/${GEM_NAME}.gemspec" ] || { echo "::error::Gemspec not found"; exit 1; }
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+ ]] || { echo "::error::Version must be semver"; exit 1; }
+          echo "gem_name=$GEM_NAME" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=${GEM_NAME}@${VERSION}" >> $GITHUB_OUTPUT
+          echo "dir=$DIR" >> $GITHUB_OUTPUT
+
+  test-and-release:
+    name: Test & Publish
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    environment: release
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
+
+      - name: Ensure version in source matches tag
+        run: |
+          DIR="${{ needs.validate.outputs.dir }}"
+          GEM_NAME="${{ needs.validate.outputs.gem_name }}"
+          VERSION="${{ needs.validate.outputs.version }}"
+          VER_FILE="packages/$DIR/src/${GEM_NAME}/version.rb"
+          grep -q "VERSION = \"$VERSION\"" "$VER_FILE" || {
+            echo "::error::Version in $VER_FILE does not match tag $VERSION. Bump and commit before tagging."
+            exit 1
+          }
+
+      - name: Run tests
+        run: |
+          cd "packages/${{ needs.validate.outputs.dir }}"
+          bundle install
+          bundle exec rake test
+
+      - name: Build gem
+        run: |
+          cd "packages/${{ needs.validate.outputs.dir }}"
+          gem build "${{ needs.validate.outputs.gem_name }}.gemspec"
+          ls -la *.gem
+
+      - name: Publish to RubyGems (OIDC)
+        uses: rubygems/release-gem@v1
+        with:
+          gem-file: "packages/${{ needs.validate.outputs.dir }}/${{ needs.validate.outputs.gem_name }}-${{ needs.validate.outputs.version }}.gem"
+
+      # Tag must already exist (pushed by maintainer). No auto-tag here.

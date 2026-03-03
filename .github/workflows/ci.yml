@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main, master]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
+      - run: bundle install
+      - run: bundle exec rubocop --format github
+
+  test:
+    name: Test ${{ matrix.package }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - cpf-dv
+          - cpf-fmt
+          - cpf-gen
+          - cpf-val
+          - cpf-utils
+          - cnpj-dv
+          - cnpj-fmt
+          - cnpj-gen
+          - cnpj-val
+          - cnpj-utils
+          - br-utilities
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
+      - run: bundle install
+      - run: |
+          cd "packages/${{ matrix.package }}"
+          bundle install
+          bundle exec rake test
+
+  monorepo-check:
+    name: Monorepo DAG
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
+      - run: bundle install
+      - run: bundle exec rake monorepo:check_cycles
