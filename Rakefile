@@ -1,28 +1,30 @@
 # frozen_string_literal: true
 
-require "yaml"
-require "pathname"
+require 'yaml'
+require 'pathname'
 
 ROOT = Pathname(__dir__)
-PACKAGES = ROOT.join("packages")
-CONFIG = YAML.load_file(ROOT.join("config/gems.yml"))
-GEMS = CONFIG["gems"] || {}
+PACKAGES = ROOT.join('packages')
+CONFIG = YAML.load_file(ROOT.join('config/gems.yml'))
+GEMS = CONFIG['gems'] || {}
 
 def gem_dirs
-  GEMS.values.map { |v| v.is_a?(Hash) ? v["dir"] : v }
+  GEMS.values.map { |v| v.is_a?(Hash) ? v['dir'] : v }
 end
 
+# rubocop:disable Metrics/AbcSize, Metrics/MethodLength
 def topological_order
   order = []
   visited = {}
   temp = {}
-  cycle = []
 
   visit = lambda do |name|
     return if visited[name]
+
     raise "Cycle involving #{name}" if temp[name]
+
     temp[name] = true
-    deps = (GEMS[name] && GEMS[name]["dependencies"]) || []
+    deps = (GEMS[name] && GEMS[name]['dependencies']) || []
     deps.each { |d| visit[d] }
     temp[name] = false
     visited[name] = true
@@ -32,30 +34,32 @@ def topological_order
   GEMS.each_key { |name| visit[name] }
   order.reverse
 end
+# rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
 def gem_name_to_dir(name)
-  GEMS.dig(name, "dir") || name.to_s
+  GEMS.dig(name, 'dir') || name.to_s
 end
 
 namespace :monorepo do
-  desc "Verify no circular dependencies"
+  desc 'Verify no circular dependencies'
   task :check_cycles do
     topological_order
     puts "OK: No cycles (DAG with #{GEMS.size} gems)"
   end
 
-  desc "List gems in build order (leaves first)"
+  desc 'List gems in build order (leaves first)'
   task :order do
     topological_order.each { |n| puts "#{n} -> #{gem_name_to_dir(n)}" }
   end
 
-  desc "Run task in each gem (build order). Usage: rake monorepo:each[test]"
+  desc 'Run task in each gem (build order). Usage: rake monorepo:each[test]'
   task :each, [:task] => :check_cycles do |_t, args|
-    task_name = args[:task] or abort "Usage: rake monorepo:each[task]"
+    task_name = args[:task] or abort 'Usage: rake monorepo:each[task]'
     Dir.chdir(ROOT) do
       topological_order.each do |name|
         dir = PACKAGES.join(gem_name_to_dir(name))
         next unless dir.directory?
+
         puts "\n>> #{dir.basename}: rake #{task_name}"
         system("cd #{dir} && bundle exec rake #{task_name}") or abort "Failed in #{dir.basename}"
       end
@@ -63,16 +67,16 @@ namespace :monorepo do
   end
 end
 
-desc "Default: check cycles and list order"
-task default: "monorepo:check_cycles"
+desc 'Default: check cycles and list order'
+task default: 'monorepo:check_cycles'
 
 # Load package-specific rake tasks from each gem (they extend this Rakefile when run from package dir)
 task :load_package_tasks do
   gem_dirs.each do |dir|
-    pkg_rake = PACKAGES.join(dir, "Rakefile")
+    pkg_rake = PACKAGES.join(dir, 'Rakefile')
     load pkg_rake.to_s if pkg_rake.exist?
   end
 rescue LoadError => e
   # Ignore if a package Rakefile expects to be run from its own dir
-  puts "Note: #{e.message}" if ENV["VERBOSE"]
+  puts "Note: #{e.message}" if ENV['VERBOSE']
 end

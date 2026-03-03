@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require "cnpj-dv"
-require_relative "cnpj-val/version"
+require 'cnpj-dv'
+require_relative 'cnpj-val/version'
 
 module CnpjVal
   def self.hello
-    "cnpj-val"
+    'cnpj-val'
   end
 end

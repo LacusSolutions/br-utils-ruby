@@ -21,3 +21,8 @@ Metrics/BlockLength:
     - "**/*.rake"
     - "**/spec/**/*"
     - "**/test/**/*"
+
+# Gem package dirs use hyphenated names (e.g. cpf-utils.rb) by design
+Naming/FileName:
+  Exclude:
+    - "packages/**"

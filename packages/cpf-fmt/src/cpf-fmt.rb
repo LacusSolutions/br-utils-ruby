@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require_relative "cpf-fmt/version"
+require_relative 'cpf-fmt/version'
 
 module CpfFmt
   def self.hello
-    "cpf-fmt"
+    'cpf-fmt'
   end
 end
