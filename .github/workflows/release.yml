@@ -78,7 +78,7 @@ jobs:
           GEM_NAME="${{ needs.validate.outputs.gem_name }}"
           VERSION="${{ needs.validate.outputs.version }}"
           VER_FILE="packages/$DIR/src/${GEM_NAME}/version.rb"
-          grep -q "VERSION = \"$VERSION\"" "$VER_FILE" || {
+          grep -qE "VERSION = ['\"]${VERSION}['\"]" "$VER_FILE" || {
             echo "::error::Version in $VER_FILE does not match tag $VERSION. Bump and commit before tagging."
             exit 1
           }
