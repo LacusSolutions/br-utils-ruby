@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require_relative "cnpj-fmt/version"
+require_relative 'cnpj-fmt/version'
 
 module CnpjFmt
   def self.hello
-    "cnpj-fmt"
+    'cnpj-fmt'
   end
 end
