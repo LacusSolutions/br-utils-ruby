@@ -13,7 +13,7 @@ Gem::Specification.new do |spec|
   spec.metadata['rubygems_mfa_required'] = 'true'
   spec.files         = Dir['src/**/*'] + ['LICENSE', 'README.md'].select { |f| File.file?(f) }
   spec.require_paths = ['src']
-  spec.add_dependency 'cnpj-fmt', '>= 1.0', '< 2'
-  spec.add_dependency 'cnpj-gen', '>= 1.0', '< 2'
-  spec.add_dependency 'cnpj-val', '>= 1.0', '< 2'
+  spec.add_dependency 'cnpj-fmt', '>= 0'
+  spec.add_dependency 'cnpj-gen', '>= 0'
+  spec.add_dependency 'cnpj-val', '>= 0'
 end
