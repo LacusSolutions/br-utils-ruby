@@ -89,7 +89,8 @@ jobs:
           bundle exec rake test
 
       - name: Publish to RubyGems (OIDC)
-        working-directory: "packages/${{ needs.validate.outputs.dir }}"
         uses: rubygems/release-gem@1c162a739e8b4cb21a676e97b087e8268d8fc40b # v1.1.2
+        env:
+          RELEASE_PACKAGE: ${{ needs.validate.outputs.dir }}
 
       # Tag must already exist (pushed by maintainer). No auto-tag here.

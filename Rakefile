@@ -70,6 +70,15 @@ end
 desc 'Default: check cycles and list order'
 task default: 'monorepo:check_cycles'
 
+# Used by release-gem action: RELEASE_PACKAGE=dir (e.g. cnpj-dv) runs that package's release task
+desc 'Build and push one package to RubyGems (set RELEASE_PACKAGE=packages/dir)'
+task :release do
+  dir = ENV['RELEASE_PACKAGE'] or abort 'Set RELEASE_PACKAGE to the package dir (e.g. cnpj-dv)'
+  pkg_path = ROOT.join('packages', dir)
+  abort "Package not found: #{pkg_path}" unless pkg_path.directory?
+  Dir.chdir(pkg_path) { system('bundle exec rake release') or abort('Release failed') }
+end
+
 # Load package-specific rake tasks from each gem (they extend this Rakefile when run from package dir)
 task :load_package_tasks do
   gem_dirs.each do |dir|
