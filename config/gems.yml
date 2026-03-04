@@ -18,12 +18,12 @@ gems:
     dir: cnpj-gen
   cnpj-val:
     dir: cnpj-val
-  cpf-utils:
-    dir: cpf-utils
+  cpf-utilities:
+    dir: cpf-utilities
     dependencies: [cpf-fmt, cpf-gen, cpf-val]
-  cnpj-utils:
-    dir: cnpj-utils
+  cnpj-utilities:
+    dir: cnpj-utilities
     dependencies: [cnpj-fmt, cnpj-gen, cnpj-val]
   br-utilities:
     dir: br-utilities
-    dependencies: [cpf-utils, cnpj-utils]
+    dependencies: [cpf-utilities, cnpj-utilities]

@@ -5,7 +5,7 @@ Brazilian data utilities (CPF, CNPJ, etc.) as a **multi-gem monorepo**, publisha
 ## Structure
 
 - **Root**: Tooling (Rake, RuboCop), shared config in `config/gems.yml`, no app code.
-- **Packages**: Under `packages/` — each is a gem (e.g. `cpf-dv`, `cpf-utils`, `br-utilities`). Internal dependencies use path in development and version constraints when published.
+- **Packages**: Under `packages/` — each is a gem (e.g. `cpf-dv`, `cpf-utilities`, `br-utilities`). Internal dependencies use path in development and version constraints when published.
 
 See [MONOREPO.md](MONOREPO.md) for folder layout, tagging, dependency resolution, and risks.
 
@@ -24,7 +24,7 @@ cd packages/cpf-dv && bundle install && rake test
 3. Configure [RubyGems Trusted Publishing](https://guides.rubygems.org/trusted-publishing/) for this repo and the `release` environment.
 4. The Release workflow runs: tests the package, builds the gem, publishes to RubyGems via OIDC. No secrets required.
 
-Release leaves first (e.g. `cpf-dv`, `cpf-fmt`), then dependents (`cpf-utils`), then `br-utilities`.
+Release leaves first (e.g. `cpf-dv`, `cpf-fmt`), then dependents (`cpf-utilities`, `cnpj-utilities`), then `br-utilities`.
 
 ## License
 

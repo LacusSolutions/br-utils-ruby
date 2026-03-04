@@ -25,19 +25,19 @@ ruby/
 │   ├── cpf-fmt/
 │   ├── cpf-gen/        # Deps: cpf-dv (path in Gemfile)
 │   ├── cpf-val/
-│   ├── cpf-utils/      # Deps: cpf-fmt, cpf-gen, cpf-val
+│   ├── cpf-utilities/  # Deps: cpf-fmt, cpf-gen, cpf-val
 │   ├── cnpj-dv/
 │   ├── cnpj-fmt/
 │   ├── cnpj-gen/
 │   ├── cnpj-val/
-│   ├── cnpj-utils/
-│   └── br-utilities/   # Umbrella: cpf-utils, cnpj-utils (gem name br-utilities, module BrUtils)
+│   ├── cnpj-utilities/
+│   └── br-utilities/   # Umbrella: cpf-utilities, cnpj-utilities (gem name br-utilities, module BrUtils)
 ├── LICENSE
 └── MONOREPO.md
 ```
 
 - **Ruby**: Minimum version 3.2 (`.ruby-version`, all gemspecs, CI).
-- **Naming**: Gem names and package dirs are **hyphenated** (`cpf-dv`, `cpf-utils`, `br-utilities`). Source files and require paths match: `src/cpf-dv.rb`, `src/cpf-dv/version.rb`. Module names stay CamelCase (e.g. `CpfDv`, `BrUtils`). Test files use snake_case (`cpf_dv_test.rb`).
+- **Naming**: Gem names and package dirs are **hyphenated** (`cpf-dv`, `cpf-utilities`, `br-utilities`). Source files and require paths match: `src/cpf-dv.rb`, `src/cpf-dv/version.rb`. Module names stay CamelCase (e.g. `CpfDv`, `BrUtils`). Test files use snake_case (`cpf_dv_test.rb`).
 - **Source layout**: All package source code lives under `src/`; gemspec uses `require_paths = ["src"]` and `Dir["src/**/*"]`.
 - **Single config**: `config/gems.yml` uses hyphenated gem names as keys; Rake and CI use it for build order and cycle checks.
 

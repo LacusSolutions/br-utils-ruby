@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'cpf-utils'
-require 'cnpj-utils'
+require "cpf-utilities"
+require "cnpj-utilities"
 require_relative 'br-utilities/version'
 
 module BrUtils
