@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    cpf_dv (1.0.0)
+    cpf-dv (0.0.0)
 
 GEM
   remote: https://rubygems.org/
@@ -14,7 +14,7 @@ PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
-  cpf_dv!
+  cpf-dv!
   minitest (~> 5.22)
   rake (~> 13.2)
 
