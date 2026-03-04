@@ -90,6 +90,8 @@ jobs:
 
       - name: Publish to RubyGems (OIDC)
         uses: rubygems/release-gem@1c162a739e8b4cb21a676e97b087e8268d8fc40b # v1.1.2
+        with:
+          await-release: "false"
         env:
           RELEASE_PACKAGE: ${{ needs.validate.outputs.dir }}
 
