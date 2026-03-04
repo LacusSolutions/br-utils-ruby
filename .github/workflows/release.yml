@@ -88,15 +88,8 @@ jobs:
           bundle install
           bundle exec rake test
 
-      - name: Build gem
-        run: |
-          cd "packages/${{ needs.validate.outputs.dir }}"
-          gem build "${{ needs.validate.outputs.gem_name }}.gemspec"
-          ls -la *.gem
-
       - name: Publish to RubyGems (OIDC)
+        working-directory: "packages/${{ needs.validate.outputs.dir }}"
         uses: rubygems/release-gem@1c162a739e8b4cb21a676e97b087e8268d8fc40b # v1.1.2
-        with:
-          gem-file: "packages/${{ needs.validate.outputs.dir }}/${{ needs.validate.outputs.gem_name }}-${{ needs.validate.outputs.version }}.gem"
 
       # Tag must already exist (pushed by maintainer). No auto-tag here.

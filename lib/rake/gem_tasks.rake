@@ -38,6 +38,12 @@ end
 desc 'Build gem into pkg/'
 task build: 'gem:build'
 
+desc 'Build and push gem to RubyGems.org (used by release-gem action with trusted publishing)'
+task release: :build do
+  gem_file = "#{gem_name}-#{gemspec.version}.gem"
+  sh "gem push #{gem_file}"
+end
+
 desc 'Run tests (override in package Rakefile to call minitest/rspec)'
 task :test do
   # Default: no-op; each package defines test
