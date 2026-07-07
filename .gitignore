@@ -1,0 +1,45 @@
+# Bundler
+/.bundle/
+/vendor/bundle/
+Gemfile.lock
+packages/*/Gemfile.lock
+
+# Gem build artifacts
+*.gem
+/pkg/
+packages/*/pkg/
+
+# Test / coverage
+/coverage/
+/.rspec_status
+packages/*/.rspec_status
+/tests/examples.txt
+packages/*/tests/examples.txt
+
+# Ruby
+*.rbc
+/.config/
+/.yardoc/
+/_yardoc/
+/doc/
+/.rspec_cache
+
+# Environment
+.env*
+!.env.example
+
+# IDE / OS
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Local AI tooling (personal; do not commit)
+.aider*
+.claude/*
+.cursor/*
+AGENTS.override.md
+CLAUDE.local.md
+GEMINI.local.md
