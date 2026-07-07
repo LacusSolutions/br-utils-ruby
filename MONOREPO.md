@@ -109,7 +109,13 @@ ruby/
 - `rake` or `rake monorepo:check_cycles` — Verify DAG.
 - `rake monorepo:order` — List gems in build order.
 - `rake monorepo:each[test]` — Run `rake test` in each package in dependency order (fails fast).
+- `rake lint` — Run RuboCop across the monorepo.
+- `rake format` — Auto-correct safe RuboCop offenses (`rubocop -a`).
 - From a package dir: `bundle exec rake test`, `bundle exec rake build`.
+
+## Linting and formatting
+
+[RuboCop](https://rubocop.org/) is the linter and formatter (via auto-correct). Configuration lives in `.rubocop.yml` at the repo root; extensions include [rubocop-rspec](https://docs.rubocop.org/rubocop-rspec/) (for `tests/**/*.spec.rb`) and [rubocop-packaging](https://github.com/rubygems/rubocop-packaging) (gemspec hygiene). CI runs `bundle exec rubocop` on every push.
 
 ---
 

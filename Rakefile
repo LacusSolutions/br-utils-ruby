@@ -3,6 +3,8 @@
 require 'yaml'
 require 'pathname'
 
+load File.join(__dir__, 'lib/rake/lint_tasks.rake')
+
 ROOT = Pathname(__dir__)
 PACKAGES = ROOT.join('packages')
 CONFIG = YAML.load_file(ROOT.join('config/gems.yml'))
@@ -73,7 +75,7 @@ task default: 'monorepo:check_cycles'
 # Used by release-gem action: RELEASE_PACKAGE=dir (e.g. cnpj-dv) runs that package's release task
 desc 'Build and push one package to RubyGems (set RELEASE_PACKAGE=packages/dir)'
 task :release do
-  dir = ENV['RELEASE_PACKAGE'] or abort 'Set RELEASE_PACKAGE to the package dir (e.g. cnpj-dv)'
+  dir = ENV.fetch('RELEASE_PACKAGE', nil) or abort 'Set RELEASE_PACKAGE to the package dir (e.g. cnpj-dv)'
   pkg_path = ROOT.join('packages', dir)
   abort "Package not found: #{pkg_path}" unless pkg_path.directory?
   Dir.chdir(pkg_path) { system('bundle exec rake release') or abort('Release failed') }
