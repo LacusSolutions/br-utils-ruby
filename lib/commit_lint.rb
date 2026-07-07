@@ -1,27 +1,35 @@
 # frozen_string_literal: true
 
-require 'yaml'
-require 'pathname'
-
 # Conventional Commits linter for the Ruby monorepo.
 #
-# Implements the rules of @commitlint/config-conventional and derives the set of
-# allowed scopes from config/gems.yml, mirroring the JS sibling's
-# @commitlint/config-workspace-scopes. Pure Ruby, no external dependencies, so it
-# runs the same way in a git commit-msg hook and in CI.
+# Implements the rules of @commitlint/config-conventional with a fixed set of
+# per-package scopes (mirroring the JS sibling's @commitlint/config-workspace-scopes).
+# Pure Ruby, no external dependencies, so it runs the same way in a git commit-msg
+# hook and in CI.
 #
 # See https://www.conventionalcommits.org.
 module CommitLint
   # Conventional Commit types (Angular preset used by config-conventional).
   TYPES = %w[build chore ci docs feat fix perf refactor revert style test].freeze
 
-  # Non-package scopes that are always valid in this repo (gem names are added
-  # dynamically from config/gems.yml on top of these).
-  EXTRA_SCOPES = %w[deps release ci monorepo rubocop rake repo docs github hooks].freeze
+  # Allowed values for the optional (scope). The scope may also be omitted entirely.
+  # A few names intentionally differ from the gem name (see the comment beside each).
+  SCOPES = %w[
+    utils
+    cnpj-dv
+    cnpj-fmt
+    cnpj-gen
+    cnpj-val
+    cnpj-utils
+    cpf-dv
+    cpf-fmt
+    cpf-gen
+    cpf-val
+    cpf-utils
+    br-utils
+  ].freeze
 
   HEADER_MAX_LENGTH = 100
-
-  ROOT = Pathname(__dir__).join('..')
 
   # type(scope)?!?: subject  — scope and the breaking-change "!" are optional.
   HEADER = /\A(?<type>\w+)(?:\((?<scope>[^)]*)\))?(?<bang>!)?: (?<subject>.+)\z/
@@ -36,16 +44,9 @@ module CommitLint
 
   module_function
 
-  # Allowed values for the optional (scope): gem names + repo-level scopes.
+  # Allowed values for the optional (scope).
   def allowed_scopes
-    (gem_scopes + EXTRA_SCOPES).uniq.sort
-  end
-
-  def gem_scopes
-    cfg = YAML.load_file(ROOT.join('config/gems.yml'))
-    (cfg['gems'] || {}).keys.map(&:to_s)
-  rescue StandardError
-    []
+    SCOPES
   end
 
   # Lint a full commit message; returns an array of error strings (empty == ok).

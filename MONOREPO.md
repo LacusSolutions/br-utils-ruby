@@ -133,7 +133,7 @@ ruby/
 Commit messages follow [Conventional Commits](https://www.conventionalcommits.org), enforced by a **pure-Ruby** linter (no Node/commitlint dependency) so it behaves identically in a git hook and in CI.
 
 - **Rules** (`lib/commit_lint.rb`): mirrors `@commitlint/config-conventional` — header `type(scope)?!?: subject`, header ≤ 100 chars, known lower-case `type`, lower-case subject with no trailing period, and a blank line before any body. Merge/revert/fixup/squash headers are skipped.
-- **Scopes**: derived from `config/gems.yml` gem names (like the JS sibling's `@commitlint/config-workspace-scopes`) plus repo-level scopes (`deps`, `release`, `ci`, `monorepo`, `rubocop`, `rake`, `repo`, `docs`, `github`, `hooks`). Adding a package to `config/gems.yml` automatically makes its name a valid scope.
+- **Scopes**: optional; when present must be one of a fixed per-package list (`SCOPES` in `lib/commit_lint.rb`), mirroring the JS sibling's `@commitlint/config-workspace-scopes`. A few scope names intentionally differ from the gem name: `utils` (`lacus-utils`), `cnpj-utils` (`cnpj-utilities`), `cpf-utils` (`cpf-utilities`), `br-utils` (`br-utilities`). The rest match the gem name (`cnpj-dv`, `cnpj-fmt`, `cnpj-gen`, `cnpj-val`, `cpf-dv`, `cpf-fmt`, `cpf-gen`, `cpf-val`).
 - **CLI** (`bin/commit-lint`): `--file PATH` (hook), `--message MSG`, or `--range A..B`.
 - **Local hook**: `.githooks/commit-msg` runs the CLI on every commit; enable with `rake hooks:install` (sets `core.hooksPath`).
 - **CI**: `.github/workflows/commitlint.yml` lints the PR/push commit range and runs the linter's RSpec self-test.

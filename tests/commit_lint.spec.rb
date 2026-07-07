@@ -20,7 +20,13 @@ RSpec.describe CommitLint do
     end
 
     context 'with a breaking-change marker' do
-      let(:message) { 'refactor(br-utilities)!: drop deprecated entrypoint' }
+      let(:message) { 'refactor(br-utils)!: drop deprecated entrypoint' }
+
+      it { is_expected.to be_empty }
+    end
+
+    context 'with a scope whose name differs from the gem name' do
+      let(:message) { 'feat(utils): add lacus helper' }
 
       it { is_expected.to be_empty }
     end
@@ -41,8 +47,16 @@ RSpec.describe CommitLint do
       end
     end
 
-    context 'when the scope is not a known gem or repo scope' do
+    context 'when the scope is not one of the allowed package scopes' do
       let(:message) { 'fix(unknown): tweak' }
+
+      it 'reports the disallowed scope' do
+        expect(errors).to include(a_string_matching(/is not allowed/))
+      end
+    end
+
+    context 'when the scope uses a gem name instead of the allowed alias' do
+      let(:message) { 'fix(lacus-utils): tweak' }
 
       it 'reports the disallowed scope' do
         expect(errors).to include(a_string_matching(/is not allowed/))
@@ -105,12 +119,11 @@ RSpec.describe CommitLint do
   describe '.allowed_scopes' do
     subject(:scopes) { described_class.allowed_scopes }
 
-    it 'includes gem names from config/gems.yml' do
-      expect(scopes).to include('cnpj-dv', 'br-utilities')
-    end
-
-    it 'includes repo-level scopes' do
-      expect(scopes).to include('deps', 'release')
+    it 'is the fixed per-package scope list' do
+      expect(scopes).to contain_exactly(
+        'utils', 'cnpj-dv', 'cnpj-fmt', 'cnpj-gen', 'cnpj-val', 'cnpj-utils',
+        'cpf-dv', 'cpf-fmt', 'cpf-gen', 'cpf-val', 'cpf-utils', 'br-utils'
+      )
     end
   end
 end

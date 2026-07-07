@@ -28,9 +28,23 @@ linter (`bin/commit-lint`) enforces this in two places:
 - **CI**: the `Commit Lint` workflow validates every commit in a push/PR.
 
 Allowed `type`s: `build, chore, ci, docs, feat, fix, perf, refactor, revert, style, test`.
-The optional `(scope)` must be a gem name from `config/gems.yml` (e.g. `cpf-dv`,
-`br-utilities`) or a repo scope (`deps`, `release`, `ci`, `monorepo`, `rubocop`, `rake`,
-`repo`, `docs`, `github`, `hooks`). Example: `feat(cpf-gen): add batch generator`.
+The `(scope)` is optional; when present it must be one of the per-package scopes below
+(a few differ from the gem name). Example: `feat(cpf-gen): add batch generator`.
+
+| Scope | Package |
+|-------|---------|
+| `utils` | `lacus-utils` |
+| `cnpj-dv` | `cnpj-dv` |
+| `cnpj-fmt` | `cnpj-fmt` |
+| `cnpj-gen` | `cnpj-gen` |
+| `cnpj-val` | `cnpj-val` |
+| `cnpj-utils` | `cnpj-utilities` |
+| `cpf-dv` | `cpf-dv` |
+| `cpf-fmt` | `cpf-fmt` |
+| `cpf-gen` | `cpf-gen` |
+| `cpf-val` | `cpf-val` |
+| `cpf-utils` | `cpf-utilities` |
+| `br-utils` | `br-utilities` |
 
 Lint a range manually with `rake lint:commits` (defaults to `origin/main..HEAD`, override
 with `COMMIT_RANGE`).
