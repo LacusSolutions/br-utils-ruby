@@ -16,6 +16,7 @@ ruby/
 ├── lib/rake/
 │   └── gem_tasks.rake  # Shared build/clean/test stub for packages
 ├── packages/
+│   ├── lacus-utils/    # Leaf — shared Lacus helpers (mirrors Python lacus.utils)
 │   ├── cpf-dv/         # Leaf
 │   │   ├── src/cpf-dv.rb, src/cpf-dv/version.rb
 │   │   ├── cpf-dv.gemspec
@@ -37,7 +38,8 @@ ruby/
 ```
 
 - **Ruby**: Minimum version 3.2 (`.ruby-version`, all gemspecs, CI).
-- **Naming**: Gem names and package dirs are **hyphenated** (`cpf-dv`, `cpf-utilities`, `br-utilities`). Source files and require paths match: `src/cpf-dv.rb`, `src/cpf-dv/version.rb`. Module names stay CamelCase (e.g. `CpfDv`, `BrUtils`). Test files use snake_case (`cpf_dv_test.rb`).
+- **Naming**: Gem names and package dirs are **hyphenated** (`cpf-dv`, `cpf-utilities`, `br-utilities`, `lacus-utils`). Source files and require paths match: `src/cpf-dv.rb`, `src/cpf-dv/version.rb`. Module names stay CamelCase (e.g. `CpfDv`, `BrUtils`, `LacusUtils`). Spec files use snake_case with a `.spec.rb` suffix (`cpf_dv.spec.rb`).
+- **Testing**: [RSpec](https://rspec.info/) with conventions from [Better Specs](https://www.betterspecs.org/). Shared config lives in `tests/spec_helper.rb`; each package loads it from `tests/spec_helper.rb` and runs `rake test` via `lib/rake/rspec_tasks.rake`.
 - **Source layout**: All package source code lives under `src/`; gemspec uses `require_paths = ["src"]` and `Dir["src/**/*"]`.
 - **Single config**: `config/gems.yml` uses hyphenated gem names as keys; Rake and CI use it for build order and cycle checks.
 

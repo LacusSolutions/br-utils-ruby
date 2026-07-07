@@ -2,28 +2,38 @@
 # Order: leaves first. Rake and CI use this for build order and cycle detection.
 
 gems:
-  cpf-dv:
-    dir: cpf-dv
-  cpf-fmt:
-    dir: cpf-fmt
-  cpf-gen:
-    dir: cpf-gen
-  cpf-val:
-    dir: cpf-val
+  lacus-utils:
+    dir: lacus-utils
   cnpj-dv:
     dir: cnpj-dv
+    dependencies: [lacus-utils]
   cnpj-fmt:
     dir: cnpj-fmt
+    dependencies: [lacus-utils]
   cnpj-gen:
     dir: cnpj-gen
+    dependencies: [cnpj-dv, lacus-utils]
   cnpj-val:
     dir: cnpj-val
-  cpf-utilities:
-    dir: cpf-utilities
-    dependencies: [cpf-fmt, cpf-gen, cpf-val]
+    dependencies: [cnpj-dv, lacus-utils]
   cnpj-utilities:
     dir: cnpj-utilities
     dependencies: [cnpj-fmt, cnpj-gen, cnpj-val]
+  cpf-dv:
+    dir: cpf-dv
+    dependencies: [lacus-utils]
+  cpf-fmt:
+    dir: cpf-fmt
+    dependencies: [lacus-utils]
+  cpf-gen:
+    dir: cpf-gen
+    dependencies: [cpf-dv, lacus-utils]
+  cpf-val:
+    dir: cpf-val
+    dependencies: [cpf-dv, lacus-utils]
+  cpf-utilities:
+    dir: cpf-utilities
+    dependencies: [cpf-fmt, cpf-gen, cpf-val]
   br-utilities:
     dir: br-utilities
-    dependencies: [cpf-utilities, cnpj-utilities]
+    dependencies: [cnpj-utilities, cpf-utilities]

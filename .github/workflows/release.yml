@@ -83,8 +83,6 @@ jobs:
       - name: Run tests
         run: |
           cd "packages/${{ needs.validate.outputs.dir }}"
-          # Use deployment mode only when Gemfile.lock is committed (Bundler then requires it)
-          [ -f Gemfile.lock ] && export BUNDLE_DEPLOYMENT=true
           bundle install
           bundle exec rake test
 
