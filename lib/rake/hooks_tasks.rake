@@ -5,6 +5,9 @@ namespace :hooks do
   task :install do
     sh 'git config core.hooksPath .githooks'
     puts 'Installed git hooks: core.hooksPath -> .githooks'
+    puts '  - pre-commit: RuboCop auto-correct + re-stage of staged files'
+    puts '  - pre-push:   run the test suite, abort push on failure'
+    puts '  - commit-msg: Conventional Commits check'
   end
 
   desc 'Uninstall git hooks (unset core.hooksPath)'

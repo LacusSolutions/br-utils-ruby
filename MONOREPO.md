@@ -9,6 +9,8 @@ ruby/
 │   ├── commitlint.yml  # Conventional Commits lint (PR/push) + linter self-test
 │   └── release.yml     # Tag-driven publish (OIDC, single gem)
 ├── .githooks/
+│   ├── pre-commit      # RuboCop auto-correct + re-stage of staged files
+│   ├── pre-push        # Run the test suite; abort push on failure
 │   └── commit-msg      # Conventional Commits hook (enable via rake hooks:install)
 ├── bin/
 │   └── commit-lint     # Pure-Ruby commit message linter CLI
@@ -125,6 +127,18 @@ ruby/
 ## Linting and formatting
 
 [RuboCop](https://rubocop.org/) is the linter and formatter (via auto-correct). Configuration lives in `.rubocop.yml` at the repo root; extensions include [rubocop-rspec](https://docs.rubocop.org/rubocop-rspec/) (for `tests/**/*.spec.rb`) and [rubocop-packaging](https://github.com/rubygems/rubocop-packaging) (gemspec hygiene). CI runs `bundle exec rubocop` on every push.
+
+---
+
+## Git hooks
+
+Local automation lives in `.githooks/` and is enabled with `rake hooks:install` (it points `core.hooksPath` at the folder, so all three hooks activate together). Undo with `rake hooks:uninstall`.
+
+- **`pre-commit`** — Runs `rubocop --autocorrect` on the staged Ruby files (`*.rb`, `*.rake`, `*.gemspec`, `*.ru`, `Gemfile`, `Rakefile`) and re-stages the corrections so they are committed alongside your change. Only the linting changes are staged: a file may be partially staged (also carry unstaged edits), so the hook lints the staged snapshot in isolation and replays your unstaged edits back onto the working tree afterwards. If an unstaged edit overlaps a corrected line the fix cannot be merged into the working copy — the staged/committed version is still linted and your unstaged edit is kept untouched. The commit is aborted if RuboCop reports offenses that safe auto-correction cannot fix (try `rake lint:autocorrect_all` or fix them by hand).
+- **`pre-push`** — Runs the repository specs (`rake test`) and every package's tests (`rake monorepo:each[test]`) in build order, aborting the push if any test fails. Delete-only pushes skip the suite.
+- **`commit-msg`** — Conventional Commits check (see below).
+
+Both `pre-commit` and `pre-push` prefer `bundle exec` and fall back to `ruby -S bundle exec` when the local `bundle` binstub cannot locate Ruby (some rvm/rbenv setups).
 
 ---
 

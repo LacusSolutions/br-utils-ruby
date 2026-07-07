@@ -13,10 +13,23 @@ See [MONOREPO.md](MONOREPO.md) for folder layout, tagging, dependency resolution
 
 ```bash
 bundle install
-rake hooks:install          # enable the Conventional Commits git hook
+rake hooks:install          # enable the git hooks (pre-commit, pre-push, commit-msg)
 rake monorepo:check_cycles
 cd packages/cpf-dv && bundle install && rake test
 ```
+
+## Git hooks
+
+`rake hooks:install` points `core.hooksPath` at `.githooks/`, enabling:
+
+- **pre-commit**: RuboCop auto-corrects the staged Ruby files and re-stages only the
+  linting changes (unstaged edits in the same files are preserved, never committed).
+  Aborts if offenses remain that safe auto-correction can't fix.
+- **pre-push**: runs the repository specs and every package's tests in build order,
+  aborting the push if any test fails.
+- **commit-msg**: rejects commit messages that don't follow Conventional Commits.
+
+Undo with `rake hooks:uninstall`. See [MONOREPO.md](MONOREPO.md#git-hooks) for details.
 
 ## Commit messages
 

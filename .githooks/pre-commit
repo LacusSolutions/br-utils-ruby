@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+# Lint staged Ruby files with RuboCop, auto-correct, and re-stage ONLY the
+# linting changes. Files may be partially staged (also carry unstaged changes);
+# those unstaged changes are preserved in the working tree and never committed.
+# Enabled via `rake hooks:install` (core.hooksPath=.githooks).
+set -euo pipefail
+
+root="$(git rev-parse --show-toplevel)"
+cd "$root"
+
+# `bundle` is preferred, but some rvm/rbenv setups ship a binstub whose shebang
+# cannot locate ruby. Fall back to `ruby -S bundle`, which ignores the shebang.
+if bundle --version >/dev/null 2>&1; then
+  bundle_exec() { bundle exec "$@"; }
+else
+  bundle_exec() { ruby -S bundle exec "$@"; }
+fi
+
+# Collect staged files RuboCop can inspect (Added/Copied/Modified/Renamed).
+files=()
+while IFS= read -r -d '' f; do
+  case "$f" in
+    *.rb | *.rake | *.gemspec | *.ru | Gemfile | */Gemfile | Rakefile | */Rakefile)
+      files+=("$f")
+      ;;
+  esac
+done < <(git diff --cached --name-only --diff-filter=ACMR -z)
+
+if [ ${#files[@]} -eq 0 ]; then
+  exit 0
+fi
+
+# For every partially-staged file, keep the staged snapshot (the merge base) and
+# the full working-tree version (the "unstaged" side). Reset the working tree to
+# the staged snapshot so RuboCop only inspects, and only re-stages, the content
+# that is actually being committed.
+work="$(mktemp -d -t pre-commit.XXXXXX)"
+cleanup() { rm -rf "$work"; }
+trap cleanup EXIT
+
+partial=()
+for i in "${!files[@]}"; do
+  f="${files[$i]}"
+  if git diff --quiet -- "$f"; then
+    partial[i]=0
+    continue
+  fi
+  partial[i]=1
+  git show ":$f" >"$work/base.$i"
+  cp -- "$f" "$work/theirs.$i"
+  cp -- "$work/base.$i" "$f"
+done
+
+# Auto-correct safe offenses. `--force-exclusion` honors AllCops/Exclude even
+# though we pass explicit paths. Exit status is non-zero if offenses remain.
+set +e
+bundle_exec rubocop --autocorrect --force-exclusion "${files[@]}"
+lint_status=$?
+set -e
+
+# Re-stage only the linting changes (working tree == staged snapshot + fixes).
+git add -- "${files[@]}"
+
+# Restore each partially-staged file's full working-tree content, then replay
+# the auto-corrections on top as a context patch. Applying the lint fixes this
+# way (rather than a 3-way merge) reapplies cleanly even when the unstaged
+# changes sit next to a corrected line. The index is never touched here, so only
+# the linting changes stay staged. If an unstaged edit overlaps a corrected line
+# the patch cannot apply; we then keep the unstaged version untouched and note it
+# (the committed/staged content is still correctly linted).
+for i in "${!files[@]}"; do
+  [ "${partial[$i]}" -eq 1 ] || continue
+  f="${files[$i]}"
+
+  set +e
+  diff -u "$work/base.$i" "$f" >"$work/fix.$i"
+  diff_status=$?
+  set -e
+
+  cp -- "$work/theirs.$i" "$f"
+
+  # diff_status: 0 = no lint fixes, 1 = fixes to replay, >1 = diff error.
+  [ "$diff_status" -eq 1 ] || continue
+
+  if ! patch -s --fuzz=3 --no-backup-if-mismatch -r "$work/rej.$i" "$f" "$work/fix.$i" 2>/dev/null; then
+    cp -- "$work/theirs.$i" "$f"
+    echo "pre-commit: kept your unstaged edits to '$f' (they overlap a lint fix)."
+    echo "pre-commit: the staged/committed version is linted; your working copy is not."
+  fi
+done
+
+if [ "$lint_status" -ne 0 ]; then
+  echo "pre-commit: RuboCop reported offenses that safe auto-correction could not fix."
+  echo "pre-commit: fix them (or try 'rake lint:autocorrect_all') and commit again."
+  echo "pre-commit: safe auto-corrections were already staged for you."
+  exit 1
+fi
+
+exit 0
