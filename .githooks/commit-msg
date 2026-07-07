@@ -1,0 +1,4 @@
+#!/bin/sh
+# Conventional Commits check. Enabled via `rake hooks:install` (core.hooksPath=.githooks).
+root="$(git rev-parse --show-toplevel)"
+exec ruby "$root/bin/commit-lint" --file "$1"

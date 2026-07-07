@@ -1,4 +1,5 @@
---require tests/spec_helper
+-I lib
+--require spec_helper
 --default-path tests
 --pattern 'tests/**/*.spec.rb'
 --format documentation

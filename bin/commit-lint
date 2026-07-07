@@ -1,0 +1,69 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+$LOAD_PATH.unshift(File.expand_path('../lib', __dir__))
+require 'commit_lint'
+
+# Command-line front-end for CommitLint.
+#
+#   bin/commit-lint --file PATH     Lint a single commit message file (commit-msg hook)
+#   bin/commit-lint --message MSG   Lint a literal message string
+#   bin/commit-lint --range A..B    Lint every commit reachable in a git range
+#
+# Exit status: 0 when all messages are valid, 1 on any violation, 2 on bad usage.
+module CommitLintCLI
+  ZERO_SHA = ('0' * 40)
+  USAGE = 'usage: commit-lint [--file PATH | --message MSG | --range A..B]'
+
+  module_function
+
+  def run(argv)
+    mode, value = argv
+    messages = messages_for(mode, value)
+
+    failed = messages.any? { |sha, msg| report_violations?(sha, msg) }
+    if failed
+      warn ''
+      warn 'Commit message(s) do not follow Conventional Commits: https://www.conventionalcommits.org'
+      exit 1
+    end
+    exit 0
+  end
+
+  def messages_for(mode, value)
+    case mode
+    when '--file'    then [[nil, File.read(value)]]
+    when '--message' then [[nil, value.to_s]]
+    when '--range'   then range_messages(value)
+    else
+      warn USAGE
+      exit 2
+    end
+  end
+
+  # Returns [[sha, message], ...] for every commit in the range (oldest first).
+  def range_messages(range)
+    return [['HEAD', commit_message('HEAD')]] if range.nil? || range.include?(ZERO_SHA)
+
+    shas = `git rev-list --reverse #{range}`.split("\n").reject(&:empty?)
+    shas.map { |sha| [sha, commit_message(sha)] }
+  end
+
+  def commit_message(ref)
+    `git show -s --format=%B #{ref}`
+  end
+
+  # Prints violations for one message; returns true when it failed.
+  def report_violations?(sha, message)
+    errors = CommitLint.lint(message)
+    return false if errors.empty?
+
+    label = sha ? sha[0, 12] : 'commit message'
+    header = message.to_s.lines.first.to_s.chomp
+    warn "invalid: #{label}: #{header}"
+    errors.each { |error| warn "  - #{error}" }
+    true
+  end
+end
+
+CommitLintCLI.run(ARGV)

@@ -15,6 +15,13 @@ namespace :lint do
   task :autocorrect_all do
     sh 'bundle exec rubocop -A'
   end
+
+  desc 'Lint commit messages against Conventional Commits (COMMIT_RANGE, default origin/main..HEAD)'
+  task :commits do
+    root = File.expand_path('../..', __dir__)
+    range = ENV['COMMIT_RANGE'] || 'origin/main..HEAD'
+    sh "ruby #{File.join(root, 'bin', 'commit-lint')} --range #{range}"
+  end
 end
 
 desc 'Run RuboCop'

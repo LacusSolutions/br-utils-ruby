@@ -6,15 +6,22 @@
 ruby/
 ├── .github/workflows/
 │   ├── ci.yml          # Lint + test matrix (one job per package)
+│   ├── commitlint.yml  # Conventional Commits lint (PR/push) + linter self-test
 │   └── release.yml     # Tag-driven publish (OIDC, single gem)
-├── .ruby-version       # 3.2.0 (minimum Ruby 3.2)
-├── .gemrc
+├── .githooks/
+│   └── commit-msg      # Conventional Commits hook (enable via rake hooks:install)
+├── bin/
+│   └── commit-lint     # Pure-Ruby commit message linter CLI
 ├── config/
 │   └── gems.yml        # Single source of truth: gem name (hyphenated) → dir + deps (DAG)
-├── Gemfile             # Root: tooling only (rake, rubocop)
+├── .ruby-version       # 3.2.0 (minimum Ruby 3.2)
+├── .gemrc
+├── Gemfile             # Root: tooling only (rake, rubocop, rspec)
 ├── Rakefile            # monorepo:check_cycles, monorepo:order, monorepo:each[task]
-├── lib/rake/
-│   └── gem_tasks.rake  # Shared build/clean/test stub for packages
+├── lib/
+│   ├── commit_lint.rb  # Conventional Commits rules (scopes from config/gems.yml)
+│   └── rake/
+│       └── gem_tasks.rake  # Shared build/clean/test stub for packages
 ├── packages/
 │   ├── lacus-utils/    # Leaf — shared Lacus helpers (mirrors Python lacus.utils)
 │   ├── cpf-dv/         # Leaf
@@ -111,11 +118,25 @@ ruby/
 - `rake monorepo:each[test]` — Run `rake test` in each package in dependency order (fails fast).
 - `rake lint` — Run RuboCop across the monorepo.
 - `rake format` — Auto-correct safe RuboCop offenses (`rubocop -a`).
+- `rake lint:commits` — Lint commit messages in `origin/main..HEAD` (override with `COMMIT_RANGE`).
+- `rake hooks:install` / `rake hooks:uninstall` — Enable/disable the git `commit-msg` hook.
 - From a package dir: `bundle exec rake test`, `bundle exec rake build`.
 
 ## Linting and formatting
 
 [RuboCop](https://rubocop.org/) is the linter and formatter (via auto-correct). Configuration lives in `.rubocop.yml` at the repo root; extensions include [rubocop-rspec](https://docs.rubocop.org/rubocop-rspec/) (for `tests/**/*.spec.rb`) and [rubocop-packaging](https://github.com/rubygems/rubocop-packaging) (gemspec hygiene). CI runs `bundle exec rubocop` on every push.
+
+---
+
+## Commit message linting (Conventional Commits)
+
+Commit messages follow [Conventional Commits](https://www.conventionalcommits.org), enforced by a **pure-Ruby** linter (no Node/commitlint dependency) so it behaves identically in a git hook and in CI.
+
+- **Rules** (`lib/commit_lint.rb`): mirrors `@commitlint/config-conventional` — header `type(scope)?!?: subject`, header ≤ 100 chars, known lower-case `type`, lower-case subject with no trailing period, and a blank line before any body. Merge/revert/fixup/squash headers are skipped.
+- **Scopes**: derived from `config/gems.yml` gem names (like the JS sibling's `@commitlint/config-workspace-scopes`) plus repo-level scopes (`deps`, `release`, `ci`, `monorepo`, `rubocop`, `rake`, `repo`, `docs`, `github`, `hooks`). Adding a package to `config/gems.yml` automatically makes its name a valid scope.
+- **CLI** (`bin/commit-lint`): `--file PATH` (hook), `--message MSG`, or `--range A..B`.
+- **Local hook**: `.githooks/commit-msg` runs the CLI on every commit; enable with `rake hooks:install` (sets `core.hooksPath`).
+- **CI**: `.github/workflows/commitlint.yml` lints the PR/push commit range and runs the linter's RSpec self-test.
 
 ---
 

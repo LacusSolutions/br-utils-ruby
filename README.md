@@ -13,9 +13,27 @@ See [MONOREPO.md](MONOREPO.md) for folder layout, tagging, dependency resolution
 
 ```bash
 bundle install
+rake hooks:install          # enable the Conventional Commits git hook
 rake monorepo:check_cycles
 cd packages/cpf-dv && bundle install && rake test
 ```
+
+## Commit messages
+
+Commits follow [Conventional Commits](https://www.conventionalcommits.org). A pure-Ruby
+linter (`bin/commit-lint`) enforces this in two places:
+
+- **Locally**: `rake hooks:install` sets `core.hooksPath` to `.githooks`, so the
+  `commit-msg` hook rejects non-conforming messages. Undo with `rake hooks:uninstall`.
+- **CI**: the `Commit Lint` workflow validates every commit in a push/PR.
+
+Allowed `type`s: `build, chore, ci, docs, feat, fix, perf, refactor, revert, style, test`.
+The optional `(scope)` must be a gem name from `config/gems.yml` (e.g. `cpf-dv`,
+`br-utilities`) or a repo scope (`deps`, `release`, `ci`, `monorepo`, `rubocop`, `rake`,
+`repo`, `docs`, `github`, `hooks`). Example: `feat(cpf-gen): add batch generator`.
+
+Lint a range manually with `rake lint:commits` (defaults to `origin/main..HEAD`, override
+with `COMMIT_RANGE`).
 
 ## Releasing (one gem at a time)
 

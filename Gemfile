@@ -7,3 +7,7 @@ gem 'rake', '~> 13.2'
 gem 'rubocop', '~> 1.64', require: false
 gem 'rubocop-packaging', require: false
 gem 'rubocop-rspec', require: false
+
+group :test do
+  gem 'rspec', '~> 3.13'
+end

@@ -4,6 +4,13 @@ require 'yaml'
 require 'pathname'
 
 load File.join(__dir__, 'lib/rake/lint_tasks.rake')
+load File.join(__dir__, 'lib/rake/hooks_tasks.rake')
+
+begin
+  load File.join(__dir__, 'lib/rake/rspec_tasks.rake')
+rescue LoadError
+  # rspec not installed in this context (e.g. release); skip the root test task.
+end
 
 ROOT = Pathname(__dir__)
 PACKAGES = ROOT.join('packages')
