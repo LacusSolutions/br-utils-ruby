@@ -4,7 +4,9 @@ source 'https://rubygems.org'
 
 gemspec
 
+gem 'lacus-utils', path: '../lacus-utils'
+
 group :test do
-  gem 'minitest', '~> 5.22'
   gem 'rake', '~> 13.2'
+  gem 'rspec', '~> 3.13'
 end
