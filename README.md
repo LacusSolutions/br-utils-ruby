@@ -7,7 +7,7 @@ Brazilian data utilities (CPF, CNPJ, etc.) as a **multi-gem monorepo**, publisha
 - **Root**: Tooling (Rake, RuboCop), shared config in `config/gems.yml`, no app code.
 - **Packages**: Under `packages/` — each is a gem (e.g. `cpf-dv`, `cpf-utilities`, `br-utilities`). Internal dependencies use path in development and version constraints when published.
 
-See [MONOREPO.md](MONOREPO.md) for folder layout, tagging, dependency resolution, and risks.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for folder layout, tagging, dependency resolution, and development workflow.
 
 ## Local setup
 
@@ -29,7 +29,7 @@ cd packages/cpf-dv && bundle install && rake test
   aborting the push if any test fails.
 - **commit-msg**: rejects commit messages that don't follow Conventional Commits.
 
-Undo with `rake hooks:uninstall`. See [MONOREPO.md](MONOREPO.md#git-hooks) for details.
+Undo with `rake hooks:uninstall`. See [CONTRIBUTING.md](CONTRIBUTING.md#git-hooks) for details.
 
 ## Commit messages
 
