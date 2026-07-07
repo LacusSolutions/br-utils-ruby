@@ -1,0 +1,5 @@
+--require tests/spec_helper
+--default-path tests
+--pattern 'tests/**/*.spec.rb'
+--format documentation
+--color

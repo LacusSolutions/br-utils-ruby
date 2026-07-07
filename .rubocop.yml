@@ -1,9 +1,16 @@
+plugins:
+  - rubocop-rspec
+  - rubocop-packaging
+
 AllCops:
   NewCops: enable
   TargetRubyVersion: 3.2
+  SuggestExtensions: false
   Exclude:
     - vendor/**/*
     - pkg/**/*
+    - '**/Gemfile.lock'
+    - '**/.rspec_status'
 
 Layout/LineLength:
   Max: 120
@@ -17,12 +24,15 @@ Style/Documentation:
 Metrics/BlockLength:
   Exclude:
     - Rakefile
-    - "**/Rakefile"
-    - "**/*.rake"
-    - "**/spec/**/*"
-    - "**/test/**/*"
+    - '**/Rakefile'
+    - '**/*.rake'
+    - '**/tests/**/*'
 
-# Gem package dirs use hyphenated names (e.g. cpf-utils.rb) by design
+# Gem package dirs use hyphenated names (e.g. cpf-dv.rb) by design
 Naming/FileName:
   Exclude:
-    - "packages/**"
+    - 'packages/**/*'
+
+RSpec:
+  Include:
+    - 'tests/**/*.spec.rb'

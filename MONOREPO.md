@@ -21,7 +21,7 @@ ruby/
 │   │   ├── cpf-dv.gemspec
 │   │   ├── Gemfile
 │   │   ├── Rakefile
-│   │   └── test/       # snake_case test files, e.g. cpf_dv_test.rb
+│   │   └── tests/      # Better Specs-style examples, e.g. cpf_dv.spec.rb
 │   ├── cpf-fmt/
 │   ├── cpf-gen/        # Deps: cpf-dv (path in Gemfile)
 │   ├── cpf-val/
