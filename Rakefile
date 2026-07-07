@@ -2,6 +2,7 @@
 
 require 'yaml'
 require 'pathname'
+require 'bundler'
 
 load File.join(__dir__, 'lib/rake/lint_tasks.rake')
 load File.join(__dir__, 'lib/rake/hooks_tasks.rake')
@@ -49,6 +50,25 @@ def gem_name_to_dir(name)
   GEMS.dig(name, 'dir') || name.to_s
 end
 
+# `bundle` is preferred, but some rvm/rbenv setups ship a binstub whose shebang
+# cannot locate ruby. Fall back to `ruby -S bundle`, which ignores the shebang.
+# Mirrors the fallback in .githooks/pre-push so nested shell-outs stay portable.
+def bundle_exec_cmd
+  @bundle_exec_cmd ||=
+    if Bundler.with_unbundled_env { system('bundle --version', out: File::NULL, err: File::NULL) }
+      'bundle exec'
+    else
+      'ruby -S bundle exec'
+    end
+end
+
+# Run a shell command for a specific package. Uses a clean bundler environment so
+# each package resolves against its own Gemfile instead of inheriting the root
+# BUNDLE_GEMFILE when this Rakefile is itself invoked via `bundle exec`.
+def system_in_package(command)
+  Bundler.with_unbundled_env { system(command) }
+end
+
 namespace :monorepo do
   desc 'Verify no circular dependencies'
   task :check_cycles do
@@ -70,7 +90,7 @@ namespace :monorepo do
         next unless dir.directory?
 
         puts "\n>> #{dir.basename}: rake #{task_name}"
-        system("cd #{dir} && bundle exec rake #{task_name}") or abort "Failed in #{dir.basename}"
+        system_in_package("cd #{dir} && #{bundle_exec_cmd} rake #{task_name}") or abort "Failed in #{dir.basename}"
       end
     end
   end
@@ -85,7 +105,7 @@ task :release do
   dir = ENV.fetch('RELEASE_PACKAGE', nil) or abort 'Set RELEASE_PACKAGE to the package dir (e.g. cnpj-dv)'
   pkg_path = ROOT.join('packages', dir)
   abort "Package not found: #{pkg_path}" unless pkg_path.directory?
-  Dir.chdir(pkg_path) { system('bundle exec rake release') or abort('Release failed') }
+  Dir.chdir(pkg_path) { system_in_package("#{bundle_exec_cmd} rake release") or abort('Release failed') }
 end
 
 # Load package-specific rake tasks from each gem (they extend this Rakefile when run from package dir)
