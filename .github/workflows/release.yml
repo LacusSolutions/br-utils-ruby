@@ -1,6 +1,8 @@
 # Release: publish a single gem to RubyGems via tag. Uses Trusted Publishing (OIDC).
 # Tag format: <gem_name>@<version>  e.g. cpf-dv@1.0.1 or br-utilities@2.1.0
 # Only the tagged gem is built and pushed; dependencies must already be on RubyGems.
+# The version is derived from the tag/input and written into the package's version.rb
+# at release time, so committing a version bump before tagging is NOT required.
 name: Release
 
 on:
@@ -69,16 +71,22 @@ jobs:
           ruby-version: "3.2"
           bundler-cache: true
 
-      - name: Ensure version in source matches tag
+      - name: Set version in source from tag
         run: |
           DIR="${{ needs.validate.outputs.dir }}"
           GEM_NAME="${{ needs.validate.outputs.gem_name }}"
           VERSION="${{ needs.validate.outputs.version }}"
           VER_FILE="packages/$DIR/src/${GEM_NAME}/version.rb"
-          grep -qE "VERSION = ['\"]${VERSION}['\"]" "$VER_FILE" || {
-            echo "::error::Version in $VER_FILE does not match tag $VERSION. Bump and commit before tagging."
+          [ -f "$VER_FILE" ] || { echo "::error::Version file $VER_FILE not found"; exit 1; }
+          # Overwrite the VERSION literal in place, keeping the module wrapper intact.
+          # This decouples the released version from what's committed: no version-bump
+          # commit is required before tagging.
+          sed -i -E "s/VERSION = ['\"][^'\"]*['\"]/VERSION = '${VERSION}'/" "$VER_FILE"
+          grep -qE "VERSION = '${VERSION}'" "$VER_FILE" || {
+            echo "::error::Failed to set version $VERSION in $VER_FILE"
             exit 1
           }
+          echo "Set $VER_FILE -> VERSION = '${VERSION}'"
 
       - name: Run tests
         run: |
