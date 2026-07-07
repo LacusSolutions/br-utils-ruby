@@ -33,7 +33,7 @@ jobs:
 
             # Subtree on another branch
             package_prefix="$PACKAGES_DIR/$package_name"
-            repo_url="git@github.com:LacusSolutions/br-utils-py.git"
+            repo_url="git@github.com:${GITHUB_REPOSITORY}.git"
             branch="$package_name/main"
             PACKAGES+=("{\"name\":\"$package_name\",\"prefix\":\"$package_prefix\",\"repo\":\"$repo_url\",\"branch\":\"$branch\"}")
           done
@@ -66,26 +66,31 @@ jobs:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - id: push-subtree
+        env:
+          PACKAGE_NAME: ${{ matrix.name }}
+          PACKAGE_PREFIX: ${{ matrix.prefix }}
+          PACKAGE_REPO: ${{ matrix.repo }}
+          PACKAGE_BRANCH: ${{ matrix.branch }}
         run: |
-          echo "🔄 Syncing '${{ matrix.name }}'..."
-          echo "📦 Package:    ${{ matrix.name }}"
-          echo "📁 Path:       ${{ matrix.prefix }}"
-          echo "🔗 Repository: ${{ matrix.repo }}"
-          echo "🌿 Branch:     ${{ matrix.branch }}"
+          echo "🔄 Syncing '$PACKAGE_NAME'..."
+          echo "📦 Package:    $PACKAGE_NAME"
+          echo "📁 Path:       $PACKAGE_PREFIX"
+          echo "🔗 Repository: $PACKAGE_REPO"
+          echo "🌿 Branch:     $PACKAGE_BRANCH"
 
-          push_output=$(git subtree push --prefix="${{ matrix.prefix }}" "${{ matrix.repo }}" "${{ matrix.branch }}" 2>&1)
+          push_output=$(git subtree push --prefix="$PACKAGE_PREFIX" "$PACKAGE_REPO" "$PACKAGE_BRANCH" 2>&1)
           push_exit_code=$?
 
           if [ $push_exit_code -eq 0 ]; then
             if echo "$push_output" | grep -q "Everything up-to-date"; then
-              echo "ℹ️ '${{ matrix.name }}' already up-to-date"
+              echo "ℹ️ '$PACKAGE_NAME' already up-to-date"
               status="ℹ️ up-to-date"
             else
-              echo "✅ '${{ matrix.name }}' successfully synced"
+              echo "✅ '$PACKAGE_NAME' successfully synced"
               status="✅ synced"
             fi
           else
-            echo "❌ '${{ matrix.name }}' failed to sync"
+            echo "❌ '$PACKAGE_NAME' failed to sync"
             status="❌ failed"
             exit 1
           fi

@@ -47,9 +47,8 @@ jobs:
         run: echo "current=$(date +%Y)" >> $GITHUB_OUTPUT
       - env:
           LICENSES: ${{ needs.licenses-to-update.outputs.licenses }}
+          CURRENT_YEAR: ${{ steps.year.outputs.current }}
         run: |
-          CURRENT_YEAR="${{ steps.year.outputs.current }}"
-
           update_license() {
             local file="$1"
 
