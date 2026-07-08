@@ -26,7 +26,7 @@ A Ruby reusable utilities library for Lacus Solutions' packages.
 Install the gem directly:
 
 ```bash
-$ gem install lacus-utils
+gem install lacus-utils
 ```
 
 Or add it to your `Gemfile` and run `bundle install`:
