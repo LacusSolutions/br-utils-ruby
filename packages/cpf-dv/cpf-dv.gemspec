@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
   spec.description   = 'Utility to calculate and verify CPF check digits.'
   spec.homepage      = 'https://github.com/LacusSolutions/br-utils-ruby'
   spec.license       = 'MIT'
-  spec.required_ruby_version = '>= 3.2'
+  spec.required_ruby_version = '>= 3.1'
   spec.metadata['source_code_uri'] = spec.homepage
   spec.metadata['changelog_uri'] = "#{spec.homepage}/blob/main/CHANGELOG.md"
   spec.metadata['rubygems_mfa_required'] = 'true'

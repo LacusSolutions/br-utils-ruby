@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.summary       = 'Generate random valid CPF numbers (Brazilian personal ID)'
   spec.homepage      = 'https://github.com/LacusSolutions/br-utils-ruby'
   spec.license       = 'MIT'
-  spec.required_ruby_version = '>= 3.2'
+  spec.required_ruby_version = '>= 3.1'
   spec.metadata['rubygems_mfa_required'] = 'true'
   spec.files         = Dir['src/**/*'] + ['LICENSE', 'README.md'].select { |f| File.file?(f) }
   spec.require_paths = ['src']
