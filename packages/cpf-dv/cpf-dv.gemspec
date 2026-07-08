@@ -4,7 +4,7 @@ require_relative 'src/cpf-dv/version'
 
 Gem::Specification.new do |spec|
   spec.name          = 'cpf-dv'
-  spec.version       = CpfDv::VERSION
+  spec.version       = CpfDV::VERSION
   spec.authors       = ['Julio L. Muller']
   spec.email         = ['juliolmuller@outlook.com']
   spec.summary       = 'Check-digit calculation for CPF (Brazilian personal ID)'

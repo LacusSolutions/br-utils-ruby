@@ -2,7 +2,7 @@
 
 require_relative 'cpf-dv/version'
 
-module CpfDv
+module CpfDV
   def self.hello
     'cpf-dv'
   end

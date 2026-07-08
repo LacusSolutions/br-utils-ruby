@@ -4,7 +4,7 @@ require_relative 'src/cnpj-dv/version'
 
 Gem::Specification.new do |spec|
   spec.name          = 'cnpj-dv'
-  spec.version       = CnpjDv::VERSION
+  spec.version       = CnpjDV::VERSION
   spec.authors       = ['Julio L. Muller']
   spec.summary       = 'Check-digit calculation for CNPJ (Brazilian company ID)'
   spec.homepage      = 'https://github.com/LacusSolutions/br-utils-ruby'
