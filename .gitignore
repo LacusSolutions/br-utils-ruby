@@ -9,6 +9,13 @@ packages/*/Gemfile.lock
 /pkg/
 packages/*/pkg/
 
+# CI release notes scratch files
+/.release/
+/.temp/
+/.tmp/
+/temp/
+/tmp/
+
 # Test / coverage
 /coverage/
 /.rspec_status

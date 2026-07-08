@@ -1,0 +1,57 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+$LOAD_PATH.unshift(File.expand_path('../lib', __dir__))
+require 'release_notes'
+
+# Command-line front-end for ReleaseNotes.
+#
+#   bin/release-notes PACKAGE                    Use the latest CHANGELOG section
+#   bin/release-notes PACKAGE --version X.Y.Z    Use a specific CHANGELOG section
+#   bin/release-notes PACKAGE -v X.Y.Z           Short form of --version
+#
+# On success prints the path to the generated notes file and exits 0.
+# On error prints the message to stderr and exits 1; bad usage exits 2.
+module ReleaseNotesCLI
+  USAGE = 'usage: release-notes PACKAGE [--version X.Y.Z]'
+
+  module_function
+
+  def run(argv)
+    package, version = parse(argv)
+    output = ReleaseNotes.prepare(package, version)
+    puts output
+    exit 0
+  rescue ReleaseNotes::Error => e
+    warn "Error: #{e.message}"
+    exit 1
+  end
+
+  # Returns [package, version] from ARGV; version is nil when not provided.
+  def parse(argv)
+    args = argv.dup
+    package = args.shift
+    invalid_usage! if package.nil? || package.start_with?('-')
+
+    [package, version_from(args)]
+  end
+
+  def version_from(args)
+    version = nil
+
+    until args.empty?
+      flag = args.shift
+      invalid_usage! unless %w[--version -v].include?(flag)
+      version = args.shift
+    end
+
+    version
+  end
+
+  def invalid_usage!
+    warn USAGE
+    exit 2
+  end
+end
+
+ReleaseNotesCLI.run(ARGV)
