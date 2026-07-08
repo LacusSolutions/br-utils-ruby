@@ -14,6 +14,6 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = '>= 3.1'
   spec.metadata['source_code_uri'] = spec.homepage
   spec.metadata['rubygems_mfa_required'] = 'true'
-  spec.files         = Dir['src/**/*'] + ['LICENSE', 'README.md'].select { |f| File.file?(f) }
+  spec.files         = Dir['src/**/*'] + ['LICENSE', 'README.md', 'CHANGELOG.md']
   spec.require_paths = ['src']
 end
