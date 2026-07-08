@@ -1,5 +1,5 @@
 # frozen_string_literal: true
 
-module CnpjDv
+module CnpjDV
   VERSION = '0.0.0'
 end

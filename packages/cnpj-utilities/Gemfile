@@ -8,7 +8,6 @@ gem 'cnpj-dv', path: '../cnpj-dv'
 gem 'cnpj-fmt', path: '../cnpj-fmt'
 gem 'cnpj-gen', path: '../cnpj-gen'
 gem 'cnpj-val', path: '../cnpj-val'
-gem 'lacus-utils', path: '../lacus-utils'
 
 group :test do
   gem 'rake', '~> 13.2'

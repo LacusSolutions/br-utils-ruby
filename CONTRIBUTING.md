@@ -151,7 +151,7 @@ Each package follows a consistent layout:
 
 ### Naming conventions
 
-Gem names and package directories are **hyphenated** (`cpf-dv`, `cpf-utilities`, `br-utilities`, `lacus-utils`). Source files and require paths match (`src/cpf-dv.rb`, `src/cpf-dv/version.rb`). Module names stay CamelCase (`CpfDv`, `BrUtils`, `LacusUtils`). Spec files use snake_case with a `.spec.rb` suffix (`cpf_dv.spec.rb`).
+Gem names and package directories are **hyphenated** (`cpf-dv`, `cpf-utilities`, `br-utilities`, `lacus-utils`). Source files and require paths match (`src/cpf-dv.rb`, `src/cpf-dv/version.rb`). Module names stay CamelCase (`CpfDV`, `BrUtils`, `LacusUtils`), with `*-dv` → `*DV` (e.g. `cnpj-dv` → `CnpjDV`). Spec files use snake_case with a `.spec.rb` suffix (`cpf_dv.spec.rb`).
 
 ### Dependency resolution (Gemspec vs Gemfile)
 
@@ -271,10 +271,10 @@ Then create a pull request on GitHub.
 
 require 'spec_helper'
 
-RSpec.describe CpfDv do
+RSpec.describe CpfDV do
   describe '.hello' do
     it 'returns cpf-dv' do
-      expect(CpfDv.hello).to eq('cpf-dv')
+      expect(CpfDV.hello).to eq('cpf-dv')
     end
   end
 end
@@ -313,7 +313,7 @@ CI runs `bundle exec rubocop` on every push.
 
 ### Naming Conventions
 
-- **Modules/Classes**: CamelCase (`CpfDv`, `CpfUtils`, `BrUtils`)
+- **Modules/Classes**: CamelCase (`CpfDV`, `CpfUtils`, `BrUtils`; `*-dv` → `*DV`)
 - **Methods**: snake_case (`hello`, `valid?`)
 - **Variables**: snake_case (`input`, `options`)
 - **Constants**: UPPER_SNAKE_CASE (`VERSION`, `CPF_LENGTH`)
@@ -328,7 +328,7 @@ CI runs `bundle exec rubocop` on every push.
 
 require_relative 'cpf-dv/version'
 
-module CpfDv
+module CpfDV
   def self.hello
     'cpf-dv'
   end
@@ -449,7 +449,7 @@ What you expected to happen.
 ```ruby
 require 'cpf-dv'
 
-result = CpfDv.hello
+result = CpfDV.hello
 
 puts result # expected vs actual
 ```
