@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'set'
+
 module LacusUtils
   # Describes the type of a value for error messages. Returns a short
   # human-readable string describing the runtime type of the value. Pure,

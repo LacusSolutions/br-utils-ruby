@@ -1,5 +1,11 @@
 # lacus-utils
 
+## 1.1.0
+
+### Improvements
+
+- **Ruby 3.1**: minimum supported version lowered from `3.2` to `3.1`.
+
 ## 1.0.0
 
 ### 🚀 Stable Version Released!
