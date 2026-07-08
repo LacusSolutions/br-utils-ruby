@@ -2,62 +2,70 @@ name: CI
 
 on:
   push:
-    branches: ["**"]
+    branches:
+      - '**'
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
-  lint:
-    name: Lint
+  discover:
+    name: Discover Packages
     runs-on: ubuntu-latest
+    outputs:
+      has-test: ${{ steps.discover.outputs.has-test }}
+      test-packages: ${{ steps.discover.outputs.test-packages }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - uses: ruby/setup-ruby@09a7688d3b55cf0e976497ff046b70949eeaccfd # v1.288.0
-        with:
-          ruby-version: "3.2"
-          bundler-cache: true
-      - run: bundle install
-      - run: bundle exec rubocop --format github
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - id: discover
+        run: |
+          set -euo pipefail
+
+          TEST_PACKAGES=()
+
+          for dir in packages/*/; do
+            [ -d "$dir" ] || continue
+            pkg=$(basename "${dir%/}")
+            gemspec="${dir%/}/${pkg}.gemspec"
+            tests="${dir%/}/tests"
+
+            if [ -f "$gemspec" ] && [ -d "$tests" ]; then
+              TEST_PACKAGES+=("$pkg")
+            fi
+          done
+
+          test_json=$(jq -n -c --args '$ARGS.positional | sort' -- "${TEST_PACKAGES[@]}")
+
+          if [ "${#TEST_PACKAGES[@]}" -gt 0 ]; then
+            echo "has-test=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has-test=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          echo "test-packages=$test_json" >> "$GITHUB_OUTPUT"
+          echo "Packages with tests: $test_json"
+
+  lint:
+    uses: ./.github/workflows/.lint.yml
 
   test:
-    name: Test ${{ matrix.package }}
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        package:
-          - lacus-utils
-          - cnpj-dv
-          - cnpj-fmt
-          - cnpj-gen
-          - cnpj-val
-          - cnpj-utilities
-          - cpf-dv
-          - cpf-fmt
-          - cpf-gen
-          - cpf-val
-          - cpf-utilities
-          - br-utilities
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - uses: ruby/setup-ruby@09a7688d3b55cf0e976497ff046b70949eeaccfd # v1.288.0
-        with:
-          ruby-version: "3.2"
-          bundler-cache: true
-      - run: bundle install
-      - run: |
-          cd "packages/${{ matrix.package }}"
-          bundle install
-          bundle exec rake test
+    needs: discover
+    if: needs.discover.outputs.has-test == 'true'
+    uses: ./.github/workflows/.test.yml
+    with:
+      packages: ${{ needs.discover.outputs.test-packages }}
 
   monorepo-check:
     name: Monorepo DAG
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - uses: ruby/setup-ruby@09a7688d3b55cf0e976497ff046b70949eeaccfd # v1.288.0
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: ruby/setup-ruby@d45b1a4e94b71acab930e56e79c6aa188764e7f9 # v1.316.0
         with:
           ruby-version: "3.2"
           bundler-cache: true

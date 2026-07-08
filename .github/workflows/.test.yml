@@ -1,0 +1,45 @@
+name: Run Unit Tests
+
+on:
+  workflow_call:
+    inputs:
+      packages:
+        type: string
+        description: 'JSON array of package directory names to test (e.g. ["cpf-val","cnpj-dv"])'
+        required: true
+      ruby-versions:
+        type: string
+        description: 'JSON array of Ruby versions (e.g. ["3.2","3.3"])'
+        required: false
+        default: '["3.2"]'
+      max-parallel:
+        type: number
+        description: 'Maximum number of parallel jobs'
+        required: false
+        default: 5
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test `${{ matrix.package }}` in Ruby v${{ matrix.ruby-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: ${{ inputs.max-parallel }}
+      matrix:
+        ruby-version: ${{ fromJSON(inputs.ruby-versions) }}
+        package: ${{ fromJSON(inputs.packages) }}
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: ruby/setup-ruby@d45b1a4e94b71acab930e56e79c6aa188764e7f9 # v1.316.0
+        with:
+          ruby-version: ${{ matrix.ruby-version }}
+          bundler-cache: true
+
+      - name: Run `${{ matrix.package }}` tests
+        run: |
+          cd "packages/${{ matrix.package }}"
+          bundle install
+          bundle exec rake test

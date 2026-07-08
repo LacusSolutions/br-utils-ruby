@@ -1,86 +1,206 @@
-# Release: publish a single gem to RubyGems via tag. Uses Trusted Publishing (OIDC).
-# Tag format: <gem_name>@<version>  e.g. cpf-dv@1.0.1 or br-utilities@2.1.0
-# Only the tagged gem is built and pushed; dependencies must already be on RubyGems.
-# The version is derived from the tag/input and written into the package's version.rb
-# at release time, so committing a version bump before tagging is NOT required.
-name: Release
+name: Release and Publish Package
 
 on:
   workflow_dispatch:
     inputs:
-      gem_name:
-        description: "Gem name (RubyGems, e.g. cpf-dv)"
+      package:
+        description: 'Monorepo package directory name (e.g. cpf-val, lacus-utils). Gem name is read from the gemspec.'
         required: true
         type: string
       version:
-        description: "Version (semver, e.g. 1.0.1)"
-        required: true
+        description: 'Version to release (e.g., 1.2.3 or 1.2.3.rc1). Leave empty to use the latest section in CHANGELOG.md'
+        required: false
         type: string
-  push:
-    tags:
-      - "*@*"   # e.g. cpf-dv@1.0.1
+        default: ''
+
+permissions:
+  contents: read
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
-  validate:
-    name: Validate
+  lint:
+    uses: ./.github/workflows/.lint.yml
+
+  test:
+    uses: ./.github/workflows/.test.yml
+    with:
+      packages: ${{ format('["{0}"]', inputs.package) }}
+
+  prepare-release:
+    name: Prepare Release Notes
     runs-on: ubuntu-latest
     outputs:
-      gem_name: ${{ steps.vars.outputs.gem_name }}
-      version: ${{ steps.vars.outputs.version }}
-      tag: ${{ steps.vars.outputs.tag }}
-      dir: ${{ steps.vars.outputs.dir }}
+      package: ${{ steps.release.outputs.package }}
+      gem_name: ${{ steps.release.outputs.gem_name }}
+      version: ${{ steps.release.outputs.version }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      release_body: ${{ steps.release.outputs.release_body }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - id: release
+        env:
+          PACKAGE_NAME: ${{ inputs.package }}
+          PACKAGE_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+
+          [[ "$PACKAGE_NAME" =~ ^[a-z0-9][a-z0-9._-]*$ ]] || {
+            echo "❌ Invalid package directory name: '$PACKAGE_NAME'"
+            exit 1
+          }
+
+          GEMSPEC="packages/$PACKAGE_NAME/$PACKAGE_NAME.gemspec"
+
+          [ -f "$GEMSPEC" ] || {
+            echo "❌ Gemspec not found: $GEMSPEC"
+            exit 1
+          }
+
+          echo "📦 Preparing release for package '$PACKAGE_NAME'..."
+
+          if [ -n "$PACKAGE_VERSION" ]; then
+            echo "📌 Using requested version: $PACKAGE_VERSION"
+            OUTPUT_PATH=$(ruby bin/release-notes "$PACKAGE_NAME" --version "$PACKAGE_VERSION")
+          else
+            echo "📌 Using latest version from CHANGELOG.md"
+            OUTPUT_PATH=$(ruby bin/release-notes "$PACKAGE_NAME")
+          fi
+
+          BASENAME=$(basename "$OUTPUT_PATH" .md)
+          VERSION="${BASENAME#*@}"
+
+          GEM_NAME=$(grep -E '^\s*spec\.name\s*=' "$GEMSPEC" | head -1 | sed -E "s/.*=\s*['\"]([^'\"]+)['\"].*/\1/")
+
+          if [ -z "$GEM_NAME" ]; then
+            echo "❌ Could not read gem name from $GEMSPEC"
+            exit 1
+          fi
+
+          echo "package=$PACKAGE_NAME" >> "$GITHUB_OUTPUT"
+          echo "gem_name=$GEM_NAME" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag_name=${GEM_NAME}@${VERSION}" >> "$GITHUB_OUTPUT"
+          {
+            echo 'release_body<<EOF'
+            cat "$OUTPUT_PATH"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+          echo "📝 Release notes written to ${OUTPUT_PATH}"
+          echo "✅ Release preparation complete"
+
+  validate:
+    name: Validate Git State
+    needs: prepare-release
+    runs-on: ubuntu-latest
+    outputs:
+      branch_name: ${{ steps.validate.outputs.branch_name }}
+      commit_sha: ${{ steps.validate.outputs.commit_sha }}
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           fetch-depth: 0
-      - id: vars
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            GEM_NAME="${{ github.event.inputs.gem_name }}"
-            VERSION="${{ github.event.inputs.version }}"
-          else
-            TAG="${GITHUB_REF#refs/tags/}"
-            GEM_NAME="${TAG%%@*}"
-            VERSION="${TAG#*@}"
-          fi
-          DIR="${GEM_NAME}"
-          [ -n "$DIR" ] && [ -n "$VERSION" ] || { echo "::error::Could not get gem name and version (event=${{ github.event_name }}, ref=${{ github.ref }})"; exit 1; }
-          [ -d "packages/$DIR" ] || { echo "::error::Package packages/$DIR not found"; exit 1; }
-          [ -f "packages/$DIR/${GEM_NAME}.gemspec" ] || { echo "::error::Gemspec not found"; exit 1; }
-          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+ ]] || { echo "::error::Version must be semver"; exit 1; }
-          echo "gem_name=$GEM_NAME" >> $GITHUB_OUTPUT
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "tag=${GEM_NAME}@${VERSION}" >> $GITHUB_OUTPUT
-          echo "dir=$DIR" >> $GITHUB_OUTPUT
 
-  test-and-release:
-    name: Test & Publish
-    needs: validate
+      - id: validate
+        env:
+          PACKAGE_NAME: ${{ needs.prepare-release.outputs.package }}
+          PACKAGE_VERSION: ${{ needs.prepare-release.outputs.version }}
+          TAG_NAME: ${{ needs.prepare-release.outputs.tag_name }}
+        run: |
+          set -euo pipefail
+
+          echo "🔍 Validating release for package '$PACKAGE_NAME' version '$PACKAGE_VERSION'..."
+          echo "🏷️  Tag: $TAG_NAME"
+          echo ""
+
+          echo "🔍 Checking if tag '$TAG_NAME' already exists..."
+
+          if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+            echo "❌ Tag '$TAG_NAME' already exists"
+            exit 1
+          fi
+
+          echo "🔍 Checking if GitHub Release '$TAG_NAME' already exists..."
+
+          ENCODED_TAG=$(jq -rn --arg t "$TAG_NAME" '$t|@uri')
+          RELEASE_CHECK=$(curl -s \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/tags/${ENCODED_TAG}" \
+            -H "Authorization: token $GITHUB_TOKEN")
+
+          if echo "$RELEASE_CHECK" | jq -e '.id' >/dev/null 2>&1; then
+            echo "❌ Release '$TAG_NAME' already exists"
+            exit 1
+          fi
+
+          echo "✅ Tag '$TAG_NAME' is available"
+          echo "✅ Release '$TAG_NAME' does not exist"
+          echo ""
+
+          BRANCH_NAME="${PACKAGE_NAME}/main"
+          echo "🔍 Checking if branch '$BRANCH_NAME' exists..."
+
+          git fetch origin --quiet 2>/dev/null || true
+
+          if ! git show-ref --verify --quiet "refs/heads/$BRANCH_NAME" && \
+             ! git show-ref --verify --quiet "refs/remotes/origin/$BRANCH_NAME"; then
+            echo "❌ Branch '$BRANCH_NAME' does not exist"
+            echo "ℹ️  Available branches:"
+            git branch -a | grep -E "(main|$PACKAGE_NAME)" || echo "   (none found)"
+            exit 1
+          fi
+
+          echo "✅ Branch '$BRANCH_NAME' exists"
+
+          if git show-ref --verify --quiet "refs/heads/$BRANCH_NAME"; then
+            COMMIT_SHA=$(git rev-parse "$BRANCH_NAME")
+          else
+            COMMIT_SHA=$(git rev-parse "origin/$BRANCH_NAME")
+          fi
+
+          echo "📝 Branch '$BRANCH_NAME' points to commit: $COMMIT_SHA"
+          echo "✅ Git state validation complete"
+
+          echo "branch_name=$BRANCH_NAME" >> "$GITHUB_OUTPUT"
+          echo "commit_sha=$COMMIT_SHA" >> "$GITHUB_OUTPUT"
+
+  publish:
+    name: Build & Publish Gem
+    needs:
+      - lint
+      - test
+      - prepare-release
+      - validate
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       id-token: write
     environment: release
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
+          ref: main
           fetch-depth: 0
-
-      - uses: ruby/setup-ruby@09a7688d3b55cf0e976497ff046b70949eeaccfd # v1.288.0
+      - uses: ruby/setup-ruby@d45b1a4e94b71acab930e56e79c6aa188764e7f9 # v1.316.0
         with:
-          ruby-version: "3.2"
+          ruby-version: '3.2'
           bundler-cache: true
 
-      - name: Set version in source from tag
+      - name: Set version in source
+        env:
+          DIR: ${{ needs.prepare-release.outputs.package }}
+          GEM_NAME: ${{ needs.prepare-release.outputs.gem_name }}
+          VERSION: ${{ needs.prepare-release.outputs.version }}
         run: |
-          DIR="${{ needs.validate.outputs.dir }}"
-          GEM_NAME="${{ needs.validate.outputs.gem_name }}"
-          VERSION="${{ needs.validate.outputs.version }}"
+          set -euo pipefail
+
           VER_FILE="packages/$DIR/src/${GEM_NAME}/version.rb"
           [ -f "$VER_FILE" ] || { echo "::error::Version file $VER_FILE not found"; exit 1; }
+
           # Overwrite the VERSION literal in place, keeping the module wrapper intact.
           # This decouples the released version from what's committed: no version-bump
-          # commit is required before tagging.
+          # commit is required before releasing.
           sed -i -E "s/VERSION = ['\"][^'\"]*['\"]/VERSION = '${VERSION}'/" "$VER_FILE"
           grep -qE "VERSION = '${VERSION}'" "$VER_FILE" || {
             echo "::error::Failed to set version $VERSION in $VER_FILE"
@@ -88,17 +208,90 @@ jobs:
           }
           echo "Set $VER_FILE -> VERSION = '${VERSION}'"
 
-      - name: Run tests
+      - name: Install package dependencies
+        env:
+          DIR: ${{ needs.prepare-release.outputs.package }}
         run: |
-          cd "packages/${{ needs.validate.outputs.dir }}"
+          cd "packages/$DIR"
           bundle install
-          bundle exec rake test
 
-      - name: Publish to RubyGems (OIDC)
+      - name: Build and Publish Gem (OIDC)
         uses: rubygems/release-gem@1c162a739e8b4cb21a676e97b087e8268d8fc40b # v1.1.2
         with:
-          await-release: "false"
+          await-release: 'false'
         env:
-          RELEASE_PACKAGE: ${{ needs.validate.outputs.dir }}
+          RELEASE_PACKAGE: ${{ needs.prepare-release.outputs.package }}
 
-      # Tag must already exist (pushed by maintainer). No auto-tag here.
+  create-release:
+    name: Create GitHub Release
+    needs:
+      - prepare-release
+      - validate
+      - publish
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    outputs:
+      tag_name: ${{ needs.prepare-release.outputs.tag_name }}
+      package: ${{ needs.prepare-release.outputs.package }}
+      gem_name: ${{ needs.prepare-release.outputs.gem_name }}
+      version: ${{ needs.prepare-release.outputs.version }}
+      release_id: ${{ steps.create-release.outputs.release_id }}
+    steps:
+      - id: create-release
+        env:
+          BRANCH_NAME: ${{ needs.validate.outputs.branch_name }}
+          COMMIT_SHA: ${{ needs.validate.outputs.commit_sha }}
+          TAG_NAME: ${{ needs.prepare-release.outputs.tag_name }}
+          PACKAGE_VERSION: ${{ needs.prepare-release.outputs.version }}
+          RELEASE_BODY: ${{ needs.prepare-release.outputs.release_body }}
+        run: |
+          set -euo pipefail
+
+          # RubyGems treats any version containing a letter (e.g. 1.2.3.rc1) as a prerelease.
+          if [[ "$PACKAGE_VERSION" =~ [A-Za-z] ]]; then
+            PRERELEASE=true
+          else
+            PRERELEASE=false
+          fi
+
+          echo "🚀 Creating GitHub Release '$TAG_NAME'..."
+          echo "🌿 Target branch: $BRANCH_NAME"
+          echo "📝 Target commit: $COMMIT_SHA"
+          echo "🏷️  Prerelease: $PRERELEASE"
+          echo ""
+
+          PAYLOAD=$(jq -n \
+            --arg target "$COMMIT_SHA" \
+            --arg tag "$TAG_NAME" \
+            --arg name "$TAG_NAME" \
+            --arg body "$RELEASE_BODY" \
+            --argjson prerelease "$PRERELEASE" \
+            '{target_commitish: $target, tag_name: $tag, name: $name, body: $body, draft: false, prerelease: $prerelease}')
+
+          RELEASE_RESPONSE=$(curl -s -w "\n%{http_code}" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases" \
+            -X POST \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            -d "$PAYLOAD")
+
+          HTTP_CODE=$(echo "$RELEASE_RESPONSE" | tail -n1)
+          RESPONSE_BODY=$(echo "$RELEASE_RESPONSE" | sed '$d')
+
+          if [ "$HTTP_CODE" -ne 201 ]; then
+            echo "❌ Failed to create release. HTTP status: $HTTP_CODE"
+            echo "Response: $RESPONSE_BODY"
+            exit 1
+          fi
+
+          RELEASE_ID=$(echo "$RESPONSE_BODY" | jq -r '.id')
+
+          if [ -z "$RELEASE_ID" ] || [ "$RELEASE_ID" = "null" ]; then
+            echo "❌ Failed to get release ID from response"
+            echo "Response: $RESPONSE_BODY"
+            exit 1
+          fi
+
+          echo "✅ Release created successfully (ID: $RELEASE_ID)"
+          echo "release_id=$RELEASE_ID" >> "$GITHUB_OUTPUT"

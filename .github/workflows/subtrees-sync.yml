@@ -15,7 +15,7 @@ jobs:
     outputs:
       matrix: ${{ steps.list-packages.outputs.matrix }}
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
       - id: list-packages
         run: |
@@ -57,7 +57,7 @@ jobs:
       matrix: ${{ fromJson(needs.detect-packages.outputs.matrix) }}
       fail-fast: false # Continue syncing other packages even if one fails
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           fetch-depth: 0
           persist-credentials: false

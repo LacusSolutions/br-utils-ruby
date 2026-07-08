@@ -1,0 +1,27 @@
+name: Lint Source Code
+
+on:
+  workflow_call:
+    inputs:
+      ruby-version:
+        type: string
+        description: 'Ruby version to lint with (e.g. "3.2")'
+        required: false
+        default: '3.2'
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint in Ruby v${{ inputs.ruby-version }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: ruby/setup-ruby@d45b1a4e94b71acab930e56e79c6aa188764e7f9 # v1.316.0
+        with:
+          ruby-version: ${{ inputs.ruby-version }}
+          bundler-cache: true
+
+      - run: bundle install
+      - run: bundle exec rubocop --format github

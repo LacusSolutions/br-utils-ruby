@@ -112,18 +112,22 @@ Both `pre-commit` and `pre-push` prefer `bundle exec` and fall back to `ruby -S 
 ```text
 ruby/
 ├── .github/workflows/
-│   ├── ci.yml          # Lint + test matrix (one job per package) + DAG check
-│   └── release.yml     # Tag-driven publish (OIDC, single gem)
+│   ├── ci.yml          # Discover packages, then lint + per-package test matrix + DAG check
+│   ├── .lint.yml       # Reusable: repo-wide RuboCop
+│   ├── .test.yml       # Reusable: per-package test matrix
+│   └── release.yml     # Dispatch-driven publish (OIDC, single gem) + GitHub Release
 ├── .githooks/
 │   ├── pre-commit      # RuboCop auto-correct + re-stage of staged files
 │   ├── pre-push        # Run the test suite; abort push on failure
 │   └── commit-msg      # Conventional Commits hook (enable via rake hooks:install)
 ├── bin/
-│   └── commit-lint     # Pure-Ruby commit message linter CLI
+│   ├── commit-lint     # Pure-Ruby commit message linter CLI
+│   └── release-notes   # Pure-Ruby CHANGELOG release-notes extractor CLI
 ├── config/
 │   └── gems.yml        # Single source of truth: gem name → dir + deps (DAG)
 ├── lib/
 │   ├── commit_lint.rb  # Conventional Commits rules (scopes below)
+│   ├── release_notes.rb # CHANGELOG section extraction used by bin/release-notes
 │   └── rake/           # Shared Rake tasks (lint, hooks, rspec, gem build/clean)
 ├── packages/           # Monorepo packages (each is an independent gem)
 │   ├── lacus-utils/    # Leaf — shared Lacus helpers
@@ -347,15 +351,23 @@ When you bump the version in `CHANGELOG.md`, also update the `VERSION` constant 
 
 ## Releasing
 
-Releases are **one gem per tag**, published to RubyGems via GitHub Actions using [Trusted Publishing (OIDC)](https://guides.rubygems.org/trusted-publishing/) — no API keys or secrets required. Only maintainers cut releases.
+Releases are **one gem at a time**, published to RubyGems via GitHub Actions using [Trusted Publishing (OIDC)](https://guides.rubygems.org/trusted-publishing/) — no API keys or secrets required. Only maintainers cut releases.
 
-- **Tag format**: `<gem_name>@<version>` (e.g. `cpf-dv@1.0.1`, `br-utilities@2.1.0`). Gem names are hyphenated.
-- **Rule**: The version in source must match the tag. Before tagging:
-  1. Bump `packages/<dir>/src/<gem_name>/version.rb` and commit.
-  2. Push the tag: `git tag cpf-dv@1.0.1 && git push origin cpf-dv@1.0.1`.
+The `Release and Publish Package` workflow is **manually dispatched** (Actions → *Release and Publish Package* → *Run workflow*) with two inputs, mirroring the Python sibling:
+
+- **`package`** (required): the package **directory** name (e.g. `cpf-val`, `lacus-utils`). The gem name is read from the package gemspec.
+- **`version`** (optional): the version to release (e.g. `1.2.3` or a prerelease like `1.2.3.rc1`). Leave it empty to use the **latest** section in that package's `CHANGELOG.md`.
+
+What the workflow does:
+
+1. **Lint & test** the package via the reusable `.lint.yml` / `.test.yml` workflows.
+2. **Prepare release notes**: extract the chosen version's `CHANGELOG.md` section with `bin/release-notes` and read the gem name from the gemspec. The tag is `<gem_name>@<version>`.
+3. **Validate git state**: fail fast if the tag or a GitHub Release already exists, and confirm the `<package>/main` subtree branch exists.
+4. **Publish (OIDC)**: write the version into `packages/<dir>/src/<gem_name>/version.rb` at release time, then build and push via `rubygems/release-gem`. No version-bump commit or manual tag is required beforehand.
+5. **Create the GitHub Release**: cut a release (and its `<gem_name>@<version>` tag) against the tip of `<package>/main`, using the extracted notes as the body. Versions containing a letter (e.g. `1.2.3.rc1`) are marked as prereleases.
+
+- **Preview the notes locally**: `ruby bin/release-notes <package> [--version X.Y.Z]` writes `.release/<package>@<version>.md` and prints its path.
 - **Order**: Release leaves first (e.g. `cpf-dv`, `cpf-fmt`), then dependents (`cpf-utilities`, `cnpj-utilities`), then the `br-utilities` umbrella. Internal dependencies must already be on RubyGems at compatible versions.
-
-The Release workflow validates the package directory and version file, runs that package's tests, builds the gem, and publishes via `rubygems/release-gem`. Only the tagged gem is published.
 
 ## Pull Request Process
 
