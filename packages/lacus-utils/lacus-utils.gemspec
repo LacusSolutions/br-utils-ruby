@@ -8,7 +8,7 @@ Gem::Specification.new do |spec|
   spec.authors       = ['Julio L. Muller']
   spec.email         = ['juliolmuller@outlook.com']
   spec.summary       = 'Reusable utilities for Lacus Solutions Ruby packages'
-  spec.description   = 'Shared helpers for Lacus Solutions Ruby gems (type description, random sequences, etc.).'
+  spec.description   = 'Reusable utilities library for Lacus Solutions Ruby gems (type description, random sequences).'
   spec.homepage      = 'https://github.com/LacusSolutions/br-utils-ruby'
   spec.license       = 'MIT'
   spec.required_ruby_version = '>= 3.2'
