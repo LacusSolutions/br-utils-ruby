@@ -98,6 +98,8 @@ module CnpjDV
       @cnpj_chars.join + both
     end
 
+    # Protected (not private) so test spy subclasses can override and call +super+.
+    # Leading underscore matches the cross-language helper name (`_calculate`).
     protected
 
     # Computes a single check digit using the standard CNPJ modulo-11 algorithm.
