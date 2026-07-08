@@ -14,7 +14,9 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = '>= 3.2'
   spec.metadata['source_code_uri'] = spec.homepage
   spec.metadata['rubygems_mfa_required'] = 'true'
-  spec.files         = Dir['src/**/*'] + ['LICENSE', 'README.md', 'README.pt.md'].select { |f| File.file?(f) }
+  spec.files = Dir['src/**/*'] + ['LICENSE', 'README.md', 'README.pt.md', 'CHANGELOG.md'].select do |f|
+    File.file?(f)
+  end
   spec.require_paths = ['src']
   spec.add_dependency 'lacus-utils', '>= 1.0.0', '< 2.0.0'
 end
