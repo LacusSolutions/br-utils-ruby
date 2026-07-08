@@ -27,7 +27,7 @@ module CnpjFmt
     end
 
     def assert_no_disallowed_key_characters!(option_name, value, forbidden_characters)
-      return unless forbidden_characters.any? { |character| value.include?(character) }
+      return unless value.chars.intersect?(forbidden_characters)
 
       raise CnpjFormatterOptionsForbiddenKeyCharacterException.new(
         option_name,
