@@ -5,7 +5,6 @@ source 'https://rubygems.org'
 gemspec
 
 gem 'cpf-dv', path: '../cpf-dv'
-gem 'lacus-utils', path: '../lacus-utils'
 
 group :test do
   gem 'rake', '~> 13.2'
