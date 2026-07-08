@@ -3,24 +3,33 @@ name: Lint Source Code
 on:
   workflow_call:
     inputs:
-      ruby-version:
+      ruby-versions:
         type: string
-        description: 'Ruby version to lint with (e.g. "3.2")'
+        description: 'JSON array of Ruby versions (e.g. ["3.1","3.2","3.3","3.4","4.0"])'
+        required: true
+      max-parallel:
+        type: number
+        description: 'Maximum number of parallel jobs'
         required: false
-        default: '3.2'
+        default: 5
 
 permissions:
   contents: read
 
 jobs:
   lint:
-    name: Lint in Ruby v${{ inputs.ruby-version }}
+    name: Lint in Ruby v${{ matrix.ruby-version }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: ${{ inputs.max-parallel }}
+      matrix:
+        ruby-version: ${{ fromJSON(inputs.ruby-versions) }}
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       - uses: ruby/setup-ruby@d45b1a4e94b71acab930e56e79c6aa188764e7f9 # v1.316.0
         with:
-          ruby-version: ${{ inputs.ruby-version }}
+          ruby-version: ${{ matrix.ruby-version }}
           bundler-cache: true
 
       - run: bundle install

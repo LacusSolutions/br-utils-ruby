@@ -22,11 +22,14 @@ env:
 jobs:
   lint:
     uses: ./.github/workflows/.lint.yml
+    with:
+      ruby-versions: ${{ format('["{0}","{1}"]', vars.MIN_RUBY_VERSION, vars.MAX_RUBY_VERSION) }}
 
   test:
     uses: ./.github/workflows/.test.yml
     with:
       packages: ${{ format('["{0}"]', inputs.package) }}
+      ruby-versions: ${{ format('["{0}","{1}"]', vars.MIN_RUBY_VERSION, vars.MAX_RUBY_VERSION) }}
 
   prepare-release:
     name: Prepare Release Notes
