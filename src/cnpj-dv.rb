@@ -2,7 +2,7 @@
 
 require_relative 'cnpj-dv/version'
 
-module CnpjDv
+module CnpjDV
   def self.hello
     'cnpj-dv'
   end
