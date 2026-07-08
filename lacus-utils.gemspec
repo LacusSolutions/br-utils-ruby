@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
   spec.description   = 'Reusable utilities library for Lacus Solutions Ruby gems (type description, random sequences).'
   spec.homepage      = 'https://github.com/LacusSolutions/br-utils-ruby'
   spec.license       = 'MIT'
-  spec.required_ruby_version = '>= 3.2'
+  spec.required_ruby_version = '>= 3.1'
   spec.metadata['source_code_uri'] = spec.homepage
   spec.metadata['rubygems_mfa_required'] = 'true'
   spec.files         = Dir['src/**/*'] + ['LICENSE', 'README.md'].select { |f| File.file?(f) }
