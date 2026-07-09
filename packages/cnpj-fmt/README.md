@@ -1,0 +1,300 @@
+![cnpj-fmt for Ruby](https://br-utils.vercel.app/img/cover_cnpj-fmt.jpg)
+
+[![Gem Version](https://img.shields.io/gem/v/cnpj-fmt)](https://rubygems.org/gems/cnpj-fmt)
+[![Gem Downloads](https://img.shields.io/gem/dt/cnpj-fmt)](https://rubygems.org/gems/cnpj-fmt)
+[![Ruby Version](https://img.shields.io/gem/rv/cnpj-fmt)](https://www.ruby-lang.org/)
+[![Test Status](https://img.shields.io/github/actions/workflow/status/LacusSolutions/br-utils-ruby/ci.yml?label=ci/cd)](https://github.com/LacusSolutions/br-utils-ruby/actions)
+[![Last Update Date](https://img.shields.io/github/last-commit/LacusSolutions/br-utils-ruby)](https://github.com/LacusSolutions/br-utils-ruby)
+[![Project License](https://img.shields.io/github/license/LacusSolutions/br-utils-ruby)](https://github.com/LacusSolutions/br-utils-ruby/blob/main/LICENSE)
+
+> 🚀 **Full support for the [new alphanumeric CNPJ format](https://github.com/user-attachments/files/23937961/calculodvcnpjalfanaumerico.pdf).**
+
+> 🌎 [Acessar documentação em português](./README.pt.md)
+
+A Ruby utility to format CNPJ (Brazilian Business Tax ID).
+
+## Ruby Support
+
+| ![Ruby 3.2](https://img.shields.io/badge/Ruby-3.2-CC342D?logo=ruby&logoColor=white) | ![Ruby 3.3](https://img.shields.io/badge/Ruby-3.3-CC342D?logo=ruby&logoColor=white) | ![Ruby 3.4](https://img.shields.io/badge/Ruby-3.4-CC342D?logo=ruby&logoColor=white) |
+| --- | --- | --- |
+| Passing ✔ | Passing ✔ | Passing ✔ |
+
+## Features
+
+- ✅ **Alphanumeric CNPJ**: Supports 14-character alphanumeric CNPJ (digits and letters, e.g. `RK0CMT3W000100`)
+- ✅ **Flexible input**: Accepts `String` or `Array` of strings; array elements are concatenated in order
+- ✅ **Format agnostic**: Strips non-alphanumeric characters and uppercases letters before formatting
+- ✅ **Custom delimiters**: `dot_key`, `slash_key`, and `dash_key` may be empty, single-, or multi-character strings
+- ✅ **Masking**: Optional hiding of a character range with a configurable replacement string (`hidden`, `hidden_key`, `hidden_start`, `hidden_end`)
+- ✅ **HTML & URL output**: Optional `escape` (HTML entities) and `encode` (URI component encoding, similar to JavaScript `encodeURIComponent`)
+- ✅ **Length errors without throwing**: Invalid length after sanitization is handled via `on_fail` (default returns an empty string)
+- ✅ **Minimal dependencies**: Only [`lacus-utils`](https://rubygems.org/gems/lacus-utils)
+- ✅ **Error handling**: Type errors for wrong API use; option validation via dedicated exception classes
+
+## Installation
+
+Install the gem directly:
+
+```bash
+gem install cnpj-fmt
+```
+
+Or add it to your `Gemfile` and run `bundle install`:
+
+```ruby
+gem 'cnpj-fmt'
+```
+
+## Require
+
+```ruby
+require 'cnpj-fmt'
+```
+
+## Quick Start
+
+```ruby
+require 'cnpj-fmt'
+
+formatter = CnpjFmt::CnpjFormatter.new
+
+formatter.format('03603568000195')   # => "03.603.568/0001-95"
+formatter.format('12ABC34500DE99')   # => "12.ABC.345/00DE-99"
+formatter.format('RK0CMT3W000100')   # => "RK.0CM.T3W/0001-00"
+```
+
+Basic helper usage:
+
+```ruby
+require 'cnpj-fmt'
+
+cnpj = '03603568000195'
+
+CnpjFmt.cnpj_fmt(cnpj)                    # => "03.603.568/0001-95"
+CnpjFmt.cnpj_fmt(cnpj, hidden: true)      # => "03.603.***/****-**"
+CnpjFmt.cnpj_fmt(                         # => "03603568|0001_95"
+  cnpj,
+  dot_key: '',
+  slash_key: '|',
+  dash_key: '_'
+)
+```
+
+## Usage
+
+The main entry points are the class `CnpjFmt::CnpjFormatter`, the options class `CnpjFmt::CnpjFormatterOptions`, and the helper `CnpjFmt.cnpj_fmt`.
+
+### `CnpjFmt::CnpjFormatter`
+
+- **`initialize`**: Optional default formatting options. The first parameter may be `nil`, a `Hash` of option keys, or a `CnpjFmt::CnpjFormatterOptions` instance (that exact instance is stored; mutating it later affects subsequent `format` calls that do not pass per-call options). You may also pass option fields as keyword arguments (`hidden:`, `hidden_key:`, `dot_key:`, …). Example: `CnpjFmt::CnpjFormatter.new(hidden: true, slash_key: '|')`.
+- **`options`**: Returns the instance’s `CnpjFmt::CnpjFormatterOptions` (same object used internally).
+- **`format(cnpj_input, options = nil, **keywords)`**: Formats a CNPJ value.
+
+  Input is normalized by removing non-alphanumeric characters and uppercasing. If the sanitized length is not exactly **14**, the **`on_fail`** callback is invoked with the original input and a `CnpjFmt::CnpjFormatterInputLengthException`; its return value is the result (nothing is thrown for length).
+
+  If the input is not a `String` or an `Array` of strings, **`CnpjFmt::CnpjFormatterInputTypeError`** is raised.
+
+  Per-call options are merged over the instance defaults for that call only (instance defaults are unchanged). Pass a `CnpjFmt::CnpjFormatterOptions` instance or a `Hash` as the second argument, in addition to keyword arguments; when both are provided, the `options` argument wins.
+
+### `CnpjFmt::CnpjFormatterOptions`
+
+Holds all formatter settings, with validation and merge support. Exposes properties: `hidden`, `hidden_key`, `hidden_start`, `hidden_end`, `dot_key`, `slash_key`, `dash_key`, `escape`, `encode`, `on_fail`.
+
+- **`initialize(options = nil, *extra_overrides, **keywords)`**: Optional default options (plain `Hash`, `CnpjFmt::CnpjFormatterOptions` instance, or keyword arguments), plus extra override objects merged in order (later overrides win).
+- **`all`**: Returns a shallow `Hash` copy of all current options.
+- **`copy`**: Returns a shallow copy of this options instance.
+- **`set(options)`**: Updates multiple fields at once; returns `self`. Accepts a `Hash` or another `CnpjFmt::CnpjFormatterOptions` instance. Explicit `nil` values in the update keep the current value.
+- **`set_hidden_range(hidden_start, hidden_end)`**: Validates indices in **`[0, 13]`** (inclusive); if `hidden_start > hidden_end`, values are swapped. `nil` arguments fall back to defaults (`DEFAULT_HIDDEN_START` / `DEFAULT_HIDDEN_END`).
+
+**`hidden_start` / `hidden_end`**: Indices refer to the **14-character normalized CNPJ string** (before inserting punctuation). The inclusive range is replaced internally by placeholders, then `hidden_key` is substituted (supports multi-character keys and empty string).
+
+**Key options** (`hidden_key`, `dot_key`, `slash_key`, `dash_key`): Must be strings and must not contain any character in `CnpjFmt::CnpjFormatterOptions::DISALLOWED_KEY_CHARACTERS` (reserved for internal formatting).
+
+### Functional helper
+
+`CnpjFmt.cnpj_fmt` builds a new `CnpjFmt::CnpjFormatter` from the same constructor parameters and calls `format(cnpj_input)` once. Use keyword arguments, a `Hash`, or a `CnpjFmt::CnpjFormatterOptions` instance for options:
+
+```ruby
+require 'cnpj-fmt'
+
+cnpj = '03603568000195'
+
+CnpjFmt.cnpj_fmt(cnpj)                # => "03.603.568/0001-95"
+CnpjFmt.cnpj_fmt(cnpj, hidden: true)  # masked with defaults
+CnpjFmt.cnpj_fmt(                     # => "03603568|0001_95"
+  cnpj,
+  dot_key: '',
+  slash_key: '|',
+  dash_key: '_'
+)
+CnpjFmt.cnpj_fmt(cnpj, {              # Hash form
+  hidden: true,
+  hidden_key: '#'
+})
+```
+
+### Object-oriented examples
+
+```ruby
+require 'cnpj-fmt'
+
+formatter = CnpjFmt::CnpjFormatter.new
+cnpj = '03603568000195'
+
+formatter.format(cnpj)   # => "03.603.568/0001-95"
+formatter.format(        # => "03.603.###/####-##"
+  cnpj,
+  hidden: true,
+  hidden_key: '#',
+  hidden_start: 5,
+  hidden_end: 13
+)
+```
+
+Default options on the instance; per-call overrides:
+
+```ruby
+require 'cnpj-fmt'
+
+formatter = CnpjFmt::CnpjFormatter.new(hidden: true)
+cnpj = '03603568000195'
+
+formatter.format(cnpj)                 # uses instance masking
+formatter.format(cnpj, hidden: false)  # this call only: unmasked
+formatter.format(cnpj)                 # back to instance defaults
+```
+
+Alphanumeric input and array input:
+
+```ruby
+require 'cnpj-fmt'
+
+formatter = CnpjFmt::CnpjFormatter.new
+
+formatter.format('RK0CMT3W000100')   # => "RK.0CM.T3W/0001-00"
+formatter.format([                   # => "RK.0CM.T3W/0001-00"
+  'RK',
+  '0CM',
+  'T3W',
+  '0001',
+  '00'
+])
+```
+
+### Input formats
+
+**String:** Raw digits and/or letters, or already formatted CNPJ (e.g. `12.345.678/0009-10`, `12.ABC.345/00DE-99`). Non-alphanumeric characters are removed; lowercase letters are uppercased.
+
+**Array of strings:** Each element must be a `String`; values are concatenated (e.g. per digit, grouped segments, or mixed with punctuation — all are stripped during normalization). Non-string elements are not allowed.
+
+### Formatting options
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `hidden` | `Boolean`, `nil` | `false` | When truthy, replaces the inclusive index range `[hidden_start, hidden_end]` on the normalized 14-character string before punctuation is applied |
+| `hidden_key` | `String`, `nil` | `'*'` | Replacement for each hidden position (may be multi-character or empty); must not use disallowed key characters |
+| `hidden_start` | `Integer`, `nil` | `5` | Start index `0`–`13` (inclusive) |
+| `hidden_end` | `Integer`, `nil` | `13` | End index `0`–`13` (inclusive); if `hidden_start > hidden_end`, they are swapped |
+| `dot_key` | `String`, `nil` | `'.'` | Separator between groups `XX` / `XXX` / `XXX` |
+| `slash_key` | `String`, `nil` | `'/'` | Separator before the branch block |
+| `dash_key` | `String`, `nil` | `'-'` | Separator before the last two characters |
+| `escape` | `Boolean`, `nil` | `false` | When truthy, HTML-escapes the final string |
+| `encode` | `Boolean`, `nil` | `false` | When truthy, URL-encodes the final string (similar to `encodeURIComponent`) |
+| `on_fail` | `Proc`, `nil` | see below | `(value, exception) -> String` — used when sanitized length ≠ 14 |
+
+Default **`on_fail`** returns an empty string. The exception passed for length failures is **`CnpjFmt::CnpjFormatterInputLengthException`** (`actual_input`, `evaluated_input`, `expected_length`). The callback return value must be a `String`; otherwise **`CnpjFmt::CnpjFormatterOptionsTypeError`** is raised.
+
+Example with all options:
+
+```ruby
+require 'cnpj-fmt'
+
+cnpj = '03603568000195'
+
+CnpjFmt.cnpj_fmt(
+  cnpj,
+  hidden: true,
+  hidden_key: '#',
+  hidden_start: 5,
+  hidden_end: 11,
+  dot_key: ' ',
+  slash_key: '|',
+  dash_key: '_-_',
+  escape: true,
+  encode: true,
+  on_fail: ->(value, _exception) { value.to_s }
+)
+```
+
+### Errors & exceptions
+
+This package uses **TypeError vs StandardError** semantics: *type errors* indicate incorrect API use (e.g. wrong type); *exceptions* indicate invalid or ineligible data passed to callbacks or option validation.
+
+- **Wrong input type** (not `String` or `Array` of strings): **`CnpjFmt::CnpjFormatterInputTypeError`** — extends **`CnpjFmt::CnpjFormatterTypeError`** (extends Ruby’s `TypeError`).
+- **Invalid option types or values when constructing or merging options**: **`CnpjFmt::CnpjFormatterOptionsTypeError`**, **`CnpjFmt::CnpjFormatterOptionsHiddenRangeInvalidException`**, **`CnpjFmt::CnpjFormatterOptionsForbiddenKeyCharacterException`** — extend **`CnpjFmt::CnpjFormatterTypeError`** or **`CnpjFmt::CnpjFormatterException`** as appropriate.
+
+Length mismatch does **not** throw from `format`; handle it inside **`on_fail`**.
+
+```ruby
+require 'cnpj-fmt'
+
+begin
+  CnpjFmt::CnpjFormatter.new.format(12_345)
+rescue CnpjFmt::CnpjFormatterInputTypeError => e
+  puts e.message
+end
+
+CnpjFmt::CnpjFormatter.new.format(
+  'short',
+  on_fail: ->(_value, _exception) { 'invalid' }
+) # => "invalid"
+```
+
+Notable attributes on raised errors:
+
+- `CnpjFormatterInputTypeError`: `actual_input`, `actual_type`, `expected_type`
+- `CnpjFormatterOptionsTypeError`: `option_name`, `actual_input`, `actual_type`, `expected_type`
+- `CnpjFormatterInputLengthException`: `actual_input`, `evaluated_input`, `expected_length`
+- `CnpjFormatterOptionsHiddenRangeInvalidException`: `option_name`, `actual_input`, `min_expected_value`, `max_expected_value`
+- `CnpjFormatterOptionsForbiddenKeyCharacterException`: `option_name`, `actual_input`, `forbidden_characters`
+
+## API
+
+### Exports
+
+After `require 'cnpj-fmt'`:
+
+- **`CnpjFmt.cnpj_fmt`**: `(cnpj_input, options = nil, **keywords) -> String` — convenience helper.
+- **`CnpjFmt::CnpjFormatter`**: Class to format CNPJ with optional default options; accepts `String` or `Array<String>` in `format`.
+- **`CnpjFmt::CnpjFormatterOptions`**: Class holding options; supports merge via constructor, `set`, and keyword arguments.
+- **`CnpjFmt::CNPJ_LENGTH`**: `14` (constant).
+- **`CnpjFmt::VERSION`**: gem version string.
+- **Exceptions**: `CnpjFmt::CnpjFormatterTypeError`, `CnpjFmt::CnpjFormatterInputTypeError`, `CnpjFmt::CnpjFormatterOptionsTypeError`, `CnpjFmt::CnpjFormatterException`, `CnpjFmt::CnpjFormatterInputLengthException`, `CnpjFmt::CnpjFormatterOptionsHiddenRangeInvalidException`, `CnpjFmt::CnpjFormatterOptionsForbiddenKeyCharacterException`.
+
+### Other available resources
+
+- **`CnpjFmt::CnpjFormatterOptions::CNPJ_LENGTH`**: `14`.
+- **`CnpjFmt::CnpjFormatterOptions::DISALLOWED_KEY_CHARACTERS`**: Characters forbidden in `hidden_key`, `dot_key`, `slash_key`, `dash_key`.
+- **`CnpjFmt::CnpjFormatterOptions::DEFAULT_*`**: Default values for each option.
+- **`CnpjFmt::CnpjFormatterOptions.default_on_fail`**: Shared default failure callback.
+
+## Contribution & Support
+
+We welcome contributions! Please see our [Contributing Guidelines](https://github.com/LacusSolutions/br-utils-ruby/blob/main/CONTRIBUTING.md) for details. If you find this project helpful, please consider:
+
+- ⭐ Starring the repository
+- 🤝 Contributing to the codebase
+- 💡 [Suggesting new features](https://github.com/LacusSolutions/br-utils-ruby/issues)
+- 🐛 [Reporting bugs](https://github.com/LacusSolutions/br-utils-ruby/issues)
+
+## License
+
+This project is licensed under the MIT License — see the [LICENSE](https://github.com/LacusSolutions/br-utils-ruby/blob/main/LICENSE) file for details.
+
+## Changelog
+
+See [CHANGELOG](./CHANGELOG.md) for a list of changes and version history.
+
+---
+
+Made with ❤️ by [Lacus Solutions](https://github.com/LacusSolutions)
