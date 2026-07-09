@@ -4,7 +4,6 @@ source 'https://rubygems.org'
 
 gemspec
 
-gem 'cnpj-dv', path: '../cnpj-dv'
 gem 'cnpj-fmt', path: '../cnpj-fmt'
 gem 'cnpj-gen', path: '../cnpj-gen'
 gem 'cnpj-val', path: '../cnpj-val'
