@@ -18,24 +18,46 @@ RSpec.describe CnpjDV do
       expect(described_class.const_defined?(:CnpjCheckDigits)).to be(true)
     end
 
-    it 'defines CnpjCheckDigitsTypeError' do
-      expect(described_class.const_defined?(:CnpjCheckDigitsTypeError)).to be(true)
+    it 'defines Error' do
+      expect(described_class.const_defined?(:Error)).to be(true)
     end
 
-    it 'defines CnpjCheckDigitsInputTypeError' do
-      expect(described_class.const_defined?(:CnpjCheckDigitsInputTypeError)).to be(true)
+    it 'defines TypeMismatchError' do
+      expect(described_class.const_defined?(:TypeMismatchError)).to be(true)
     end
 
-    it 'defines CnpjCheckDigitsException' do
-      expect(described_class.const_defined?(:CnpjCheckDigitsException)).to be(true)
+    it 'defines MissingArgumentError' do
+      expect(described_class.const_defined?(:MissingArgumentError)).to be(true)
     end
 
-    it 'defines CnpjCheckDigitsInputInvalidException' do
-      expect(described_class.const_defined?(:CnpjCheckDigitsInputInvalidException)).to be(true)
+    it 'defines InvalidArgumentCombinationError' do
+      expect(described_class.const_defined?(:InvalidArgumentCombinationError)).to be(true)
     end
 
-    it 'defines CnpjCheckDigitsInputLengthException' do
-      expect(described_class.const_defined?(:CnpjCheckDigitsInputLengthException)).to be(true)
+    it 'defines DomainError' do
+      expect(described_class.const_defined?(:DomainError)).to be(true)
+    end
+
+    it 'defines OutOfRangeError' do
+      expect(described_class.const_defined?(:OutOfRangeError)).to be(true)
+    end
+
+    it 'defines InvalidLengthError' do
+      expect(described_class.const_defined?(:InvalidLengthError)).to be(true)
+    end
+
+    it 'defines ValidationError' do
+      expect(described_class.const_defined?(:ValidationError)).to be(true)
+    end
+
+    it 'does not define legacy error class names' do
+      aggregate_failures do
+        expect(described_class.const_defined?(:CnpjCheckDigitsTypeError)).to be(false)
+        expect(described_class.const_defined?(:CnpjCheckDigitsInputTypeError)).to be(false)
+        expect(described_class.const_defined?(:CnpjCheckDigitsException)).to be(false)
+        expect(described_class.const_defined?(:CnpjCheckDigitsInputLengthException)).to be(false)
+        expect(described_class.const_defined?(:CnpjCheckDigitsInputInvalidException)).to be(false)
+      end
     end
   end
 
@@ -51,27 +73,39 @@ RSpec.describe CnpjDV do
       end
     end
 
-    it 'exposes CnpjCheckDigitsTypeError as a TypeError' do
-      expect(described_class::CnpjCheckDigitsTypeError < TypeError).to be(true)
+    it 'exposes TypeMismatchError as a TypeError' do
+      expect(described_class::TypeMismatchError < TypeError).to be(true)
     end
 
-    it 'exposes instantiable InputTypeError' do
-      instance = described_class::CnpjCheckDigitsInputTypeError.new(123, 'string')
+    it 'exposes instantiable TypeMismatchError' do
+      instance = described_class::TypeMismatchError.new(123, 'string')
 
       aggregate_failures do
         expect(instance.actual_input).to eq(123)
+        expect(instance).to be_a(described_class::Error)
         expect(instance.message).to eq(
           'CNPJ input must be of type string. Got integer number.'
         )
       end
     end
 
-    it 'exposes CnpjCheckDigitsException as StandardError' do
-      expect(described_class::CnpjCheckDigitsException < StandardError).to be(true)
+    it 'exposes DomainError as a RangeError' do
+      expect(described_class::DomainError < RangeError).to be(true)
     end
 
-    it 'exposes instantiable InputInvalidException' do
-      instance = described_class::CnpjCheckDigitsInputInvalidException.new(
+    it 'exposes instantiable InvalidLengthError' do
+      instance = described_class::InvalidLengthError.new('x', '1', 12, 14)
+
+      aggregate_failures do
+        expect(instance.min_expected_length).to eq(12)
+        expect(instance.max_expected_length).to eq(14)
+        expect(instance).to be_a(described_class::DomainError)
+        expect(instance).to be_a(described_class::Error)
+      end
+    end
+
+    it 'exposes instantiable ValidationError' do
+      instance = described_class::ValidationError.new(
         '123',
         'some reason'
       )
@@ -79,16 +113,10 @@ RSpec.describe CnpjDV do
       aggregate_failures do
         expect(instance.actual_input).to eq('123')
         expect(instance.reason).to eq('some reason')
+        expect(instance).to be_a(ArgumentError)
+        expect(instance).to be_a(described_class::Error)
+        expect(instance).not_to be_a(described_class::DomainError)
         expect(instance.message).to eq('CNPJ input "123" is invalid. some reason')
-      end
-    end
-
-    it 'exposes instantiable InputLengthException' do
-      instance = described_class::CnpjCheckDigitsInputLengthException.new('x', '1', 12, 14)
-
-      aggregate_failures do
-        expect(instance.min_expected_length).to eq(12)
-        expect(instance.max_expected_length).to eq(14)
       end
     end
   end
