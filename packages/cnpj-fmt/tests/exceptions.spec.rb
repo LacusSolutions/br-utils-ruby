@@ -2,58 +2,27 @@
 
 require 'spec_helper'
 
-RSpec.describe CnpjFmt::CnpjFormatterTypeError do
-  before do
-    stub_const('CnpjFmt::TestTypeError', Class.new(described_class))
-  end
-
-  subject(:error) { CnpjFmt::TestTypeError.new(123, 'number', 'string', 'some error') }
-
-  context 'when instantiated through a subclass' do
-    it 'is a TypeError' do
-      expect(error).to be_a(TypeError)
-    end
-
-    it 'is a CnpjFormatterTypeError' do
-      expect(error).to be_a(described_class)
-    end
-
-    it 'exposes the subclass name' do
-      expect(error.class.name).to eq('CnpjFmt::TestTypeError')
-    end
-
-    it 'sets actual_input' do
-      expect(error.actual_input).to eq(123)
-    end
-
-    it 'sets actual_type' do
-      expect(error.actual_type).to eq('number')
-    end
-
-    it 'sets expected_type' do
-      expect(error.expected_type).to eq('string')
-    end
-
-    it 'exposes the message' do
-      expect(error.message).to eq('some error')
-    end
+RSpec.describe CnpjFmt::Error do
+  it 'is a module' do
+    expect(described_class).to be_a(Module)
+    expect(described_class).not_to be_a(Class)
   end
 end
 
-RSpec.describe CnpjFmt::CnpjFormatterInputTypeError do
-  subject(:error) { described_class.new(123, 'string') }
+RSpec.describe CnpjFmt::TypeMismatchError do
+  context 'when instantiated for CNPJ input' do
+    subject(:error) { described_class.new(123, 'string') }
 
-  context 'when instantiated' do
     it 'is a TypeError' do
       expect(error).to be_a(TypeError)
     end
 
-    it 'is a CnpjFormatterTypeError' do
-      expect(error).to be_a(CnpjFmt::CnpjFormatterTypeError)
+    it 'includes CnpjFmt::Error' do
+      expect(error).to be_a(CnpjFmt::Error)
     end
 
     it 'exposes the class name' do
-      expect(error.class.name).to eq('CnpjFmt::CnpjFormatterInputTypeError')
+      expect(error.class.name).to eq('CnpjFmt::TypeMismatchError')
     end
 
     it 'sets actual_input' do
@@ -69,119 +38,197 @@ RSpec.describe CnpjFmt::CnpjFormatterInputTypeError do
         .to eq('string or string[]')
     end
 
+    it 'leaves option_name nil' do
+      expect(error.option_name).to be_nil
+    end
+
     it 'builds a descriptive message' do
       expect(described_class.new(123, 'string[]').message)
         .to eq('CNPJ input must be of type string[]. Got integer number.')
     end
   end
-end
 
-RSpec.describe CnpjFmt::CnpjFormatterOptionsTypeError do
-  subject(:error) { described_class.new('hidden', 123, 'boolean') }
-
-  context 'when instantiated' do
-    it 'is a TypeError' do
-      expect(error).to be_a(TypeError)
-    end
-
-    it 'is a CnpjFormatterTypeError' do
-      expect(error).to be_a(CnpjFmt::CnpjFormatterTypeError)
-    end
-
-    it 'exposes the class name' do
-      expect(error.class.name).to eq('CnpjFmt::CnpjFormatterOptionsTypeError')
-    end
+  context 'when instantiated for an option' do
+    subject(:error) { described_class.new(123, 'boolean', option_name: 'hidden') }
 
     it 'sets option_name' do
-      expect(described_class.new('hidden_key', 123, 'string').option_name).to eq('hidden_key')
+      expect(described_class.new(123, 'string', option_name: 'hidden_key').option_name)
+        .to eq('hidden_key')
     end
 
     it 'sets actual_input' do
-      expect(described_class.new('hidden_key', 123, 'string').actual_input).to eq(123)
+      expect(described_class.new(123, 'string', option_name: 'hidden_key').actual_input)
+        .to eq(123)
     end
 
     it 'sets actual_type' do
-      expect(described_class.new('hidden_key', 123, 'string').actual_type).to eq('integer number')
+      expect(described_class.new(123, 'string', option_name: 'hidden_key').actual_type)
+        .to eq('integer number')
     end
 
     it 'sets expected_type' do
-      expect(described_class.new('hidden_key', 123, 'string').expected_type).to eq('string')
+      expect(described_class.new(123, 'string', option_name: 'hidden_key').expected_type)
+        .to eq('string')
     end
 
     it 'builds a descriptive message' do
-      expect(described_class.new('hidden_key', 123, 'string').message).to eq(
+      expect(described_class.new(123, 'string', option_name: 'hidden_key').message).to eq(
         'CNPJ formatting option "hidden_key" must be of type string. Got integer number.'
       )
     end
   end
 end
 
-RSpec.describe CnpjFmt::CnpjFormatterException do
-  before do
-    stub_const('CnpjFmt::TestException', Class.new(described_class))
+RSpec.describe CnpjFmt::MissingArgumentError do
+  subject(:error) { described_class.new('missing') }
+
+  it 'is an ArgumentError' do
+    expect(error).to be_a(ArgumentError)
   end
 
-  subject(:exception) { CnpjFmt::TestException.new('some error') }
+  it 'includes CnpjFmt::Error' do
+    expect(error).to be_a(CnpjFmt::Error)
+  end
+
+  it 'is not a DomainError' do
+    expect(error).not_to be_a(CnpjFmt::DomainError)
+  end
+end
+
+RSpec.describe CnpjFmt::InvalidArgumentCombinationError do
+  subject(:error) { described_class.new('invalid combination') }
+
+  it 'is an ArgumentError' do
+    expect(error).to be_a(ArgumentError)
+  end
+
+  it 'includes CnpjFmt::Error' do
+    expect(error).to be_a(CnpjFmt::Error)
+  end
+
+  it 'is not a DomainError' do
+    expect(error).not_to be_a(CnpjFmt::DomainError)
+  end
+end
+
+RSpec.describe CnpjFmt::DomainError do
+  before do
+    stub_const('CnpjFmt::TestDomainError', Class.new(described_class))
+  end
+
+  subject(:error) { CnpjFmt::TestDomainError.new('some error') }
 
   context 'when instantiated through a subclass' do
-    it 'is a StandardError' do
-      expect(exception).to be_a(StandardError)
+    it 'is a RangeError' do
+      expect(error).to be_a(RangeError)
     end
 
-    it 'is a CnpjFormatterException' do
-      expect(exception).to be_a(described_class)
+    it 'is a DomainError' do
+      expect(error).to be_a(described_class)
+    end
+
+    it 'includes CnpjFmt::Error' do
+      expect(error).to be_a(CnpjFmt::Error)
     end
 
     it 'exposes the subclass name' do
-      expect(exception.class.name).to eq('CnpjFmt::TestException')
+      expect(error.class.name).to eq('CnpjFmt::TestDomainError')
     end
 
     it 'exposes the message' do
-      expect(exception.message).to eq('some error')
+      expect(error.message).to eq('some error')
     end
   end
 end
 
-RSpec.describe CnpjFmt::CnpjFormatterInputLengthException do
-  subject(:exception) { described_class.new('1.2.3.4.5', '12345', 14) }
+RSpec.describe CnpjFmt::OutOfRangeError do
+  subject(:error) { described_class.new('hidden_start', 20, 5, 13) }
 
   context 'when instantiated' do
-    it 'is a StandardError' do
-      expect(exception).to be_a(StandardError)
+    it 'is a RangeError' do
+      expect(error).to be_a(RangeError)
     end
 
-    it 'is a CnpjFormatterException' do
-      expect(exception).to be_a(CnpjFmt::CnpjFormatterException)
+    it 'is a DomainError' do
+      expect(error).to be_a(CnpjFmt::DomainError)
+    end
+
+    it 'includes CnpjFmt::Error' do
+      expect(error).to be_a(CnpjFmt::Error)
     end
 
     it 'exposes the class name' do
-      expect(exception.class.name).to eq('CnpjFmt::CnpjFormatterInputLengthException')
+      expect(error.class.name).to eq('CnpjFmt::OutOfRangeError')
+    end
+
+    it 'sets option_name' do
+      expect(error.option_name).to eq('hidden_start')
     end
 
     it 'sets actual_input' do
-      expect(exception.actual_input).to eq('1.2.3.4.5')
+      expect(error.actual_input).to eq(20)
     end
 
-    it 'sets evaluated_input' do
-      expect(exception.evaluated_input).to eq('12345')
+    it 'sets min_expected_value' do
+      expect(error.min_expected_value).to eq(5)
     end
 
-    it 'sets expected_length' do
-      expect(exception.expected_length).to eq(14)
+    it 'sets max_expected_value' do
+      expect(error.max_expected_value).to eq(13)
     end
 
     it 'builds a descriptive message' do
-      expect(exception.message).to eq(
+      expect(error.message).to eq(
+        'CNPJ formatting option "hidden_start" must be an integer between 5 and 13. Got 20.'
+      )
+    end
+  end
+end
+
+RSpec.describe CnpjFmt::InvalidLengthError do
+  subject(:error) { described_class.new('1.2.3.4.5', '12345', 14) }
+
+  context 'when instantiated' do
+    it 'is a RangeError' do
+      expect(error).to be_a(RangeError)
+    end
+
+    it 'is a DomainError' do
+      expect(error).to be_a(CnpjFmt::DomainError)
+    end
+
+    it 'includes CnpjFmt::Error' do
+      expect(error).to be_a(CnpjFmt::Error)
+    end
+
+    it 'exposes the class name' do
+      expect(error.class.name).to eq('CnpjFmt::InvalidLengthError')
+    end
+
+    it 'sets actual_input' do
+      expect(error.actual_input).to eq('1.2.3.4.5')
+    end
+
+    it 'sets evaluated_input' do
+      expect(error.evaluated_input).to eq('12345')
+    end
+
+    it 'sets expected_length' do
+      expect(error.expected_length).to eq(14)
+    end
+
+    it 'builds a descriptive message' do
+      expect(error.message).to eq(
         'CNPJ input "1.2.3.4.5" does not contain 14 characters. Got 5 in "12345".'
       )
     end
 
     it 'summarizes sequence input without serializing contents' do
-      sequence_exception = described_class.new(%w[12 345], '12345', 14)
+      sequence_error = described_class.new(%w[12 345], '12345', 14)
 
       aggregate_failures do
-        expect(sequence_exception.actual_input).to eq(%w[12 345])
-        expect(sequence_exception.message).to eq(
+        expect(sequence_error.actual_input).to eq(%w[12 345])
+        expect(sequence_error.message).to eq(
           'CNPJ input sequence[2] does not contain 14 characters. Got 5 in "12345".'
         )
       end
@@ -189,62 +236,26 @@ RSpec.describe CnpjFmt::CnpjFormatterInputLengthException do
   end
 end
 
-RSpec.describe CnpjFmt::CnpjFormatterOptionsHiddenRangeInvalidException do
-  subject(:exception) { described_class.new('hidden_start', 20, 5, 13) }
-
-  context 'when instantiated' do
-    it 'is a StandardError' do
-      expect(exception).to be_a(StandardError)
-    end
-
-    it 'is a CnpjFormatterException' do
-      expect(exception).to be_a(CnpjFmt::CnpjFormatterException)
-    end
-
-    it 'exposes the class name' do
-      expect(exception.class.name).to eq('CnpjFmt::CnpjFormatterOptionsHiddenRangeInvalidException')
-    end
-
-    it 'sets option_name' do
-      expect(exception.option_name).to eq('hidden_start')
-    end
-
-    it 'sets actual_input' do
-      expect(exception.actual_input).to eq(20)
-    end
-
-    it 'sets min_expected_value' do
-      expect(exception.min_expected_value).to eq(5)
-    end
-
-    it 'sets max_expected_value' do
-      expect(exception.max_expected_value).to eq(13)
-    end
-
-    it 'builds a descriptive message' do
-      expect(exception.message).to eq(
-        'CNPJ formatting option "hidden_start" must be an integer between 5 and 13. Got 20.'
-      )
-    end
-  end
-end
-
-RSpec.describe CnpjFmt::CnpjFormatterOptionsForbiddenKeyCharacterException do
-  subject(:exception) do
+RSpec.describe CnpjFmt::ValidationError do
+  subject(:error) do
     described_class.new('dot_key', 'å', %w[å ë ï ö])
   end
 
   context 'when instantiated' do
-    it 'is a StandardError' do
-      expect(exception).to be_a(StandardError)
+    it 'is an ArgumentError' do
+      expect(error).to be_a(ArgumentError)
     end
 
-    it 'is a CnpjFormatterException' do
-      expect(exception).to be_a(CnpjFmt::CnpjFormatterException)
+    it 'includes CnpjFmt::Error' do
+      expect(error).to be_a(CnpjFmt::Error)
+    end
+
+    it 'is not a DomainError' do
+      expect(error).not_to be_a(CnpjFmt::DomainError)
     end
 
     it 'exposes the class name' do
-      expect(exception.class.name).to eq('CnpjFmt::CnpjFormatterOptionsForbiddenKeyCharacterException')
+      expect(error.class.name).to eq('CnpjFmt::ValidationError')
     end
 
     it 'sets option_name' do
@@ -261,7 +272,7 @@ RSpec.describe CnpjFmt::CnpjFormatterOptionsForbiddenKeyCharacterException do
     end
 
     it 'builds a descriptive message' do
-      expect(exception.message).to eq(
+      expect(error.message).to eq(
         'Value "å" for CNPJ formatting option "dot_key" contains disallowed characters ("å", "ë", "ï", "ö").'
       )
     end
