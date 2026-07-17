@@ -54,8 +54,8 @@ module CnpjFmt
     # from +hidden_start+ to +hidden_end+ (inclusive).
     #
     # @param value [String, nil] replacement string; +nil+ uses default
-    # @raise [CnpjFormatterOptionsTypeError] if the value is not a +String+
-    # @raise [CnpjFormatterOptionsForbiddenKeyCharacterException] if the value
+    # @raise [TypeMismatchError] if the value is not a +String+
+    # @raise [ValidationError] if the value
     #   contains any disallowed key character
     def hidden_key=(value)
       assign_string_key_option('hidden_key', value, CnpjFormatterOptions::DEFAULT_HIDDEN_KEY)
@@ -80,8 +80,8 @@ module CnpjFmt
     # +hidden_start <= hidden_end+.
     #
     # @param value [Integer, nil] start index; +nil+ uses default
-    # @raise [CnpjFormatterOptionsTypeError] if the value is not an integer
-    # @raise [CnpjFormatterOptionsHiddenRangeInvalidException] if the value is out
+    # @raise [TypeMismatchError] if the value is not an integer
+    # @raise [OutOfRangeError] if the value is out
     #   of valid range +[0, CNPJ_LENGTH - 1]+
     def hidden_start=(value)
       set_hidden_range(value, @options[:hidden_end])
@@ -106,8 +106,8 @@ module CnpjFmt
     # +hidden_start <= hidden_end+.
     #
     # @param value [Integer, nil] end index; +nil+ uses default
-    # @raise [CnpjFormatterOptionsTypeError] if the value is not an integer
-    # @raise [CnpjFormatterOptionsHiddenRangeInvalidException] if the value is out
+    # @raise [TypeMismatchError] if the value is not an integer
+    # @raise [OutOfRangeError] if the value is out
     #   of valid range +[0, CNPJ_LENGTH - 1]+
     def hidden_end=(value)
       set_hidden_range(@options[:hidden_start], value)
@@ -129,8 +129,8 @@ module CnpjFmt
     # formatted CNPJ (e.g., +"."+ in +"12.345.678/0001-90"+).
     #
     # @param value [String, nil] delimiter string; +nil+ uses default
-    # @raise [CnpjFormatterOptionsTypeError] if the value is not a +String+
-    # @raise [CnpjFormatterOptionsForbiddenKeyCharacterException] if the value
+    # @raise [TypeMismatchError] if the value is not a +String+
+    # @raise [ValidationError] if the value
     #   contains any disallowed key character
     def dot_key=(value)
       assign_string_key_option('dot_key', value, CnpjFormatterOptions::DEFAULT_DOT_KEY)
@@ -154,8 +154,8 @@ module CnpjFmt
     # +"12.345.678/0001-90"+).
     #
     # @param value [String, nil] delimiter string; +nil+ uses default
-    # @raise [CnpjFormatterOptionsTypeError] if the value is not a +String+
-    # @raise [CnpjFormatterOptionsForbiddenKeyCharacterException] if the value
+    # @raise [TypeMismatchError] if the value is not a +String+
+    # @raise [ValidationError] if the value
     #   contains any disallowed key character
     def slash_key=(value)
       assign_string_key_option('slash_key', value, CnpjFormatterOptions::DEFAULT_SLASH_KEY)
@@ -177,8 +177,8 @@ module CnpjFmt
     # formatted CNPJ (e.g., +"-"+ in +"12.345.678/0001-90"+).
     #
     # @param value [String, nil] delimiter string; +nil+ uses default
-    # @raise [CnpjFormatterOptionsTypeError] if the value is not a +String+
-    # @raise [CnpjFormatterOptionsForbiddenKeyCharacterException] if the value
+    # @raise [TypeMismatchError] if the value is not a +String+
+    # @raise [ValidationError] if the value
     #   contains any disallowed key character
     def dash_key=(value)
       assign_string_key_option('dash_key', value, CnpjFormatterOptions::DEFAULT_DASH_KEY)
@@ -257,10 +257,10 @@ module CnpjFmt
     # and should return a string to use as the fallback output.
     #
     # @param value [Proc, nil] callback; +nil+ uses {CnpjFormatterOptions.default_on_fail}
-    # @raise [CnpjFormatterOptionsTypeError] if the value is not callable
+    # @raise [TypeMismatchError] if the value is not callable
     def on_fail=(value)
       actual_on_fail = value.nil? ? CnpjFormatterOptions.default_on_fail : value
-      raise CnpjFormatterOptionsTypeError.new('on_fail', value, 'function') unless actual_on_fail.respond_to?(:call)
+      raise TypeMismatchError.new(value, 'function', option_name: 'on_fail') unless actual_on_fail.respond_to?(:call)
 
       @options[:on_fail] = actual_on_fail
     end

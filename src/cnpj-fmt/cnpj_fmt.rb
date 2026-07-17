@@ -13,12 +13,12 @@ module CnpjFmt
   # @param options [CnpjFormatterOptions, Hash, nil] default formatter options
   # @param keywords [Hash] per-call option overrides (see {CnpjFormatterOptions})
   # @return [String] formatted CNPJ string, or the +on_fail+ callback result
-  # @raise [CnpjFormatterInputTypeError] if +cnpj_input+ is not a +String+ or
+  # @raise [TypeMismatchError] if +cnpj_input+ is not a +String+ or
   #   +Array<String>+
-  # @raise [CnpjFormatterOptionsTypeError] if any option has an invalid type
-  # @raise [CnpjFormatterOptionsHiddenRangeInvalidException] if +hidden_start+ or
+  # @raise [TypeMismatchError] if any option has an invalid type
+  # @raise [OutOfRangeError] if +hidden_start+ or
   #   +hidden_end+ are out of valid range
-  # @raise [CnpjFormatterOptionsForbiddenKeyCharacterException] if any key
+  # @raise [ValidationError] if any key
   #   option contains a disallowed character
   # @see CnpjFormatter#format for detailed option descriptions
   # @see CnpjFormatter
