@@ -16,7 +16,7 @@ Utilitário em Ruby para calcular os dígitos verificadores de CNPJ (Cadastro Na
 - ✅ **Avaliação lazy**: Dígitos verificadores são calculados apenas quando acessados (via métodos)
 - ✅ **Cache**: Valores calculados são armazenados em cache para acessos subsequentes
 - ✅ **Dependências mínimas**: Apenas [`lacus-utils`](https://rubygems.org/gems/lacus-utils)
-- ✅ **Tratamento de erros**: Tipos específicos para tipo, tamanho e CNPJ inválido (semântica `TypeError` vs `StandardError`)
+- ✅ **Tratamento de erros**: Erros de uso da API vs erros de domínio, com o marcador `CnpjDV::Error` para resgate em nível de biblioteca
 
 ## Instalação
 
@@ -96,56 +96,139 @@ CnpjDV::CnpjCheckDigits.new(%w[9141 5732 0007])
 CnpjDV::CnpjCheckDigits.new(%w[MG KGM J9X 0001])
 ```
 
-### Erros e exceções
+### Tratamento de erros
 
-Este pacote usa a distinção **TypeError vs StandardError**: *erros de tipo* indicam uso incorreto da API (ex.: tipo errado); *exceções* indicam dados inválidos ou inelegíveis (ex.: tamanho ou regras de negócio). Você pode resgatar classes específicas ou as classes base.
+Os erros se dividem em duas categorias:
 
-- **`CnpjDV::CnpjCheckDigitsTypeError`** — classe base para erros de tipo; estende o `TypeError` do Ruby
-- **`CnpjDV::CnpjCheckDigitsInputTypeError`** — entrada não é `String` nem `Array` de strings (ou o array contém elemento que não é string)
-- **`CnpjDV::CnpjCheckDigitsException`** — classe base para exceções de dados/fluxo; estende `StandardError`
-- **`CnpjDV::CnpjCheckDigitsInputLengthException`** — tamanho após sanitização não é 12–14
-- **`CnpjDV::CnpjCheckDigitsInputInvalidException`** — base `00000000`, filial `0000`, ou 12 dígitos numéricos idênticos (padrão de repetição)
+| Categoria | Significado |
+|---|---|
+| **Uso incorreto da API** | O chamador usou a biblioteca de forma incorreta (tipo errado). Detectável pela forma da chamada. |
+| **Erro de domínio** | A chamada estava estruturalmente correta, mas um valor viola uma regra de negócio (tamanho, elegibilidade, formato). |
+
+Todo erro customizado inclui o módulo marcador `CnpjDV::Error`. Falhas de tamanho herdam de `CnpjDV::DomainError` (`RangeError`); demais falhas de domínio usam `CnpjDV::ValidationError` (`ArgumentError`) e **não** ficam sob `DomainError`. O pacote também define folhas do esqueleto ainda não usadas (`MissingArgumentError`, `InvalidArgumentCombinationError`, `OutOfRangeError`) por consistência do monorepo.
+
+#### Resumo
+
+| Classe | Herda de | Categoria | Condição de disparo |
+|---|---|---|---|
+| `CnpjDV::TypeMismatchError` | `TypeError` (+ `include Error`) | Uso incorreto da API | Argumento com tipo de dado incorreto |
+| `CnpjDV::InvalidLengthError` | `CnpjDV::DomainError` | Erro de domínio | Tamanho após sanitização não é 12–14 |
+| `CnpjDV::ValidationError` | `ArgumentError` (+ `include Error`) | Erro de domínio | Base/filial inelegível ou dígitos numéricos repetidos |
+
+#### `CnpjDV::Error` (módulo marcador)
+
+- **Herança:** módulo marcador misturado em todo erro da biblioteca via `include` (não é uma classe).
+- **Categoria:** N/A (apenas alvo de `rescue`) — não é um modo de falha por si só.
+- **Quando é levantado:** Nunca diretamente; incluído por todo erro customizado que a biblioteca levanta.
+- **Exemplo:** N/A
+- **Como resgatar:**
 
 ```ruby
-require 'cnpj-dv'
+rescue CnpjDV::Error
+  # tudo o que esta biblioteca levanta
+```
 
-# Tipo de entrada (ex.: inteiro não permitido)
-begin
-  CnpjDV::CnpjCheckDigits.new(12_345_678_000_100)
-rescue CnpjDV::CnpjCheckDigitsInputTypeError => e
-  puts e.message
-  # => CNPJ input must be of type string or string[]. Got integer number.
-end
+#### `CnpjDV::DomainError`
 
-# Tamanho (deve ser 12–14 caracteres alfanuméricos após sanitização)
-begin
-  CnpjDV::CnpjCheckDigits.new('12345678901')
-rescue CnpjDV::CnpjCheckDigitsInputLengthException => e
-  puts e.message
-  # => CNPJ input "12345678901" does not contain 12 to 14 characters. Got 11.
-end
+- **Herança:** `CnpjDV::DomainError < RangeError` (inclui `CnpjDV::Error`)
+- **Categoria:** Erro de domínio — ancestral das falhas numéricas/de tamanho.
+- **Quando é levantado:** Não é levantado diretamente; prefira uma subclasse folha.
+- **Exemplo:** Prefira `raise CnpjDV::InvalidLengthError` a levantar `DomainError` diretamente.
+- **Como resgatar:**
 
-# Inválido (ex.: base ou filial zeradas, ou dígitos numéricos repetidos)
-begin
-  CnpjDV::CnpjCheckDigits.new('000000000001')
-rescue CnpjDV::CnpjCheckDigitsInputInvalidException => e
-  puts e.message
-  # => CNPJ input "000000000001" is invalid. Base ID "00000000" is not eligible.
-end
+```ruby
+rescue CnpjDV::DomainError
+  # InvalidLengthError e qualquer outra subclasse de DomainError
+```
 
-# Qualquer exceção de dados do pacote
-begin
-  CnpjDV::CnpjCheckDigits.new('000000000001')
-rescue CnpjDV::CnpjCheckDigitsException => e
-  puts e.message
-end
+#### `CnpjDV::TypeMismatchError`
+
+- **Herança:** `CnpjDV::TypeMismatchError < TypeError` (inclui `CnpjDV::Error`)
+- **Categoria:** Uso incorreto da API — o chamador passou um valor do tipo errado.
+- **Quando é levantado:** Levantado quando a entrada de CNPJ não é `String` nem `Array` de strings (ou o array contém elemento que não é string).
+- **Exemplo:**
+
+```ruby
+CnpjDV::CnpjCheckDigits.new(12_345_678_000_100) # levanta CnpjDV::TypeMismatchError
+```
+
+- **Como resgatar:**
+
+```ruby
+rescue CnpjDV::TypeMismatchError
+  # violação de contrato de tipo desta biblioteca
+
+rescue TypeError
+  # erros nativos de tipo, incluindo TypeMismatchError desta biblioteca
+```
+
+#### `CnpjDV::InvalidLengthError`
+
+- **Herança:** `CnpjDV::InvalidLengthError < CnpjDV::DomainError < RangeError` (inclui `CnpjDV::Error`)
+- **Categoria:** Erro de domínio — o tamanho de uma coleção ou string viola uma regra de negócio.
+- **Quando é levantado:** Levantado quando a entrada de CNPJ sanitizada não contém de 12 a 14 caracteres alfanuméricos.
+- **Exemplo:**
+
+```ruby
+CnpjDV::CnpjCheckDigits.new('12345678901') # levanta CnpjDV::InvalidLengthError
+```
+
+- **Como resgatar:**
+
+```ruby
+rescue CnpjDV::InvalidLengthError
+  # esta violação exata de tamanho
+
+rescue CnpjDV::DomainError
+  # falhas de domínio enraizadas em RangeError desta biblioteca
+```
+
+#### `CnpjDV::ValidationError`
+
+- **Herança:** `CnpjDV::ValidationError < ArgumentError` (inclui `CnpjDV::Error`)
+- **Categoria:** Erro de domínio — um valor falha uma regra de domínio que não é numérica nem de tamanho.
+- **Quando é levantado:** Levantado quando a base é `00000000`, a filial é `0000`, ou os 12 primeiros caracteres são o mesmo dígito numérico.
+- **Exemplo:**
+
+```ruby
+CnpjDV::CnpjCheckDigits.new('000000000001') # levanta CnpjDV::ValidationError
+```
+
+- **Como resgatar:**
+
+```ruby
+rescue CnpjDV::ValidationError
+  # esta falha exata de validação de domínio
+
+rescue CnpjDV::Error
+  # qualquer erro levantado por esta biblioteca
+```
+
+#### Granularidade de rescue
+
+```ruby
+# 1) Uma classe nativa — captura uso incorreto (e ValidationError, que herda ArgumentError).
+rescue ArgumentError
+  # CnpjDV::ValidationError e qualquer outro ArgumentError (da biblioteca ou não)
+
+# 2) CnpjDV::DomainError — captura apenas violações de regra enraizadas em RangeError.
+rescue CnpjDV::DomainError
+  # CnpjDV::InvalidLengthError e outras subclasses de DomainError
+
+# 3) CnpjDV::Error — captura tudo o que a biblioteca levanta.
+rescue CnpjDV::Error
+  # todo erro customizado que inclui CnpjDV::Error
+
+# 4) Classe folha específica — captura apenas aquele modo de falha.
+rescue CnpjDV::InvalidLengthError
+  # apenas CnpjDV::InvalidLengthError
 ```
 
 Atributos relevantes nos erros:
 
-- `CnpjCheckDigitsInputTypeError`: `actual_input`, `actual_type`, `expected_type`
-- `CnpjCheckDigitsInputLengthException`: `actual_input`, `evaluated_input`, `min_expected_length`, `max_expected_length`
-- `CnpjCheckDigitsInputInvalidException`: `actual_input`, `reason`
+- `TypeMismatchError`: `actual_input`, `actual_type`, `expected_type`
+- `InvalidLengthError`: `actual_input`, `evaluated_input`, `min_expected_length`, `max_expected_length`
+- `ValidationError`: `actual_input`, `reason`
 
 ### Outros recursos disponíveis
 
@@ -153,7 +236,7 @@ Após `require 'cnpj-dv'`:
 
 - **`CnpjDV::CNPJ_MIN_LENGTH`**: `12`
 - **`CnpjDV::CNPJ_MAX_LENGTH`**: `14`
-- **Exceções**: veja acima
+- **Erros**: veja acima (`CnpjDV::Error`, `DomainError`, folhas levantadas e folhas do esqueleto)
 
 ## Algoritmo de cálculo
 
