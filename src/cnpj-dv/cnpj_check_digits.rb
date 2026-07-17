@@ -45,13 +45,11 @@ module CnpjDV
     #
     # @param cnpj_input [String, Array<String>] alphanumeric CNPJ with or without
     #   formatting, or an array of strings
-    # @raise [CnpjCheckDigitsInputTypeError] when input is not a +String+ or
-    #   +Array<String>+
-    # @raise [CnpjCheckDigitsInputLengthException] when character count is not
-    #   between 12 and 14
-    # @raise [CnpjCheckDigitsInputInvalidException] when base ID is all zero
-    #   (+00.000.000+), branch ID is all zero (+0000+) or all digits are numeric
-    #   the same (repeated digits, e.g. +77.777.777/7777-...+)
+    # @raise [TypeMismatchError] when input is not a +String+ or +Array<String>+
+    # @raise [InvalidLengthError] when character count is not between 12 and 14
+    # @raise [ValidationError] when base ID is all zero (+00.000.000+), branch ID
+    #   is all zero (+0000+) or all digits are numeric the same (repeated digits,
+    #   e.g. +77.777.777/7777-...+)
     def initialize(cnpj_input)
       parsed_input = parse_input(cnpj_input)
 
@@ -126,13 +124,12 @@ module CnpjDV
     #
     # @param cnpj_input [Object] candidate CNPJ input
     # @return [Array<String>] uppercase alphanumeric characters
-    # @raise [CnpjCheckDigitsInputTypeError] when input is not a +String+ or
-    #   +Array<String>+
+    # @raise [TypeMismatchError] when input is not a +String+ or +Array<String>+
     def parse_input(cnpj_input)
       return parse_string_input(cnpj_input) if cnpj_input.is_a?(String)
       return parse_array_input(cnpj_input) if cnpj_input.is_a?(Array)
 
-      raise CnpjCheckDigitsInputTypeError.new(cnpj_input, 'string or string[]')
+      raise TypeMismatchError.new(cnpj_input, 'string or string[]')
     end
 
     # Strips non-alphanumeric characters and uppercases the remainder.
@@ -158,12 +155,11 @@ module CnpjDV
     #
     # @param cnpj_array [Array] candidate array of string chunks
     # @return [Array<String>] uppercase alphanumeric characters
-    # @raise [CnpjCheckDigitsInputTypeError] when input is not a +String+ or
-    #   +Array<String>+
+    # @raise [TypeMismatchError] when input is not a +String+ or +Array<String>+
     def parse_array_input(cnpj_array)
       return [] if cnpj_array.empty?
 
-      raise CnpjCheckDigitsInputTypeError.new(cnpj_array, 'string or string[]') unless cnpj_array.all?(String)
+      raise TypeMismatchError.new(cnpj_array, 'string or string[]') unless cnpj_array.all?(String)
 
       parse_string_input(cnpj_array.join)
     end
@@ -173,14 +169,13 @@ module CnpjDV
     #
     # @param cnpj_chars [Array<String>] normalized characters
     # @param original_input [String, Array<String>] original caller input
-    # @raise [CnpjCheckDigitsInputLengthException] when character count is not
-    #   between 12 and 14
+    # @raise [InvalidLengthError] when character count is not between 12 and 14
     def validate_length(cnpj_chars, original_input)
       chars_count = cnpj_chars.length
 
       return if chars_count.between?(CNPJ_MIN_LENGTH, CNPJ_MAX_LENGTH)
 
-      raise CnpjCheckDigitsInputLengthException.new(
+      raise InvalidLengthError.new(
         original_input,
         cnpj_chars.join,
         CNPJ_MIN_LENGTH,
@@ -192,12 +187,11 @@ module CnpjDV
     #
     # @param cnpj_chars [Array<String>] normalized characters
     # @param original_input [String, Array<String>] original caller input
-    # @raise [CnpjCheckDigitsInputInvalidException] when base ID is all zeros
-    #   (+00.000.000+)
+    # @raise [ValidationError] when base ID is all zeros (+00.000.000+)
     def validate_base_id(cnpj_chars, original_input)
       return unless cnpj_chars[0, CNPJ_BASE_ID_LENGTH].all? { |char| char == '0' }
 
-      raise CnpjCheckDigitsInputInvalidException.new(
+      raise ValidationError.new(
         original_input,
         "Base ID \"#{CNPJ_INVALID_BASE_ID}\" is not eligible."
       )
@@ -207,8 +201,7 @@ module CnpjDV
     #
     # @param cnpj_chars [Array<String>] normalized characters
     # @param original_input [String, Array<String>] original caller input
-    # @raise [CnpjCheckDigitsInputInvalidException] when branch ID is all zeros
-    #   (+0000+)
+    # @raise [ValidationError] when branch ID is all zeros (+0000+)
     def validate_branch_id(cnpj_chars, original_input)
       branch_start = CNPJ_BASE_ID_LENGTH
       branch_end = branch_start + CNPJ_BRANCH_ID_LENGTH
@@ -216,7 +209,7 @@ module CnpjDV
 
       return unless branch_id.all? { |char| char == '0' }
 
-      raise CnpjCheckDigitsInputInvalidException.new(
+      raise ValidationError.new(
         original_input,
         "Branch ID \"#{CNPJ_INVALID_BRANCH_ID}\" is not eligible."
       )
@@ -226,14 +219,14 @@ module CnpjDV
     #
     # @param cnpj_chars [Array<String>] normalized characters
     # @param original_input [String, Array<String>] original caller input
-    # @raise [CnpjCheckDigitsInputInvalidException] when all digits are numeric
-    #   the same (repeated digits, e.g. +77.777.777/7777-...+)
+    # @raise [ValidationError] when all digits are numeric the same (repeated
+    #   digits, e.g. +77.777.777/7777-...+)
     def validate_non_repeated_digits(cnpj_chars, original_input)
       first_char = cnpj_chars[0]
       return unless first_char.match?(/\A\d\z/)
       return unless cnpj_chars[1, CNPJ_MIN_LENGTH - 1].all? { |char| char == first_char }
 
-      raise CnpjCheckDigitsInputInvalidException.new(
+      raise ValidationError.new(
         original_input,
         'Repeated digits are not considered valid.'
       )
