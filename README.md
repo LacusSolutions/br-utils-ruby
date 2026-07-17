@@ -33,7 +33,7 @@ A Ruby utility to calculate check digits on CNPJ (Brazilian Business Tax ID).
 - ✅ **Lazy evaluation**: Check digits are calculated only when accessed (via methods)
 - ✅ **Caching**: Calculated values are cached for subsequent access
 - ✅ **Minimal dependencies**: Only `[lacus-utils](https://rubygems.org/gems/lacus-utils)`
-- ✅ **Error handling**: Specific types for type, length, and invalid CNPJ scenarios (`TypeError` vs `StandardError` semantics)
+- ✅ **Error handling**: API misuse vs domain errors with a `CnpjDV::Error` marker for library-wide rescue
 
 
 
@@ -125,56 +125,139 @@ CnpjDV::CnpjCheckDigits.new(%w[MG KGM J9X 0001])
 
 
 
-### Errors & exceptions handling
+### Error handling
 
-This package uses **TypeError vs StandardError** semantics: *type errors* indicate incorrect API use (e.g. wrong type); *exceptions* indicate invalid or ineligible data (e.g. invalid length or business rules). You can rescue specific classes or use the base classes.
+Errors fall into two categories:
 
-- `CnpjDV::CnpjCheckDigitsTypeError` — base class for type errors; extends Ruby’s `TypeError`
-- `CnpjDV::CnpjCheckDigitsInputTypeError` — input is not `String` or `Array` of strings (or array contains a non-string element)
-- `CnpjDV::CnpjCheckDigitsException` — base class for data/flow exceptions; extends `StandardError`
-- `CnpjDV::CnpjCheckDigitsInputLengthException` — sanitized length is not 12–14
-- `CnpjDV::CnpjCheckDigitsInputInvalidException` — base ID `00000000`, branch ID `0000`, or 12 identical numeric digits (repeated-digit pattern)
+| Category | Meaning |
+|---|---|
+| **API misuse** | The caller invoked the library incorrectly (wrong type). Detectable from the call shape. |
+| **Domain error** | The call was structurally correct, but a value violates a business rule (length, eligibility, format). |
+
+Every custom error includes the `CnpjDV::Error` marker module. Length domain failures inherit from `CnpjDV::DomainError` (`RangeError`); other domain failures use `CnpjDV::ValidationError` (`ArgumentError`) and are **not** under `DomainError`. The package also defines unused skeleton leaves (`MissingArgumentError`, `InvalidArgumentCombinationError`, `OutOfRangeError`) for monorepo consistency.
+
+#### Summary
+
+| Class | Inherits from | Category | Trigger condition |
+|---|---|---|---|
+| `CnpjDV::TypeMismatchError` | `TypeError` (+ `include Error`) | API misuse | Argument has the wrong data type |
+| `CnpjDV::InvalidLengthError` | `CnpjDV::DomainError` | Domain error | Sanitized length is not 12–14 |
+| `CnpjDV::ValidationError` | `ArgumentError` (+ `include Error`) | Domain error | Ineligible base/branch ID or repeated numeric digits |
+
+#### `CnpjDV::Error` (marker module)
+
+- **Inheritance:** module marker mixed into every library error via `include` (not a class).
+- **Category:** N/A (rescue target only) — not a failure mode by itself.
+- **When it is raised:** Never raised directly; included by every custom error the library raises.
+- **Example:** N/A
+- **How to rescue it:**
 
 ```ruby
-require 'cnpj-dv'
+rescue CnpjDV::Error
+  # everything this library raises
+```
 
-# Input type (e.g. integer not allowed)
-begin
-  CnpjDV::CnpjCheckDigits.new(12_345_678_000_100)
-rescue CnpjDV::CnpjCheckDigitsInputTypeError => e
-  puts e.message
-  # => CNPJ input must be of type string or string[]. Got integer number.
-end
+#### `CnpjDV::DomainError`
 
-# Length (must be 12–14 alphanumeric characters after sanitization)
-begin
-  CnpjDV::CnpjCheckDigits.new('12345678901')
-rescue CnpjDV::CnpjCheckDigitsInputLengthException => e
-  puts e.message
-  # => CNPJ input "12345678901" does not contain 12 to 14 characters. Got 11.
-end
+- **Inheritance:** `CnpjDV::DomainError < RangeError` (includes `CnpjDV::Error`)
+- **Category:** Domain error — ancestor for numeric/length domain failures.
+- **When it is raised:** Not raised directly; prefer raising a leaf subclass.
+- **Example:** Prefer `raise CnpjDV::InvalidLengthError` over raising `DomainError` directly.
+- **How to rescue it:**
 
-# Invalid (e.g. all-zero base or branch, or repeated numeric digits)
-begin
-  CnpjDV::CnpjCheckDigits.new('000000000001')
-rescue CnpjDV::CnpjCheckDigitsInputInvalidException => e
-  puts e.message
-  # => CNPJ input "000000000001" is invalid. Base ID "00000000" is not eligible.
-end
+```ruby
+rescue CnpjDV::DomainError
+  # InvalidLengthError and any other DomainError subclass
+```
 
-# Any data exception from the package
-begin
-  CnpjDV::CnpjCheckDigits.new('000000000001')
-rescue CnpjDV::CnpjCheckDigitsException => e
-  puts e.message
-end
+#### `CnpjDV::TypeMismatchError`
+
+- **Inheritance:** `CnpjDV::TypeMismatchError < TypeError` (includes `CnpjDV::Error`)
+- **Category:** API misuse — the caller passed a value of the wrong type.
+- **When it is raised:** Raised when the CNPJ input is not a `String` or an `Array` of strings (or an array contains a non-string element).
+- **Example:**
+
+```ruby
+CnpjDV::CnpjCheckDigits.new(12_345_678_000_100) # raises CnpjDV::TypeMismatchError
+```
+
+- **How to rescue it:**
+
+```ruby
+rescue CnpjDV::TypeMismatchError
+  # this library's type-contract violation
+
+rescue TypeError
+  # native type errors, including this library's TypeMismatchError
+```
+
+#### `CnpjDV::InvalidLengthError`
+
+- **Inheritance:** `CnpjDV::InvalidLengthError < CnpjDV::DomainError < RangeError` (includes `CnpjDV::Error`)
+- **Category:** Domain error — a collection or string length violates a business rule.
+- **When it is raised:** Raised when the sanitized CNPJ input does not contain 12 to 14 alphanumeric characters.
+- **Example:**
+
+```ruby
+CnpjDV::CnpjCheckDigits.new('12345678901') # raises CnpjDV::InvalidLengthError
+```
+
+- **How to rescue it:**
+
+```ruby
+rescue CnpjDV::InvalidLengthError
+  # this exact length violation
+
+rescue CnpjDV::DomainError
+  # RangeError-rooted domain failures from this library
+```
+
+#### `CnpjDV::ValidationError`
+
+- **Inheritance:** `CnpjDV::ValidationError < ArgumentError` (includes `CnpjDV::Error`)
+- **Category:** Domain error — a value fails a non-numeric, non-length domain rule.
+- **When it is raised:** Raised when the base ID is `00000000`, the branch ID is `0000`, or the first 12 characters are the same numeric digit.
+- **Example:**
+
+```ruby
+CnpjDV::CnpjCheckDigits.new('000000000001') # raises CnpjDV::ValidationError
+```
+
+- **How to rescue it:**
+
+```ruby
+rescue CnpjDV::ValidationError
+  # this exact domain validation failure
+
+rescue CnpjDV::Error
+  # any error raised by this library
+```
+
+#### Rescue granularity
+
+```ruby
+# 1) Single native class — catches misuse (and ValidationError, which inherits ArgumentError).
+rescue ArgumentError
+  # CnpjDV::ValidationError and any other ArgumentError (library or not)
+
+# 2) CnpjDV::DomainError — catches only RangeError-rooted business-rule violations.
+rescue CnpjDV::DomainError
+  # CnpjDV::InvalidLengthError and other DomainError subclasses
+
+# 3) CnpjDV::Error — catches everything the library raises.
+rescue CnpjDV::Error
+  # every custom error that includes CnpjDV::Error
+
+# 4) Specific leaf class — catches only that exact failure mode.
+rescue CnpjDV::InvalidLengthError
+  # only CnpjDV::InvalidLengthError
 ```
 
 Notable attributes on raised errors:
 
-- `CnpjCheckDigitsInputTypeError`: `actual_input`, `actual_type`, `expected_type`
-- `CnpjCheckDigitsInputLengthException`: `actual_input`, `evaluated_input`, `min_expected_length`, `max_expected_length`
-- `CnpjCheckDigitsInputInvalidException`: `actual_input`, `reason`
+- `TypeMismatchError`: `actual_input`, `actual_type`, `expected_type`
+- `InvalidLengthError`: `actual_input`, `evaluated_input`, `min_expected_length`, `max_expected_length`
+- `ValidationError`: `actual_input`, `reason`
 
 
 
@@ -184,7 +267,7 @@ After `require 'cnpj-dv'`:
 
 - `CnpjDV::CNPJ_MIN_LENGTH`: `12`
 - `CnpjDV::CNPJ_MAX_LENGTH`: `14`
-- **Exceptions**: see above
+- **Errors**: see above (`CnpjDV::Error`, `DomainError`, raised leaves, and skeleton leaves)
 
 
 
