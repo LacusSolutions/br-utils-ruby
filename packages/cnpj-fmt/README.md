@@ -29,7 +29,7 @@ A Ruby utility to format CNPJ (Brazilian Business Tax ID).
 - ✅ **HTML & URL output**: Optional `escape` (HTML entities) and `encode` (URI component encoding, similar to JavaScript `encodeURIComponent`)
 - ✅ **Length errors without throwing**: Invalid length after sanitization is handled via `on_fail` (default returns an empty string)
 - ✅ **Minimal dependencies**: Only [`lacus-utils`](https://rubygems.org/gems/lacus-utils)
-- ✅ **Error handling**: Type errors for wrong API use; option validation via dedicated exception classes
+- ✅ **Error handling**: API misuse vs domain errors with a `CnpjFmt::Error` marker for library-wide rescue
 
 ## Installation
 
@@ -90,9 +90,9 @@ The main entry points are the class `CnpjFmt::CnpjFormatter`, the options class 
 - **`options`**: Returns the instance’s `CnpjFmt::CnpjFormatterOptions` (same object used internally).
 - **`format(cnpj_input, options = nil, **keywords)`**: Formats a CNPJ value.
 
-  Input is normalized by removing non-alphanumeric characters and uppercasing. If the sanitized length is not exactly **14**, the **`on_fail`** callback is invoked with the original input and a `CnpjFmt::CnpjFormatterInputLengthException`; its return value is the result (nothing is thrown for length).
+  Input is normalized by removing non-alphanumeric characters and uppercasing. If the sanitized length is not exactly **14**, the **`on_fail`** callback is invoked with the original input and a `CnpjFmt::InvalidLengthError`; its return value is the result (nothing is thrown for length).
 
-  If the input is not a `String` or an `Array` of strings, **`CnpjFmt::CnpjFormatterInputTypeError`** is raised.
+  If the input is not a `String` or an `Array` of strings, **`CnpjFmt::TypeMismatchError`** is raised.
 
   Per-call options are merged over the instance defaults for that call only (instance defaults are unchanged). Pass a `CnpjFmt::CnpjFormatterOptions` instance or a `Hash` as the second argument, in addition to keyword arguments; when both are provided, the `options` argument wins.
 
@@ -202,7 +202,7 @@ formatter.format([                   # => "RK.0CM.T3W/0001-00"
 | `encode` | `Boolean`, `nil` | `false` | When truthy, URL-encodes the final string (similar to `encodeURIComponent`) |
 | `on_fail` | `Proc`, `nil` | see below | `(value, exception) -> String` — used when sanitized length ≠ 14 |
 
-Default **`on_fail`** returns an empty string. The exception passed for length failures is **`CnpjFmt::CnpjFormatterInputLengthException`** (`actual_input`, `evaluated_input`, `expected_length`). The callback return value must be a `String`; otherwise **`CnpjFmt::CnpjFormatterOptionsTypeError`** is raised.
+Default **`on_fail`** returns an empty string. The exception passed for length failures is **`CnpjFmt::InvalidLengthError`** (`actual_input`, `evaluated_input`, `expected_length`). The callback return value must be a `String`; otherwise **`CnpjFmt::TypeMismatchError`** is raised.
 
 Example with all options:
 
@@ -226,37 +226,170 @@ CnpjFmt.cnpj_fmt(
 )
 ```
 
-### Errors & exceptions
+### Error handling
 
-This package uses **TypeError vs StandardError** semantics: *type errors* indicate incorrect API use (e.g. wrong type); *exceptions* indicate invalid or ineligible data passed to callbacks or option validation.
+Errors fall into two categories:
 
-- **Wrong input type** (not `String` or `Array` of strings): **`CnpjFmt::CnpjFormatterInputTypeError`** — extends **`CnpjFmt::CnpjFormatterTypeError`** (extends Ruby’s `TypeError`).
-- **Invalid option types or values when constructing or merging options**: **`CnpjFmt::CnpjFormatterOptionsTypeError`**, **`CnpjFmt::CnpjFormatterOptionsHiddenRangeInvalidException`**, **`CnpjFmt::CnpjFormatterOptionsForbiddenKeyCharacterException`** — extend **`CnpjFmt::CnpjFormatterTypeError`** or **`CnpjFmt::CnpjFormatterException`** as appropriate.
+| Category | Meaning |
+|---|---|
+| **API misuse** | The caller invoked the library incorrectly (wrong type for input or options). |
+| **Domain error** | The call was structurally correct, but a value violates a business rule (length, range, forbidden characters). |
 
-Length mismatch does **not** throw from `format`; handle it inside **`on_fail`**.
+Every custom error includes the `CnpjFmt::Error` marker module. Length and range domain failures inherit from `CnpjFmt::DomainError` (`RangeError`); forbidden-character failures use `CnpjFmt::ValidationError` (`ArgumentError`) and are **not** under `DomainError`.
+
+**Important:** `InvalidLengthError` is **constructed and passed to `on_fail`**, not raised from `format` / `cnpj_fmt`. The package also defines unused skeleton leaves (`MissingArgumentError`, `InvalidArgumentCombinationError`) for monorepo consistency.
+
+#### Summary
+
+| Class | Inherits from | Category | Trigger condition |
+|---|---|---|---|
+| `CnpjFmt::TypeMismatchError` | `TypeError` (+ `include Error`) | API misuse | CNPJ input or option has the wrong data type |
+| `CnpjFmt::InvalidLengthError` | `CnpjFmt::DomainError` | Domain error | Sanitized length is not exactly 14 (passed to `on_fail`) |
+| `CnpjFmt::OutOfRangeError` | `CnpjFmt::DomainError` | Domain error | `hidden_start` / `hidden_end` outside `0`–`13` |
+| `CnpjFmt::ValidationError` | `ArgumentError` (+ `include Error`) | Domain error | Key option contains a disallowed character |
+
+#### `CnpjFmt::Error` (marker module)
+
+- **Inheritance:** module marker mixed into every library error via `include` (not a class).
+- **Category:** N/A (rescue target only) — not a failure mode by itself.
+- **When it is raised:** Never raised directly; included by every custom error the library raises or constructs for `on_fail`.
+- **Example:** N/A
+- **How to rescue it:**
 
 ```ruby
-require 'cnpj-fmt'
+rescue CnpjFmt::Error
+  # everything this library raises
+```
 
-begin
-  CnpjFmt::CnpjFormatter.new.format(12_345)
-rescue CnpjFmt::CnpjFormatterInputTypeError => e
-  puts e.message
-end
+#### `CnpjFmt::DomainError`
 
+- **Inheritance:** `CnpjFmt::DomainError < RangeError` (includes `CnpjFmt::Error`)
+- **Category:** Domain error — ancestor for numeric/length domain failures.
+- **When it is raised:** Not raised directly; prefer raising a leaf subclass.
+- **Example:** Prefer `raise CnpjFmt::OutOfRangeError` / construct `InvalidLengthError` over raising `DomainError` directly.
+- **How to rescue it:**
+
+```ruby
+rescue CnpjFmt::DomainError
+  # OutOfRangeError, InvalidLengthError (when raised by you), and other DomainError subclasses
+```
+
+#### `CnpjFmt::TypeMismatchError`
+
+- **Inheritance:** `CnpjFmt::TypeMismatchError < TypeError` (includes `CnpjFmt::Error`)
+- **Category:** API misuse — the caller passed a value of the wrong type.
+- **When it is raised:** Raised when the CNPJ input is not a `String` or an `Array` of strings, when an option has the wrong type, or when `on_fail` does not return a `String`.
+- **Example:**
+
+```ruby
+CnpjFmt::CnpjFormatter.new.format(12_345) # raises CnpjFmt::TypeMismatchError
+```
+
+- **How to rescue it:**
+
+```ruby
+rescue CnpjFmt::TypeMismatchError
+  # this library's type-contract violation
+
+rescue TypeError
+  # native type errors, including this library's TypeMismatchError
+```
+
+#### `CnpjFmt::InvalidLengthError`
+
+- **Inheritance:** `CnpjFmt::InvalidLengthError < CnpjFmt::DomainError < RangeError` (includes `CnpjFmt::Error`)
+- **Category:** Domain error — a collection or string length violates a business rule.
+- **When it is raised:** Not raised from `format`; constructed and passed as the second argument to `on_fail` when the sanitized CNPJ does not contain exactly 14 alphanumeric characters.
+- **Example:**
+
+```ruby
 CnpjFmt::CnpjFormatter.new.format(
   'short',
-  on_fail: ->(_value, _exception) { 'invalid' }
+  on_fail: ->(_value, error) {
+    error # => #<CnpjFmt::InvalidLengthError ...>
+    'invalid'
+  }
 ) # => "invalid"
 ```
 
-Notable attributes on raised errors:
+- **How to rescue it:** Handle inside `on_fail` (typical), or rescue if you re-raise:
 
-- `CnpjFormatterInputTypeError`: `actual_input`, `actual_type`, `expected_type`
-- `CnpjFormatterOptionsTypeError`: `option_name`, `actual_input`, `actual_type`, `expected_type`
-- `CnpjFormatterInputLengthException`: `actual_input`, `evaluated_input`, `expected_length`
-- `CnpjFormatterOptionsHiddenRangeInvalidException`: `option_name`, `actual_input`, `min_expected_value`, `max_expected_value`
-- `CnpjFormatterOptionsForbiddenKeyCharacterException`: `option_name`, `actual_input`, `forbidden_characters`
+```ruby
+rescue CnpjFmt::InvalidLengthError
+  # this exact length violation
+
+rescue CnpjFmt::DomainError
+  # RangeError-rooted domain failures from this library
+```
+
+#### `CnpjFmt::OutOfRangeError`
+
+- **Inheritance:** `CnpjFmt::OutOfRangeError < CnpjFmt::DomainError < RangeError` (includes `CnpjFmt::Error`)
+- **Category:** Domain error — a numeric value violates a business range rule.
+- **When it is raised:** Raised when `hidden_start` or `hidden_end` is outside the inclusive range `0`–`13`.
+- **Example:**
+
+```ruby
+CnpjFmt::CnpjFormatterOptions.new(hidden_start: 14) # raises CnpjFmt::OutOfRangeError
+```
+
+- **How to rescue it:**
+
+```ruby
+rescue CnpjFmt::OutOfRangeError
+  # this exact range violation
+
+rescue CnpjFmt::DomainError
+  # RangeError-rooted domain failures from this library
+```
+
+#### `CnpjFmt::ValidationError`
+
+- **Inheritance:** `CnpjFmt::ValidationError < ArgumentError` (includes `CnpjFmt::Error`)
+- **Category:** Domain error — a value fails a non-numeric, non-length domain rule.
+- **When it is raised:** Raised when a key option (`hidden_key`, `dot_key`, `slash_key`, `dash_key`) contains a disallowed character.
+- **Example:**
+
+```ruby
+CnpjFmt::CnpjFormatterOptions.new(dot_key: 'å') # raises CnpjFmt::ValidationError
+```
+
+- **How to rescue it:**
+
+```ruby
+rescue CnpjFmt::ValidationError
+  # this exact domain validation failure
+
+rescue CnpjFmt::Error
+  # any error raised by this library
+```
+
+#### Rescue granularity
+
+```ruby
+# 1) Single native class — catches misuse (and ValidationError, which inherits ArgumentError).
+rescue ArgumentError
+  # CnpjFmt::ValidationError and any other ArgumentError (library or not)
+
+# 2) CnpjFmt::DomainError — catches only RangeError-rooted business-rule violations.
+rescue CnpjFmt::DomainError
+  # CnpjFmt::OutOfRangeError, CnpjFmt::InvalidLengthError, and other DomainError subclasses
+
+# 3) CnpjFmt::Error — catches everything the library raises.
+rescue CnpjFmt::Error
+  # every custom error that includes CnpjFmt::Error
+
+# 4) Specific leaf class — catches only that exact failure mode.
+rescue CnpjFmt::OutOfRangeError
+  # only CnpjFmt::OutOfRangeError
+```
+
+Notable attributes:
+
+- `TypeMismatchError`: `actual_input`, `actual_type`, `expected_type`, `option_name` (nil for CNPJ input)
+- `InvalidLengthError`: `actual_input`, `evaluated_input`, `expected_length`
+- `OutOfRangeError`: `option_name`, `actual_input`, `min_expected_value`, `max_expected_value`
+- `ValidationError`: `option_name`, `actual_input`, `forbidden_characters`
 
 ## API
 
@@ -269,7 +402,7 @@ After `require 'cnpj-fmt'`:
 - **`CnpjFmt::CnpjFormatterOptions`**: Class holding options; supports merge via constructor, `set`, and keyword arguments.
 - **`CnpjFmt::CNPJ_LENGTH`**: `14` (constant).
 - **`CnpjFmt::VERSION`**: gem version string.
-- **Exceptions**: `CnpjFmt::CnpjFormatterTypeError`, `CnpjFmt::CnpjFormatterInputTypeError`, `CnpjFmt::CnpjFormatterOptionsTypeError`, `CnpjFmt::CnpjFormatterException`, `CnpjFmt::CnpjFormatterInputLengthException`, `CnpjFmt::CnpjFormatterOptionsHiddenRangeInvalidException`, `CnpjFmt::CnpjFormatterOptionsForbiddenKeyCharacterException`.
+- **Errors**: `CnpjFmt::Error`, `CnpjFmt::DomainError`, `CnpjFmt::TypeMismatchError`, `CnpjFmt::InvalidLengthError`, `CnpjFmt::OutOfRangeError`, `CnpjFmt::ValidationError` (plus unused skeleton leaves).
 
 ### Other available resources
 
