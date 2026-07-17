@@ -3,90 +3,7 @@
 require 'lacus-utils'
 
 module CnpjFmt
-  # Base error for all `cnpj-fmt` type-related errors.
-  #
-  # This base class extends the native {TypeError} and serves as the base for all
-  # type validation errors in the CNPJ formatter. It stores the actual input,
-  # actual type, and expected type.
-  class CnpjFormatterTypeError < TypeError
-    # @return [Object] the offending input value
-    attr_reader :actual_input
-
-    # @return [String] human-readable type of {#actual_input}
-    attr_reader :actual_type
-
-    # @return [String] description of the expected type
-    attr_reader :expected_type
-
-    # @param actual_input [Object] the offending input value
-    # @param actual_type [String] human-readable type of +actual_input+
-    # @param expected_type [String] description of the expected type
-    # @param message [String] error message
-    def initialize(actual_input, actual_type, expected_type, message)
-      super(message)
-      @actual_input = actual_input
-      @actual_type = actual_type
-      @expected_type = expected_type
-    end
-  end
-
-  # Error raised when the input provided to the CNPJ formatter is not of the
-  # expected type ({CnpjInput}).
-  #
-  # The error message includes both the actual input type and the expected type.
-  #
-  # @see CnpjInput
-  class CnpjFormatterInputTypeError < CnpjFormatterTypeError
-    # @param actual_input [Object] the offending input value
-    # @param expected_type [String] description of the expected type (e.g.
-    #   +"string or string[]"+)
-    def initialize(actual_input, expected_type)
-      actual_type = LacusUtils.describe_type(actual_input)
-
-      super(
-        actual_input,
-        actual_type,
-        expected_type,
-        "CNPJ input must be of type #{expected_type}. Got #{actual_type}."
-      )
-    end
-  end
-
-  # Error raised when a specific option in the formatter configuration has an
-  # invalid type.
-  #
-  # The error message includes the option name, the actual input type and the
-  # expected type.
-  class CnpjFormatterOptionsTypeError < CnpjFormatterTypeError
-    # @return [String] the offending option name
-    attr_reader :option_name
-
-    # @param option_name [String] the offending option key
-    # @param actual_input [Object] the offending option value
-    # @param expected_type [String] description of the expected type
-    def initialize(option_name, actual_input, expected_type)
-      actual_type = LacusUtils.describe_type(actual_input)
-
-      super(
-        actual_input,
-        actual_type,
-        expected_type,
-        %(CNPJ formatting option "#{option_name}" must be of type #{expected_type}. Got #{actual_type}.)
-      )
-      @option_name = option_name
-    end
-  end
-
-  # Base exception for all `cnpj-fmt` rules-related errors.
-  #
-  # This base class extends the native {StandardError} and serves as the base for
-  # all non-type-related errors in the {CnpjFormatter} and its dependencies. It is
-  # suitable for validation errors, range errors, and other business logic
-  # exceptions that are not strictly type-related.
-  class CnpjFormatterException < StandardError
-  end
-
-  # Formats the original input for inclusion in a length exception message.
+  # Formats the original input for inclusion in a length error message.
   module FormatLengthExceptionInput
     module_function
 
@@ -100,13 +17,103 @@ module CnpjFmt
   end
   private_constant :FormatLengthExceptionInput
 
-  # Exception raised when the CNPJ string input (after optional processing) does
-  # not have the required length.
+  # Marker module mixed into every custom error raised by this library.
   #
-  # A valid CNPJ must contain exactly 14 alphanumeric characters. The error
-  # message distinguishes between the original input and the evaluated one (which
-  # strips punctuation characters).
-  class CnpjFormatterInputLengthException < CnpjFormatterException
+  # Use +rescue CnpjFmt::Error+ to catch every library error regardless of native
+  # ancestry.
+  module Error; end
+
+  # Raised when an argument's runtime type does not match the type required by
+  # the API contract (CNPJ input or a formatting option).
+  class TypeMismatchError < TypeError
+    include Error
+
+    # @return [Object] the offending input value
+    attr_reader :actual_input
+
+    # @return [String] human-readable type of {#actual_input}
+    attr_reader :actual_type
+
+    # @return [String] description of the expected type
+    attr_reader :expected_type
+
+    # @return [String, nil] the offending option key, or +nil+ for CNPJ input
+    attr_reader :option_name
+
+    # @param actual_input [Object] the offending input or option value
+    # @param expected_type [String] description of the expected type
+    # @param option_name [String, nil] option key when the failure is option-related
+    def initialize(actual_input, expected_type, option_name: nil)
+      actual_type = LacusUtils.describe_type(actual_input)
+      super(build_message(actual_type, expected_type, option_name))
+      @actual_input = actual_input
+      @actual_type = actual_type
+      @expected_type = expected_type
+      @option_name = option_name
+    end
+
+    private
+
+    def build_message(actual_type, expected_type, option_name)
+      if option_name
+        %(CNPJ formatting option "#{option_name}" must be of type #{expected_type}. Got #{actual_type}.)
+      else
+        "CNPJ input must be of type #{expected_type}. Got #{actual_type}."
+      end
+    end
+  end
+
+  # Raised when a required argument is not provided.
+  class MissingArgumentError < ArgumentError
+    include Error
+  end
+
+  # Raised when the combination of provided arguments does not match any valid
+  # overload-style signature.
+  class InvalidArgumentCombinationError < ArgumentError
+    include Error
+  end
+
+  # Ancestor for numeric and length-based domain failures.
+  class DomainError < RangeError
+    include Error
+  end
+
+  # Raised when +hidden_start+ or +hidden_end+ falls outside the valid index
+  # range for CNPJ formatting.
+  class OutOfRangeError < DomainError
+    # @return [String] the offending option name
+    attr_reader :option_name
+
+    # @return [Integer] the offending value
+    attr_reader :actual_input
+
+    # @return [Integer] minimum valid index
+    attr_reader :min_expected_value
+
+    # @return [Integer] maximum valid index
+    attr_reader :max_expected_value
+
+    # @param option_name [String] the offending option key
+    # @param actual_input [Integer] the offending value
+    # @param min_expected_value [Integer] minimum valid index
+    # @param max_expected_value [Integer] maximum valid index
+    def initialize(option_name, actual_input, min_expected_value, max_expected_value)
+      super(
+        %(CNPJ formatting option "#{option_name}" must be an integer between ) \
+        "#{min_expected_value} and #{max_expected_value}. Got #{actual_input}."
+      )
+      @option_name = option_name
+      @actual_input = actual_input
+      @min_expected_value = min_expected_value
+      @max_expected_value = max_expected_value
+    end
+  end
+
+  # Constructed when the sanitized CNPJ input does not have the required length.
+  #
+  # Passed to the +on_fail+ callback; not raised from {CnpjFormatter#format}.
+  class InvalidLengthError < DomainError
     # @return [String, Array<String>] the original input
     attr_reader :actual_input
 
@@ -142,44 +149,10 @@ module CnpjFmt
     end
   end
 
-  # Exception raised when +hidden_start+ or +hidden_end+ option values are outside
-  # the valid range for CNPJ formatting.
-  #
-  # The valid range bounds are between 0 and 13 (inclusive), representing the
-  # indices of the 14-character CNPJ string. The error message includes the
-  # option name, the actual input value, and the expected range bounds.
-  class CnpjFormatterOptionsHiddenRangeInvalidException < CnpjFormatterException
-    # @return [String] the offending option name
-    attr_reader :option_name
+  # Raised when a key option contains a disallowed character.
+  class ValidationError < ArgumentError
+    include Error
 
-    # @return [Integer] the offending value
-    attr_reader :actual_input
-
-    # @return [Integer] minimum valid index (0)
-    attr_reader :min_expected_value
-
-    # @return [Integer] maximum valid index (13)
-    attr_reader :max_expected_value
-
-    # @param option_name [String] the offending option key
-    # @param actual_input [Integer] the offending value
-    # @param min_expected_value [Integer] minimum valid index
-    # @param max_expected_value [Integer] maximum valid index
-    def initialize(option_name, actual_input, min_expected_value, max_expected_value)
-      super(
-        %(CNPJ formatting option "#{option_name}" must be an integer between ) \
-        "#{min_expected_value} and #{max_expected_value}. Got #{actual_input}."
-      )
-      @option_name = option_name
-      @actual_input = actual_input
-      @min_expected_value = min_expected_value
-      @max_expected_value = max_expected_value
-    end
-  end
-
-  # Exception raised when a character is not allowed to be used as a key character
-  # on options.
-  class CnpjFormatterOptionsForbiddenKeyCharacterException < CnpjFormatterException
     # @return [String] the offending option name
     attr_reader :option_name
 

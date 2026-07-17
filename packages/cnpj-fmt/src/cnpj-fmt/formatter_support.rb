@@ -59,32 +59,31 @@ module CnpjFmt
     #
     # @param cnpj_input [Object] candidate CNPJ input
     # @return [String] joined string input
-    # @raise [CnpjFormatterInputTypeError] if the input is not a +String+ or
-    #   +Array<String>+
+    # @raise [TypeMismatchError] if the input is not a +String+ or +Array<String>+
     def to_string_input(cnpj_input)
       return cnpj_input if cnpj_input.is_a?(String)
 
       if cnpj_input.is_a?(Array)
         cnpj_input.each do |item|
-          raise CnpjFormatterInputTypeError.new(cnpj_input, 'string or string[]') unless item.is_a?(String)
+          raise TypeMismatchError.new(cnpj_input, 'string or string[]') unless item.is_a?(String)
         end
 
         return cnpj_input.join
       end
 
-      raise CnpjFormatterInputTypeError.new(cnpj_input, 'string or string[]')
+      raise TypeMismatchError.new(cnpj_input, 'string or string[]')
     end
 
     # Invokes the +on_fail+ callback and validates its return type.
     #
     # @param on_fail [Proc] failure callback
     # @param cnpj_input [String, Array<String>] original input
-    # @param exception [CnpjFormatterInputLengthException] length error
+    # @param exception [InvalidLengthError] length error
     # @return [String] callback result
-    # @raise [CnpjFormatterOptionsTypeError] if the callback does not return a +String+
+    # @raise [TypeMismatchError] if the callback does not return a +String+
     def invoke_on_fail(on_fail, cnpj_input, exception)
       result = on_fail.call(cnpj_input, exception)
-      raise CnpjFormatterOptionsTypeError.new('on_fail', result, 'string') unless result.is_a?(String)
+      raise TypeMismatchError.new(result, 'string', option_name: 'on_fail') unless result.is_a?(String)
 
       result
     end

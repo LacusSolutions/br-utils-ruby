@@ -38,10 +38,10 @@ module CnpjFmt
     # @param extra_overrides [Array<CnpjFormatterOptions, Hash>] additional option
     #   layers merged in order (later overrides win)
     # @param keywords [Hash] option keyword overrides (see {CnpjFormatterOptions})
-    # @raise [CnpjFormatterOptionsTypeError] if any option has an invalid type
-    # @raise [CnpjFormatterOptionsHiddenRangeInvalidException] if +hidden_start+ or
+    # @raise [TypeMismatchError] if any option has an invalid type
+    # @raise [OutOfRangeError] if +hidden_start+ or
     #   +hidden_end+ are out of valid range
-    # @raise [CnpjFormatterOptionsForbiddenKeyCharacterException] if any key
+    # @raise [ValidationError] if any key
     #   option contains a disallowed character
     def initialize(options = nil, *extra_overrides, **keywords)
       @options =
@@ -77,12 +77,12 @@ module CnpjFmt
     # @param options [CnpjFormatterOptions, Hash, nil] per-call option overrides
     # @param keywords [Hash] per-call option keyword overrides
     # @return [String] formatted CNPJ string, or the +on_fail+ callback result
-    # @raise [CnpjFormatterInputTypeError] if the input is not a +String+ or
+    # @raise [TypeMismatchError] if the input is not a +String+ or
     #   +Array<String>+
-    # @raise [CnpjFormatterOptionsTypeError] if any option has an invalid type
-    # @raise [CnpjFormatterOptionsHiddenRangeInvalidException] if +hidden_start+
+    # @raise [TypeMismatchError] if any option has an invalid type
+    # @raise [OutOfRangeError] if +hidden_start+
     #   or +hidden_end+ are out of valid range
-    # @raise [CnpjFormatterOptionsForbiddenKeyCharacterException] if any key
+    # @raise [ValidationError] if any key
     #   option contains a disallowed character
     #
     # @example
@@ -105,7 +105,7 @@ module CnpjFmt
     end
 
     def handle_invalid_length(cnpj_input, formatted_cnpj, actual_options)
-      exception = CnpjFormatterInputLengthException.new(
+      exception = InvalidLengthError.new(
         cnpj_input,
         formatted_cnpj,
         CnpjFormatterOptions::CNPJ_LENGTH

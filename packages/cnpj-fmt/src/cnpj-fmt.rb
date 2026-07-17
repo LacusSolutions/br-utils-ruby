@@ -12,19 +12,27 @@ require_relative 'cnpj-fmt/cnpj_fmt'
 # human-readable string. Supports the 14-character alphanumeric CNPJ format
 # (digits and uppercase letters).
 #
-# The package distinguishes between **errors** and **exceptions**:
+# Errors fall into two categories:
 #
-# - {CnpjFormatterTypeError} (extends the native {TypeError}) signals incorrect
-#   API usage (the input or option is of the wrong *type*).
-# - {CnpjFormatterException} (extends the native {StandardError}) signals invalid
-#   or ineligible data (right type, bad value).
+# - *API misuse* — the caller invoked the library incorrectly (wrong type for
+#   input or options). Raised as {CnpjFmt::TypeMismatchError} (+TypeError+).
+# - *Domain errors* — the call shape was valid, but a value violates a business
+#   rule. Length failures construct {CnpjFmt::InvalidLengthError} and pass it to
+#   +on_fail+ (not raised from {CnpjFormatter#format}). Hidden-range failures
+#   raise {CnpjFmt::OutOfRangeError}; forbidden key characters raise
+#   {CnpjFmt::ValidationError}.
+#
+# Every custom error includes the {CnpjFmt::Error} marker module so consumers can
+# +rescue CnpjFmt::Error+ for a library-wide catch.
 #
 # Public API:
 #
 # - {CnpjFmt.cnpj_fmt}
 # - {CnpjFormatter}, {CnpjFormatterOptions}
 # - {CNPJ_LENGTH}, {VERSION}
-# - Exception hierarchy under {CnpjFmt}
+# - Error marker {CnpjFmt::Error}; domain ancestor {CnpjFmt::DomainError};
+#   leaves {CnpjFmt::TypeMismatchError}, {CnpjFmt::InvalidLengthError},
+#   {CnpjFmt::OutOfRangeError}, {CnpjFmt::ValidationError}
 #
 # @example
 #   require 'cnpj-fmt'

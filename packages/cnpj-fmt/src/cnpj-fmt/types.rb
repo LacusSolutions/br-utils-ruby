@@ -30,7 +30,7 @@ module CnpjFmt
   # should return a string to use as the fallback output.
   #
   # @yieldparam original_input [String, Array<String>] the raw input value
-  # @yieldparam exception [CnpjFormatterInputLengthException] the length error
+  # @yieldparam exception [InvalidLengthError] the length error
   # @yieldreturn [String] fallback output
   OnFailCallback = Object
 
