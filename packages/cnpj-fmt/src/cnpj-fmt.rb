@@ -19,8 +19,8 @@ require_relative 'cnpj-fmt/cnpj_fmt'
 #   {CnpjFmt::InvalidArgumentCombinationError}.
 # - *Domain errors* — the call shape was valid, but a value violates a business
 #   rule. Length failures construct {CnpjFmt::InvalidLengthError} and pass it to
-#   +on_fail+ (not raised from {CnpjFormatter#format}). Hidden-range failures
-#   raise {CnpjFmt::OutOfRangeError}; forbidden key characters raise
+#   +on_fail+ as a {CnpjFmt::DomainError}. Hidden-range failures raise
+#   {CnpjFmt::OutOfRangeError}; forbidden key characters raise
 #   {CnpjFmt::ValidationError}.
 #
 # Every custom error includes the {CnpjFmt::Error} marker module so consumers can

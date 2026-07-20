@@ -108,7 +108,8 @@ module CnpjFmt
 
   # Constructed when the sanitized CNPJ input does not have the required length.
   #
-  # Passed to the +on_fail+ callback; not raised from {CnpjFormatter#format}.
+  # Passed to the +on_fail+ callback as a {DomainError}; not raised from
+  # {CnpjFormatter#format}.
   class InvalidLengthError < DomainError
     # @return [String, Array<String>] the original input
     attr_reader :actual_input

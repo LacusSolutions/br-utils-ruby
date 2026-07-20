@@ -238,6 +238,7 @@ RSpec.describe CnpjFmt::CnpjFormatter do
         it "invokes on_fail for #{length}-char input" do
           on_fail = lambda do |value, error|
             aggregate_failures do
+              expect(error).to be_a(CnpjFmt::DomainError)
               expect(error).to be_a(CnpjFmt::InvalidLengthError)
               expect(error.evaluated_input.length).to eq(length)
               expect(error.actual_input).to eq(value)

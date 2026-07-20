@@ -90,7 +90,7 @@ The main entry points are the class `CnpjFmt::CnpjFormatter`, the options class 
 - **`options`**: Returns the instance’s `CnpjFmt::CnpjFormatterOptions` (same object used internally).
 - **`format(cnpj_input, options = nil, **keywords)`**: Formats a CNPJ value.
 
-  Input is normalized by removing non-alphanumeric characters and uppercasing. If the sanitized length is not exactly **14**, the **`on_fail`** callback is invoked with the original input and a `CnpjFmt::InvalidLengthError`; its return value is the result (nothing is thrown for length).
+  Input is normalized by removing non-alphanumeric characters and uppercasing. If the sanitized length is not exactly **14**, the **`on_fail`** callback is invoked with the original input and a `CnpjFmt::DomainError` (`InvalidLengthError`); its return value is the result (nothing is thrown for length).
 
   If the input is not a `String` or an `Array` of strings, **`CnpjFmt::TypeMismatchError`** is raised.
 
@@ -200,9 +200,9 @@ formatter.format([                   # => "RK.0CM.T3W/0001-00"
 | `dash_key` | `String`, `nil` | `'-'` | Separator before the last two characters |
 | `escape` | `Boolean`, `nil` | `false` | When truthy, HTML-escapes the final string |
 | `encode` | `Boolean`, `nil` | `false` | When truthy, URL-encodes the final string (similar to `encodeURIComponent`) |
-| `on_fail` | `Proc`, `nil` | see below | `(value, exception) -> String` — used when sanitized length ≠ 14 |
+| `on_fail` | `Proc`, `nil` | see below | `(value, error) -> String` — used when sanitized length ≠ 14 |
 
-Default **`on_fail`** returns an empty string. The exception passed for length failures is **`CnpjFmt::InvalidLengthError`** (`actual_input`, `evaluated_input`, `expected_length`). The callback return value must be a `String`; otherwise **`CnpjFmt::TypeMismatchError`** is raised.
+Default **`on_fail`** returns an empty string. Signature: `(original_input, error) -> String`, where `error` is a **`CnpjFmt::DomainError`** (currently an `InvalidLengthError` with `actual_input`, `evaluated_input`, `expected_length`). The callback return value must be a `String`; otherwise **`CnpjFmt::TypeMismatchError`** is raised.
 
 Example with all options:
 
@@ -222,7 +222,7 @@ CnpjFmt.cnpj_fmt(
   dash_key: '_-_',
   escape: true,
   encode: true,
-  on_fail: ->(value, _exception) { value.to_s }
+  on_fail: ->(value, _error) { value.to_s }
 )
 ```
 
@@ -237,14 +237,14 @@ Errors fall into two categories:
 
 Every custom error includes the `CnpjFmt::Error` marker module. Domain failures (`InvalidLengthError`, `OutOfRangeError`, `ValidationError`) inherit from `CnpjFmt::DomainError` (`RangeError`).
 
-**Important:** `InvalidLengthError` is **constructed and passed to `on_fail`**, not raised from `format` / `cnpj_fmt`. The package also defines an unused skeleton leaf (`InvalidArgumentCombinationError`) for monorepo consistency.
+**Important:** length failures are **constructed as `InvalidLengthError` and passed to `on_fail` as a `DomainError`**, not raised from `format` / `cnpj_fmt`. The package also defines an unused skeleton leaf (`InvalidArgumentCombinationError`) for monorepo consistency.
 
 #### Summary
 
 | Class | Inherits from | Category | Trigger condition |
 |---|---|---|---|
 | `CnpjFmt::TypeMismatchError` | `TypeError` (+ `include Error`) | API misuse | CNPJ input or option has the wrong data type |
-| `CnpjFmt::InvalidLengthError` | `CnpjFmt::DomainError` | Domain error | Sanitized length is not exactly 14 (passed to `on_fail`) |
+| `CnpjFmt::InvalidLengthError` | `CnpjFmt::DomainError` | Domain error | Sanitized length is not exactly 14 (passed to `on_fail` as `DomainError`) |
 | `CnpjFmt::OutOfRangeError` | `CnpjFmt::DomainError` | Domain error | `hidden_start` / `hidden_end` outside `0`–`13` |
 | `CnpjFmt::ValidationError` | `CnpjFmt::DomainError` | Domain error | Key option contains a disallowed character |
 
@@ -299,14 +299,14 @@ rescue TypeError
 
 - **Inheritance:** `CnpjFmt::InvalidLengthError < CnpjFmt::DomainError < RangeError` (includes `CnpjFmt::Error`)
 - **Category:** Domain error — a collection or string length violates a business rule.
-- **When it is raised:** Not raised from `format`; constructed and passed as the second argument to `on_fail` when the sanitized CNPJ does not contain exactly 14 alphanumeric characters.
+- **When it is raised:** Not raised from `format`; constructed and passed as the `DomainError` second argument to `on_fail` when the sanitized CNPJ does not contain exactly 14 alphanumeric characters.
 - **Example:**
 
 ```ruby
 CnpjFmt::CnpjFormatter.new.format(
   'short',
   on_fail: ->(_value, error) {
-    error # => #<CnpjFmt::InvalidLengthError ...>
+    error # => #<CnpjFmt::InvalidLengthError ...> (a DomainError)
     'invalid'
   }
 ) # => "invalid"
