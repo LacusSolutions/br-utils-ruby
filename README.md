@@ -29,7 +29,7 @@ Requires Ruby **≥ 3.1** (see `required_ruby_version` in the gemspec).
 - ✅ **Reusable generator**: `CnpjGen::CnpjGenerator` class with default options and per-call overrides
 - ✅ **Keyword overrides**: Pass `format:`, `prefix:`, and `type:` on `cnpj_gen`, `CnpjGenerator#generate`, and constructors
 - ✅ **Minimal dependencies**: Only [`cnpj-dv`](https://rubygems.org/gems/cnpj-dv) and [`lacus-utils`](https://rubygems.org/gems/lacus-utils)
-- ✅ **Error handling**: Specific type errors and exceptions for invalid options
+- ✅ **Error handling**: API misuse vs domain errors with a `CnpjGen::Error` marker for library-wide rescue
 
 ## Installation
 
@@ -86,18 +86,20 @@ All options are optional:
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `format` | `Boolean`, `nil` | `false` | When truthy, return the generated CNPJ in standard format (`00.000.000/0000-00`). Non-boolean values are coerced (`false`, `''`, and `0` become `false`; other values become truthy). |
-| `prefix` | `String`, `nil` | `''` | Partial start string (0–12 alphanumeric chars). Only alphanumeric characters are kept and uppercased; missing characters are generated randomly and check digits are computed. |
-| `type` | `String`, `nil` | `'alphanumeric'` | Character set for the randomly generated part (`prefix` is kept as-is after sanitization). Must be one of `'numeric'`, `'alphabetic'`, or `'alphanumeric'`. **Check digits are always numeric.** |
+| `format` | `Boolean` | `false` | When truthy, return the generated CNPJ in standard format (`00.000.000/0000-00`). Non-boolean values are coerced (`false`, `''`, and `0` become `false`; other values become truthy). |
+| `prefix` | `String` | `''` | Partial start string (0–12 alphanumeric chars). Only alphanumeric characters are kept and uppercased; missing characters are generated randomly and check digits are computed. |
+| `type` | `String` | `'alphanumeric'` | Character set for the randomly generated part (`prefix` is kept as-is after sanitization). Must be one of `'numeric'`, `'alphabetic'`, or `'alphanumeric'`. **Check digits are always numeric.** |
 
 Prefix rules: base ID (first 8 chars) and branch ID (chars 9–12) cannot be all zeros; 12 repeated digits (e.g. `777777777777`) are also not allowed.
+
+`nil` is accepted as a keyword argument on `cnpj_gen`, `CnpjGenerator.new`, `CnpjGenerator#generate`, and `CnpjGeneratorOptions.new`/`#set` — it simply means "no override for this option". It is **not** accepted by the `CnpjGeneratorOptions` property setters (`options.format = value`, `options.prefix = value`, `options.type = value`): calling a setter with `nil` directly raises `CnpjGen::TypeMismatchError`. To reset a property to its default value through a setter, pass the literal constant instead, e.g. `options.format = CnpjGen::CnpjGeneratorOptions::DEFAULT_FORMAT`.
 
 ### `CnpjGen.cnpj_gen` (helper)
 
 Generates a valid CNPJ string. With no options, returns a 14-character alphanumeric CNPJ. This is a convenience wrapper around `CnpjGen::CnpjGenerator.new(...).generate`.
 
 - **`options`** (optional): `CnpjGen::CnpjGeneratorOptions` instance, a `Hash` of option keys, or `nil`. See [Generator options](#generator-options).
-- **`format`**, **`prefix`**, **`type`** (keyword arguments): Per-option overrides when `options` is omitted or to layer on top of a `Hash`.
+- **`format`**, **`prefix`**, **`type`** (keyword arguments): Only used when `options` is omitted (`nil`). Passing `options` **and** any of these keywords at the same time raises `InvalidArgumentCombinationError` — the two ways of passing options are never merged together.
 
 ### `CnpjGen::CnpjGenerator` (class)
 
@@ -113,8 +115,8 @@ generator.generate(prefix: '12345678')   # override for this call only
 generator.options                     # current default options (CnpjGen::CnpjGeneratorOptions)
 ```
 
-- **`initialize(options = nil, format: nil, prefix: nil, type: nil)`**: Optional default options (plain `Hash`, `CnpjGen::CnpjGeneratorOptions` instance, or keyword arguments). When `options` is a `CnpjGen::CnpjGeneratorOptions` instance, that exact instance is stored (mutating it later affects future `generate` calls that do not pass per-call options).
-- **`generate(options = nil, format: nil, prefix: nil, type: nil)`**: Returns a valid CNPJ; per-call options override instance defaults for that call only.
+- **`initialize(options = nil, **keywords)`**: Optional default options. When `options` is given (a `CnpjGen::CnpjGeneratorOptions` instance or a `Hash`) alone, it determines the default options; a `CnpjGen::CnpjGeneratorOptions` instance is stored by reference (mutating it later affects future `generate` calls that do not pass per-call options), while a `Hash` builds a new instance. When `options` is omitted (`nil`), the default options are built exclusively from the keyword arguments (`format:`, `prefix:`, `type:`). Passing `options` together with any non-`nil` keyword raises `InvalidArgumentCombinationError` instead of silently ignoring the keywords.
+- **`generate(options = nil, **keywords)`**: Returns a valid CNPJ. `options` and the keyword arguments are never merged: a given `options` argument alone fully overrides the instance defaults for this call; otherwise, any given keyword overrides the instance defaults for this call. When neither is given, the instance defaults are used as-is. The instance defaults are never mutated by a per-call override. Passing `options` together with any non-`nil` keyword raises `InvalidArgumentCombinationError`.
 - **`options`**: Reader returning the default options used when per-call options are not provided (same instance as used internally; mutating it affects future `generate` calls).
 
 Default options on the instance; per-call overrides:
@@ -146,11 +148,15 @@ options.type     # => "numeric"
 options.format   # => true
 options.set(format: false)  # merge and return self
 options.all      # => { format: false, prefix: "AB123XYZ", type: "numeric" }
+
+# Resetting a property to its default value requires the literal constant —
+# a bare `nil` on a setter raises TypeMismatchError:
+options.format = CnpjGen::CnpjGeneratorOptions::DEFAULT_FORMAT
 ```
 
-- **`initialize(options = nil, *extra_overrides, format: nil, prefix: nil, type: nil)`**: Options merged in order (later overrides win). Extra positional arguments may be `Hash` objects or other `CnpjGen::CnpjGeneratorOptions` instances.
-- **`format`**, **`prefix`**, **`type`**: Accessors with setters; `prefix` is validated (base/branch ineligible, repeated digits).
-- **`set(options)`**: Update multiple options at once; omitted/`nil` fields in a `Hash` keep their current value; returns `self`. Accepts a `Hash` or another `CnpjGen::CnpjGeneratorOptions` instance.
+- **`initialize(*options, **keywords)`**: Every positional `options` argument (each a `Hash` or another `CnpjGen::CnpjGeneratorOptions` instance) is folded left to right — later arguments win — then the keyword arguments (`format:`, `prefix:`, `type:`) are applied on top with the highest precedence. At every step, a `nil` value for a given key is ignored in favor of whatever was resolved so far. Any option still unresolved after that is set to its `DEFAULT_*` value.
+- **`format`**, **`prefix`**, **`type`**: Accessors with setters; `prefix` is validated (base/branch ineligible, repeated digits). The setters **never accept `nil`** — pass the matching `DEFAULT_*` constant (e.g. `CnpjGeneratorOptions::DEFAULT_PREFIX`) to reset a property explicitly.
+- **`set(*options, **keywords)`**: Updates multiple options at once, using the same fold-then-keywords, ignore-`nil` resolution as `initialize`. Any option left unresolved after merging keeps its **current** value on the instance (a partial update, not a re-initialization). Returns `self`.
 - **`all`**: Shallow `Hash` copy of current options (`:format`, `:prefix`, `:type`).
 
 ## API
@@ -159,63 +165,169 @@ options.all      # => { format: false, prefix: "AB123XYZ", type: "numeric" }
 
 After `require 'cnpj-gen'`:
 
-- **`CnpjGen.cnpj_gen`**: `(options = nil, format: nil, prefix: nil, type: nil) -> String` — convenience helper.
+- **`CnpjGen.cnpj_gen`**: `(options = nil, **keywords) -> String` — convenience helper.
 - **`CnpjGen::CnpjGenerator`**: Class to generate CNPJ with optional default options and per-call overrides.
 - **`CnpjGen::CnpjGeneratorOptions`**: Class holding options with validation and merge.
 - **`CnpjGen::CNPJ_LENGTH`**: `14` (constant).
 - **`CnpjGen::CNPJ_PREFIX_MAX_LENGTH`**: `12` (constant).
 - **`CnpjGen::CNPJ_TYPE_VALUES`**: `%w[alphabetic alphanumeric numeric]` — allowed `type` values.
 - **`CnpjGen::VERSION`**: gem version string.
-- **Exceptions**: `CnpjGen::CnpjGeneratorTypeError`, `CnpjGen::CnpjGeneratorOptionsTypeError`, `CnpjGen::CnpjGeneratorException`, `CnpjGen::CnpjGeneratorOptionPrefixInvalidException`, `CnpjGen::CnpjGeneratorOptionTypeInvalidException`.
+- **Errors**: `CnpjGen::Error`, `CnpjGen::DomainError`, `CnpjGen::TypeMismatchError`, `CnpjGen::InvalidArgumentCombinationError`, `CnpjGen::ValidationError`.
 
-### Errors & Exceptions
+### Error handling
 
-This package uses **TypeError** subclasses for invalid option types and **StandardError** subclasses for invalid option values (`prefix` or `type`). You can rescue specific classes or the base types.
+Errors fall into two categories:
 
-- **CnpjGen::CnpjGeneratorTypeError** — base for option type errors (abstract; rescue subclasses)
-- **CnpjGen::CnpjGeneratorOptionsTypeError** — an option has the wrong type (e.g. `prefix` not a `String`)
-- **CnpjGen::CnpjGeneratorException** — base for option value exceptions
-- **CnpjGen::CnpjGeneratorOptionPrefixInvalidException** — prefix invalid (e.g. all-zero base/branch, repeated digits)
-- **CnpjGen::CnpjGeneratorOptionTypeInvalidException** — `type` is not one of `'numeric'`, `'alphabetic'`, `'alphanumeric'`
+| Category | Meaning |
+|---|---|
+| **API misuse** | The caller invoked the library incorrectly (wrong type for an option, or an invalid argument combination). |
+| **Domain error** | The call was structurally correct, but a value violates a business rule (invalid `prefix`, or `type` not in the allowed set). |
+
+Every custom error includes the `CnpjGen::Error` marker module. Domain failures (`ValidationError`) inherit from `CnpjGen::DomainError` (`RangeError`).
+
+**Important:** passing both an `options` instance/`Hash` and keyword arguments raises `InvalidArgumentCombinationError`.
+
+#### Summary
+
+| Class | Inherits from | Category | Trigger condition |
+|---|---|---|---|
+| `CnpjGen::InvalidArgumentCombinationError` | `ArgumentError` (+ `include Error`) | API misuse | Both an `options` instance/`Hash` and keyword arguments are passed at once |
+| `CnpjGen::TypeMismatchError` | `TypeError` (+ `include Error`) | API misuse | A generator option has the wrong data type |
+| `CnpjGen::ValidationError` | `CnpjGen::DomainError` | Domain error | `prefix` is ineligible, or `type` is not one of the allowed values |
+
+#### `CnpjGen::Error` (marker module)
+
+- **Inheritance:** module marker mixed into every library error via `include` (not a class).
+- **Category:** N/A (rescue target only) — not a failure mode by itself.
+- **When it is raised:** Never raised directly; included by every custom error the library raises.
+- **Example:** N/A
+- **How to rescue it:**
 
 ```ruby
-require 'cnpj-gen'
+rescue CnpjGen::Error
+  # everything this library raises
+```
 
-# Option type (e.g. `prefix` must be String)
-begin
-  CnpjGen.cnpj_gen(prefix: 123)
-rescue CnpjGen::CnpjGeneratorOptionsTypeError => e
-  puts e.option_name, e.expected_type, e.actual_type
-  # CNPJ generator option "prefix" must be of type string. Got integer number.
-end
+#### `CnpjGen::DomainError`
 
-# Invalid prefix (e.g. all-zero base)
-begin
-  CnpjGen.cnpj_gen(prefix: '000000000001')
-rescue CnpjGen::CnpjGeneratorOptionPrefixInvalidException => e
-  puts e.reason, e.actual_input
-end
+- **Inheritance:** `CnpjGen::DomainError < RangeError` (includes `CnpjGen::Error`)
+- **Category:** Domain error — ancestor for all domain failures.
+- **When it is raised:** Not raised directly; prefer raising a leaf subclass.
+- **Example:** Prefer `raise CnpjGen::ValidationError` over raising `DomainError` directly.
+- **How to rescue it:**
 
-# Invalid type value
-begin
-  CnpjGen.cnpj_gen(type: 'invalid')
-rescue CnpjGen::CnpjGeneratorOptionTypeInvalidException => e
-  puts e.expected_values, e.actual_input
-end
+```ruby
+rescue CnpjGen::DomainError
+  # ValidationError and other DomainError subclasses
+```
 
-# Any exception from the package
+#### `CnpjGen::TypeMismatchError`
+
+- **Inheritance:** `CnpjGen::TypeMismatchError < TypeError` (includes `CnpjGen::Error`)
+- **Category:** API misuse — the caller passed a value of the wrong type.
+- **When it is raised:** Raised when a generator option (`format`, `prefix`, or `type`) has the wrong runtime type.
+- **Example:**
+
+```ruby
+CnpjGen.cnpj_gen(prefix: 123) # raises CnpjGen::TypeMismatchError
+```
+
+- **How to rescue it:**
+
+```ruby
+rescue CnpjGen::TypeMismatchError
+  # this library's type-contract violation
+
+rescue TypeError
+  # native type errors, including this library's TypeMismatchError
+```
+
+#### `CnpjGen::InvalidArgumentCombinationError`
+
+- **Inheritance:** `CnpjGen::InvalidArgumentCombinationError < ArgumentError` (includes `CnpjGen::Error`)
+- **Category:** API misuse — the caller mixed mutually exclusive argument patterns.
+- **When it is raised:** Raised when `CnpjGenerator.new`, `#generate`, or `cnpj_gen` receives both an `options` argument (instance or `Hash`) and any non-`nil` keyword argument at the same time.
+- **Example:**
+
+```ruby
 begin
-  CnpjGen.cnpj_gen(prefix: '000000000000')
-rescue CnpjGen::CnpjGeneratorException => e
+  CnpjGen::CnpjGenerator.new({ format: true }, prefix: 'AB')
+rescue CnpjGen::InvalidArgumentCombinationError => e
   puts e.message
+  # Pass either an options instance/Hash to `options`, or keyword arguments (format:, prefix:, type:), not both.
 end
 ```
 
-Notable attributes on raised errors:
+- **How to rescue it:**
 
-- `CnpjGeneratorOptionsTypeError`: `option_name`, `actual_input`, `actual_type`, `expected_type`
-- `CnpjGeneratorOptionPrefixInvalidException`: `actual_input`, `reason`
-- `CnpjGeneratorOptionTypeInvalidException`: `actual_input`, `expected_values`
+```ruby
+rescue CnpjGen::InvalidArgumentCombinationError
+  # this library's invalid argument combination
+
+rescue ArgumentError
+  # native argument errors, including this library's InvalidArgumentCombinationError
+```
+
+#### `CnpjGen::ValidationError`
+
+- **Inheritance:** `CnpjGen::ValidationError < CnpjGen::DomainError < RangeError` (includes `CnpjGen::Error`)
+- **Category:** Domain error — a value fails a non-numeric, non-length domain rule.
+- **When it is raised:** Raised when `prefix` is ineligible (zeroed base/branch ID, or 12 repeated digits), or when `type` is not one of `'alphabetic'`, `'alphanumeric'`, or `'numeric'`.
+- **Example:**
+
+```ruby
+CnpjGen.cnpj_gen(prefix: '000000000001') # raises CnpjGen::ValidationError
+CnpjGen.cnpj_gen(type: 'invalid')        # raises CnpjGen::ValidationError
+```
+
+- **How to rescue it:**
+
+```ruby
+rescue CnpjGen::ValidationError
+  # this exact domain validation failure
+
+rescue CnpjGen::DomainError
+  # RangeError-rooted domain failures from this library
+```
+
+#### Rescue granularity
+
+```ruby
+# 1) Single native class — catches type misuse from this library (and other TypeErrors).
+rescue TypeError
+  # CnpjGen::TypeMismatchError and any other TypeError (library or not)
+
+# 2) CnpjGen::DomainError — catches business-rule violations under DomainError.
+rescue CnpjGen::DomainError
+  # CnpjGen::ValidationError and other DomainError subclasses
+
+# 3) CnpjGen::Error — catches everything the library raises.
+rescue CnpjGen::Error
+  # every custom error that includes CnpjGen::Error
+
+# 4) Specific leaf class — catches only that exact failure mode.
+rescue CnpjGen::ValidationError
+  # only CnpjGen::ValidationError
+```
+
+Notable attributes:
+
+- `TypeMismatchError`: `option_name`, `actual_input`, `actual_type`, `expected_type`
+- `ValidationError`: `option_name`, `actual_input`, `reason` (prefix failures), `expected_values` (type failures)
+
+Property setters never accept `nil` directly — pass the matching `DEFAULT_*` constant to reset:
+
+```ruby
+options = CnpjGen::CnpjGeneratorOptions.new
+begin
+  options.prefix = nil
+rescue CnpjGen::TypeMismatchError => e
+  puts e.message
+  # CNPJ generator option "prefix" must be of type string. Got nil.
+end
+
+options.prefix = CnpjGen::CnpjGeneratorOptions::DEFAULT_PREFIX # explicit reset instead
+```
 
 Check-digit computation failures from `cnpj-dv` are handled internally by retrying generation with the same resolved options; they are not raised to callers under normal operation.
 

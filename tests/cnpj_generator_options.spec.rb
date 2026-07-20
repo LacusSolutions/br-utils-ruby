@@ -135,6 +135,24 @@ RSpec.describe CnpjGen::CnpjGeneratorOptions do
 
         expect(options.prefix).to eq('77888999')
       end
+
+      it 'ignores a nil value inside a later layer' do
+        options = described_class.new({ prefix: '11222333' }, { prefix: nil })
+
+        expect(options.prefix).to eq('11222333')
+      end
+
+      it 'gives keyword arguments precedence over every positional layer' do
+        options = described_class.new({ prefix: '12345' }, { prefix: '11222333' }, prefix: '99999999')
+
+        expect(options.prefix).to eq('99999999')
+      end
+
+      it 'ignores a nil keyword argument in favor of the positional layers' do
+        options = described_class.new({ prefix: '11222333' }, prefix: nil)
+
+        expect(options.prefix).to eq('11222333')
+      end
     end
   end
 
@@ -156,11 +174,14 @@ RSpec.describe CnpjGen::CnpjGeneratorOptions do
     end
 
     context 'when setting to a nil value' do
-      it 'sets the default value' do
+      it 'raises TypeMismatchError' do
         options = described_class.new(format: !described_class::DEFAULT_FORMAT)
-        options.format = nil
 
-        expect(options.format).to eq(default_parameters[:format])
+        expect { options.format = nil }
+          .to raise_error(
+            CnpjGen::TypeMismatchError,
+            'CNPJ generator option "format" must be of type boolean. Got nil.'
+          )
       end
     end
 
@@ -234,41 +255,44 @@ RSpec.describe CnpjGen::CnpjGeneratorOptions do
     end
 
     context 'when setting to a nil value' do
-      it 'sets the default value' do
+      it 'raises TypeMismatchError' do
         options = described_class.new(prefix: '12345')
-        options.prefix = nil
 
-        expect(options.prefix).to eq(default_parameters[:prefix])
+        expect { options.prefix = nil }
+          .to raise_error(
+            CnpjGen::TypeMismatchError,
+            'CNPJ generator option "prefix" must be of type string. Got nil.'
+          )
       end
     end
 
     context 'when setting to a non-string value' do
-      it 'raises CnpjGeneratorOptionsTypeError for an object' do
+      it 'raises TypeMismatchError for an object' do
         options = described_class.new
 
         expect { options.prefix = { not: 'a string' } }
           .to raise_error(
-            CnpjGen::CnpjGeneratorOptionsTypeError,
-            'CNPJ generator option "prefix" must be of type string. Got object.'
+            CnpjGen::TypeMismatchError,
+            'CNPJ generator option "prefix" must be of type string. Got hash.'
           )
       end
 
-      it 'raises CnpjGeneratorOptionsTypeError for a number' do
+      it 'raises TypeMismatchError for a number' do
         options = described_class.new
 
         expect { options.prefix = 123 }
           .to raise_error(
-            CnpjGen::CnpjGeneratorOptionsTypeError,
+            CnpjGen::TypeMismatchError,
             'CNPJ generator option "prefix" must be of type string. Got integer number.'
           )
       end
 
-      it 'raises CnpjGeneratorOptionsTypeError for a boolean' do
+      it 'raises TypeMismatchError for a boolean' do
         options = described_class.new
 
         expect { options.prefix = true }
           .to raise_error(
-            CnpjGen::CnpjGeneratorOptionsTypeError,
+            CnpjGen::TypeMismatchError,
             'CNPJ generator option "prefix" must be of type string. Got boolean.'
           )
       end
@@ -280,7 +304,7 @@ RSpec.describe CnpjGen::CnpjGeneratorOptions do
 
         expect { options.prefix = '00000000' }
           .to raise_error(
-            CnpjGen::CnpjGeneratorOptionPrefixInvalidException,
+            CnpjGen::ValidationError,
             'CNPJ generator option "prefix" with value "00000000" is invalid. ' \
             'Zeroed base ID is not eligible.'
           )
@@ -291,7 +315,7 @@ RSpec.describe CnpjGen::CnpjGeneratorOptions do
 
         expect { options.prefix = '123456780000' }
           .to raise_error(
-            CnpjGen::CnpjGeneratorOptionPrefixInvalidException,
+            CnpjGen::ValidationError,
             'CNPJ generator option "prefix" with value "123456780000" is invalid. ' \
             'Zeroed branch ID is not eligible.'
           )
@@ -303,7 +327,7 @@ RSpec.describe CnpjGen::CnpjGeneratorOptions do
 
           expect { options.prefix = prefix }
             .to raise_error(
-              CnpjGen::CnpjGeneratorOptionPrefixInvalidException,
+              CnpjGen::ValidationError,
               %(CNPJ generator option "prefix" with value "#{prefix}" is invalid. ) \
               'Repeated digits are not considered valid.'
             )
@@ -334,52 +358,55 @@ RSpec.describe CnpjGen::CnpjGeneratorOptions do
     end
 
     context 'when setting to a nil value' do
-      it 'sets the default value' do
+      it 'raises TypeMismatchError' do
         options = described_class.new(type: 'numeric')
-        options.type = nil
 
-        expect(options.type).to eq(default_parameters[:type])
+        expect { options.type = nil }
+          .to raise_error(
+            CnpjGen::TypeMismatchError,
+            'CNPJ generator option "type" must be of type string. Got nil.'
+          )
       end
     end
 
     context 'when setting to a non-string value' do
-      it 'raises CnpjGeneratorOptionsTypeError for an object' do
+      it 'raises TypeMismatchError for an object' do
         options = described_class.new
 
         expect { options.type = { not: 'a string' } }
           .to raise_error(
-            CnpjGen::CnpjGeneratorOptionsTypeError,
-            'CNPJ generator option "type" must be of type string. Got object.'
+            CnpjGen::TypeMismatchError,
+            'CNPJ generator option "type" must be of type string. Got hash.'
           )
       end
 
-      it 'raises CnpjGeneratorOptionsTypeError for a number' do
+      it 'raises TypeMismatchError for a number' do
         options = described_class.new
 
         expect { options.type = 123 }
           .to raise_error(
-            CnpjGen::CnpjGeneratorOptionsTypeError,
+            CnpjGen::TypeMismatchError,
             'CNPJ generator option "type" must be of type string. Got integer number.'
           )
       end
 
-      it 'raises CnpjGeneratorOptionsTypeError for a boolean' do
+      it 'raises TypeMismatchError for a boolean' do
         options = described_class.new
 
         expect { options.type = true }
           .to raise_error(
-            CnpjGen::CnpjGeneratorOptionsTypeError,
+            CnpjGen::TypeMismatchError,
             'CNPJ generator option "type" must be of type string. Got boolean.'
           )
       end
     end
 
     context 'when setting to an invalid option' do
-      it 'raises CnpjGeneratorOptionTypeInvalidException' do
+      it 'raises ValidationError' do
         options = described_class.new
 
         expect { options.type = 'something' }
-          .to raise_error(CnpjGen::CnpjGeneratorOptionTypeInvalidException, CNPJ_GENERATOR_OPTIONS_TYPE_INVALID_MESSAGE)
+          .to raise_error(CnpjGen::ValidationError, CNPJ_GENERATOR_OPTIONS_TYPE_INVALID_MESSAGE)
       end
     end
   end

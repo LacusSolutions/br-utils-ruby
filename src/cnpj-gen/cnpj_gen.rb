@@ -18,18 +18,17 @@ module CnpjGen
   # style output.
   #
   # @param options [CnpjGeneratorOptions, Hash, nil] generator options
-  # @param format [Boolean, nil] whether to format the generated CNPJ
-  # @param prefix [String, nil] partial start string for the generated CNPJ
-  # @param type [String, nil] character set for random segments
+  # @param keywords [Hash] option keyword overrides (mutually exclusive with +options+;
+  #   see {CnpjGeneratorOptions})
   # @return [String] generated CNPJ
-  # @raise [CnpjGeneratorOptionsTypeError] if any option has an invalid type
-  # @raise [CnpjGeneratorOptionPrefixInvalidException] if +prefix+ is invalid
-  # @raise [CnpjGeneratorOptionTypeInvalidException] if +type+ is not allowed
+  # @raise [InvalidArgumentCombinationError] if +options+ and a keyword argument are both given
+  # @raise [TypeMismatchError] if any option has an invalid type
+  # @raise [ValidationError] if +prefix+ is invalid or +type+ is not allowed
   # @see CnpjGenerator for detailed option descriptions
   #
   # @example
   #   CnpjGen.cnpj_gen # => "AB123CDE000155"
-  def cnpj_gen(options = nil, format: nil, prefix: nil, type: nil)
-    CnpjGenerator.new(options, format: format, prefix: prefix, type: type).generate
+  def cnpj_gen(options = nil, **keywords)
+    CnpjGenerator.new(options, **keywords).generate
   end
 end
