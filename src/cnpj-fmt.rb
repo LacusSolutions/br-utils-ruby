@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'cnpj-fmt/version'
-require_relative 'cnpj-fmt/exceptions'
+require_relative 'cnpj-fmt/errors'
 require_relative 'cnpj-fmt/types'
 require_relative 'cnpj-fmt/cnpj_formatter_options'
 require_relative 'cnpj-fmt/formatter_support'
