@@ -379,7 +379,7 @@ RSpec.describe CnpjGen::CnpjGenerator do
       end
     end
 
-    context 'when CnpjCheckDigits raises an exception' do
+    context 'when CnpjCheckDigits raises a DomainError' do
       before do
         allow(LacusUtils).to receive(:generate_random_sequence)
           .and_return('111111111111', '123456780001')
