@@ -127,16 +127,16 @@ RSpec.describe CnpjDV::ValidationError do
   end
 
   context 'when instantiated' do
-    it 'is an ArgumentError' do
-      expect(error).to be_a(ArgumentError)
+    it 'is a RangeError' do
+      expect(error).to be_a(RangeError)
+    end
+
+    it 'is a DomainError' do
+      expect(error).to be_a(CnpjDV::DomainError)
     end
 
     it 'includes CnpjDV::Error' do
       expect(error).to be_a(CnpjDV::Error)
-    end
-
-    it 'is not a DomainError' do
-      expect(error).not_to be_a(CnpjDV::DomainError)
     end
 
     it 'exposes the class name' do

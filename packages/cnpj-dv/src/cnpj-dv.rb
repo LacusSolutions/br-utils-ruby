@@ -12,8 +12,8 @@ require_relative 'cnpj-dv/cnpj_check_digits'
 #   Raised as {CnpjDV::TypeMismatchError} (+TypeError+).
 # - *Domain errors* — the call shape was valid, but a value violates a business
 #   rule (invalid length, ineligible base/branch, repeated digits). Length
-#   failures raise {CnpjDV::InvalidLengthError} (+DomainError+ / +RangeError+);
-#   other domain failures raise {CnpjDV::ValidationError} (+ArgumentError+).
+#   failures raise {CnpjDV::InvalidLengthError}; other domain failures raise
+#   {CnpjDV::ValidationError} (both under {CnpjDV::DomainError} / +RangeError+).
 #
 # Every custom error includes the {CnpjDV::Error} marker module so consumers can
 # +rescue CnpjDV::Error+ for a library-wide catch.
