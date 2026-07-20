@@ -6,16 +6,6 @@ require 'lacus-utils'
 require_relative 'cnpj_generator_options'
 
 module CnpjGen
-  # Formats a raw 14-character CNPJ into the standard masked representation.
-  module FormatCnpj
-    module_function
-
-    def call(raw)
-      "#{raw[0, 2]}.#{raw[2, 3]}.#{raw[5, 3]}/#{raw[8, 4]}-#{raw[12, 2]}"
-    end
-  end
-  private_constant :FormatCnpj
-
   # Generator for CNPJ (Cadastro Nacional da Pessoa Jurídica) identifiers. Builds
   # valid 14-character CNPJ values by combining an optional +prefix+ with a
   # randomly generated sequence and computed check digits. Options control
@@ -38,26 +28,28 @@ module CnpjGen
     # per-call +options+ argument or keyword overrides. Options control +prefix+,
     # character +type+, and whether the generated CNPJ is formatted.
     #
+    # +options+ and the keyword arguments are never merged with each other: when
+    # +options+ is given (a {CnpjGeneratorOptions} instance or a {Hash}), it alone
+    # determines the default options; otherwise, the default options are built
+    # exclusively from the keyword arguments, with {CnpjGeneratorOptions} filling
+    # in its own defaults for every keyword left as +nil+. Passing +options+
+    # together with any non-+nil+ keyword argument raises
+    # {InvalidArgumentCombinationError} instead of silently ignoring the keywords.
+    #
     # When +options+ is a {CnpjGeneratorOptions} instance, that instance is used
     # directly (no copy is created). Mutating it later (e.g. via the {#options}
     # reader or the original reference) affects future {#generate} calls that do
-    # not pass per-call options. When a plain {Hash} or nothing is passed, a new
+    # not pass per-call options. When a plain {Hash} is passed instead, a new
     # {CnpjGeneratorOptions} instance is created from it.
     #
     # @param options [CnpjGeneratorOptions, Hash, nil] default options
-    # @param format [Boolean, nil] default formatting option
-    # @param prefix [String, nil] default prefix option
-    # @param type [String, nil] default type option
-    # @raise [CnpjGeneratorOptionsTypeError] if any option has an invalid type
-    # @raise [CnpjGeneratorOptionPrefixInvalidException] if +prefix+ is invalid
-    # @raise [CnpjGeneratorOptionTypeInvalidException] if +type+ is not allowed
-    def initialize(options = nil, format: nil, prefix: nil, type: nil)
-      @options =
-        if options.is_a?(CnpjGeneratorOptions)
-          options
-        else
-          CnpjGeneratorOptions.new(options, format: format, prefix: prefix, type: type)
-        end
+    # @param keywords [Hash] option keyword overrides (mutually exclusive with +options+;
+    #   see {CnpjGeneratorOptions})
+    # @raise [InvalidArgumentCombinationError] if +options+ and a keyword argument are both given
+    # @raise [TypeMismatchError] if any option has an invalid type
+    # @raise [ValidationError] if +prefix+ is invalid or +type+ is not allowed
+    def initialize(options = nil, **keywords)
+      @options = resolve_default_options(options, keywords)
     end
 
     # Generates a valid CNPJ value.
@@ -66,55 +58,65 @@ module CnpjGen
     # sequence of the configured character +type+, and two computed check digits.
     # If formatting is enabled, the result is returned as +00.000.000/0000-00+.
     #
-    # Per-call +options+ and keyword overrides are merged over the instance default
-    # options for this call only; the instance defaults are unchanged.
+    # +options+ and the keyword arguments are never merged with each other: when
+    # +options+ is given (a {CnpjGeneratorOptions} instance or a {Hash}), it alone
+    # overrides the instance default options for this call; otherwise, any
+    # non-+nil+ keyword argument overrides the instance default options for this
+    # call. When neither +options+ nor any keyword argument is given, the
+    # instance default options are used as-is. In every case, the instance
+    # default options themselves are left unchanged. Passing +options+ together
+    # with any non-+nil+ keyword argument raises {InvalidArgumentCombinationError}
+    # instead of silently ignoring the keywords.
     #
     # @param options [CnpjGeneratorOptions, Hash, nil] per-call option overrides
-    # @param format [Boolean, nil] per-call formatting option
-    # @param prefix [String, nil] per-call prefix option
-    # @param type [String, nil] per-call type option
+    # @param keywords [Hash] per-call option keyword overrides (mutually exclusive
+    #   with +options+; see {CnpjGeneratorOptions})
     # @return [String] generated CNPJ
-    # @raise [CnpjGeneratorOptionsTypeError] if any option has an invalid type
-    # @raise [CnpjGeneratorOptionPrefixInvalidException] if +prefix+ is invalid
-    # @raise [CnpjGeneratorOptionTypeInvalidException] if +type+ is not allowed
-    def generate(options = nil, format: nil, prefix: nil, type: nil)
-      actual_options = resolve_generate_options(options, format: format, prefix: prefix, type: type)
+    # @raise [InvalidArgumentCombinationError] if +options+ and a keyword argument are both given
+    # @raise [TypeMismatchError] if any option has an invalid type
+    # @raise [ValidationError] if +prefix+ is invalid or +type+ is not allowed
+    def generate(options = nil, **keywords)
+      actual_options = resolve_call_options(options, keywords)
       generated_cnpj = build_base_cnpj(actual_options)
-      retry_args = { options: options, format: format, prefix: prefix, type: type }
 
-      with_check_digits(generated_cnpj, **retry_args) do |cnpj_with_digits|
-        actual_options.format ? FormatCnpj.call(cnpj_with_digits) : cnpj_with_digits
+      with_check_digits(generated_cnpj, options, keywords) do |cnpj_with_digits|
+        actual_options.format ? Utils.format_cnpj(cnpj_with_digits) : cnpj_with_digits
       end
     end
 
     private
 
-    def resolve_generate_options(options, format:, prefix:, type:)
-      return @options unless per_call_overrides?(options, format: format, prefix: prefix, type: type)
+    def resolve_default_options(options, keywords)
+      keyword_overrides = compact_keyword_overrides(keywords)
+      raise_ambiguous_options! if options && !keyword_overrides.empty?
+      return options if options.is_a?(CnpjGeneratorOptions)
+      return CnpjGeneratorOptions.new(options) if options
 
-      merge_options(options, format: format, prefix: prefix, type: type)
+      CnpjGeneratorOptions.new(**keywords)
     end
 
-    def per_call_overrides?(options, format:, prefix:, type:)
-      !options.nil? || !format.nil? || !prefix.nil? || !type.nil?
+    def resolve_call_options(options, keywords)
+      keyword_overrides = compact_keyword_overrides(keywords)
+      raise_ambiguous_options! if options && !keyword_overrides.empty?
+      return @options.copy.set(options) if options
+      return @options if keyword_overrides.empty?
+
+      @options.copy.set(keyword_overrides)
     end
 
-    def merge_options(options, format:, prefix:, type:)
-      layers = [@options]
-      layers << options unless options.nil?
-
-      keyword_overrides = compact_keyword_overrides(format: format, prefix: prefix, type: type)
-      layers << keyword_overrides unless keyword_overrides.empty?
-
-      CnpjGeneratorOptions.new(*layers)
-    end
-
-    def compact_keyword_overrides(format:, prefix:, type:)
-      {}.tap do |overrides|
-        overrides[:format] = format unless format.nil?
-        overrides[:prefix] = prefix unless prefix.nil?
-        overrides[:type] = type unless type.nil?
+    def compact_keyword_overrides(keywords)
+      CnpjGeneratorOptions::OPTION_KEYS.each_with_object({}) do |key, overrides|
+        value = keywords[key]
+        overrides[key] = value unless value.nil?
       end
+    end
+
+    def raise_ambiguous_options!
+      option_keywords = CnpjGeneratorOptions::OPTION_KEYS.map { |key| "#{key}:" }.join(', ')
+
+      raise InvalidArgumentCombinationError,
+            "Pass either an options instance/Hash to `options`, or keyword arguments (#{option_keywords}), " \
+            'not both.'
     end
 
     def build_base_cnpj(actual_options)
@@ -126,12 +128,12 @@ module CnpjGen
       )
     end
 
-    def with_check_digits(generated_cnpj, options:, format:, prefix:, type:)
+    def with_check_digits(generated_cnpj, options, keywords)
       cnpj_with_digits = CnpjDV::CnpjCheckDigits.new(generated_cnpj).cnpj
 
       yield cnpj_with_digits
     rescue CnpjDV::CnpjCheckDigitsException
-      generate(options, format: format, prefix: prefix, type: type)
+      generate(options, **keywords)
     end
   end
 end

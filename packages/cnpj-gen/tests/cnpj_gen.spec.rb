@@ -17,5 +17,12 @@ RSpec.describe CnpjGen do
         expect(result).to match(%r{\A12\.345\.\d{3}/\d{4}-\d{2}\z})
       end
     end
+
+    context 'when called with keyword options' do
+      it 'raises InvalidArgumentCombinationError when options and keywords are both given' do
+        expect { described_class.cnpj_gen({ format: true }, prefix: 'AB') }
+          .to raise_error(CnpjGen::InvalidArgumentCombinationError, /options.*keyword arguments.*not both/)
+      end
+    end
   end
 end

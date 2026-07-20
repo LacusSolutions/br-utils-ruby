@@ -1,11 +1,10 @@
 # frozen_string_literal: true
 
-require_relative 'types'
-require_relative 'exceptions'
-
 module CnpjGen
-  # Internal validation helpers for {CnpjGeneratorOptions}.
-  module GeneratorOptionsValidation
+  # Low-level helpers used by {CnpjGenerator} and {CnpjGeneratorOptions}.
+  #
+  # @api private
+  module Utils
     module_function
 
     # rubocop:disable Naming/PredicateMethod -- coercion helper, not a predicate query
@@ -19,7 +18,7 @@ module CnpjGen
     def assert_string_option!(option_name, value)
       return if value.is_a?(String)
 
-      raise CnpjGeneratorOptionsTypeError.new(option_name, value, 'string')
+      raise TypeMismatchError.new(value, 'string', option_name: option_name)
     end
 
     def fetch_option(source, key)
@@ -30,12 +29,10 @@ module CnpjGen
     end
 
     def sanitize_prefix(value)
-      actual_prefix = value.nil? ? CnpjGeneratorOptions::DEFAULT_PREFIX : value
+      assert_string_option!('prefix', value)
 
-      assert_string_option!('prefix', actual_prefix)
-
-      actual_prefix = actual_prefix.gsub(CnpjGeneratorOptions::PREFIX_SANITIZE_PATTERN, '').upcase
-      actual_prefix[0, CnpjGeneratorOptions::CNPJ_PREFIX_MAX_LENGTH]
+      sanitized = value.gsub(CnpjGeneratorOptions::PREFIX_SANITIZE_PATTERN, '').upcase
+      sanitized[0, CnpjGeneratorOptions::CNPJ_PREFIX_MAX_LENGTH]
     end
 
     def validate_prefix!(partial_cnpj)
@@ -51,9 +48,10 @@ module CnpjGen
 
       return unless cnpj_base_id == CnpjGeneratorOptions::ZEROED_CNPJ_BASE_ID
 
-      raise CnpjGeneratorOptionPrefixInvalidException.new(
+      raise ValidationError.new(
+        'prefix',
         partial_cnpj,
-        'Zeroed base ID is not eligible.'
+        reason: 'Zeroed base ID is not eligible.'
       )
     end
 
@@ -64,9 +62,10 @@ module CnpjGen
       return if partial_cnpj.length < minimum_length
       return unless branch_id == CnpjGeneratorOptions::ZEROED_CNPJ_BRANCH_ID
 
-      raise CnpjGeneratorOptionPrefixInvalidException.new(
+      raise ValidationError.new(
+        'prefix',
         partial_cnpj,
-        'Zeroed branch ID is not eligible.'
+        reason: 'Zeroed branch ID is not eligible.'
       )
     end
 
@@ -78,10 +77,16 @@ module CnpjGen
       return unless first_character.match?(/\A\d\z/)
       return unless cnpj_prefix == first_character * CnpjGeneratorOptions::CNPJ_PREFIX_MAX_LENGTH
 
-      raise CnpjGeneratorOptionPrefixInvalidException.new(
+      raise ValidationError.new(
+        'prefix',
         cnpj_prefix,
-        'Repeated digits are not considered valid.'
+        reason: 'Repeated digits are not considered valid.'
       )
+    end
+
+    # Formats a raw 14-character CNPJ into the standard masked representation.
+    def format_cnpj(raw)
+      "#{raw[0, 2]}.#{raw[2, 3]}.#{raw[5, 3]}/#{raw[8, 4]}-#{raw[12, 2]}"
     end
   end
 end

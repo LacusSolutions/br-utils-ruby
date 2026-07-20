@@ -135,19 +135,35 @@ RSpec.describe CnpjGen::CnpjGenerator do
     end
 
     context 'when called with invalid options' do
-      it 'raises CnpjGeneratorOptionPrefixInvalidException' do
+      it 'raises ValidationError' do
         expect { described_class.new(prefix: '00000000') }
-          .to raise_error(CnpjGen::CnpjGeneratorOptionPrefixInvalidException)
+          .to raise_error(CnpjGen::ValidationError)
       end
 
-      it 'raises CnpjGeneratorOptionTypeInvalidException' do
+      it 'raises ValidationError' do
         expect { described_class.new(type: 'invalid') }
-          .to raise_error(CnpjGen::CnpjGeneratorOptionTypeInvalidException)
+          .to raise_error(CnpjGen::ValidationError)
       end
 
-      it 'raises CnpjGeneratorOptionsTypeError' do
+      it 'raises TypeMismatchError' do
         expect { described_class.new(prefix: 123) }
-          .to raise_error(CnpjGen::CnpjGeneratorOptionsTypeError)
+          .to raise_error(CnpjGen::TypeMismatchError)
+      end
+    end
+
+    context 'when called with both an options instance and keyword arguments' do
+      it 'raises InvalidArgumentCombinationError' do
+        options = CnpjGen::CnpjGeneratorOptions.new(format: true, prefix: '12345678', type: 'numeric')
+
+        expect { described_class.new(options, format: false) }
+          .to raise_error(CnpjGen::InvalidArgumentCombinationError, /options.*keyword arguments.*not both/)
+      end
+    end
+
+    context 'when called with both an options Hash and keyword arguments' do
+      it 'raises InvalidArgumentCombinationError' do
+        expect { described_class.new({ format: true }, prefix: 'AB') }
+          .to raise_error(CnpjGen::InvalidArgumentCombinationError, /options.*keyword arguments.*not both/)
       end
     end
   end
@@ -341,6 +357,25 @@ RSpec.describe CnpjGen::CnpjGenerator do
             end
           end
         end
+      end
+    end
+
+    context 'when called with both an options instance and keyword arguments' do
+      it 'raises InvalidArgumentCombinationError' do
+        generator = described_class.new(format: false, prefix: 'AB', type: 'alphabetic')
+        per_call_options = CnpjGen::CnpjGeneratorOptions.new(format: true, prefix: '12345678', type: 'numeric')
+
+        expect { generator.generate(per_call_options, format: false) }
+          .to raise_error(CnpjGen::InvalidArgumentCombinationError, /options.*keyword arguments.*not both/)
+      end
+    end
+
+    context 'when called with both an options Hash and keyword arguments' do
+      it 'raises InvalidArgumentCombinationError' do
+        generator = described_class.new
+
+        expect { generator.generate({ format: true }, prefix: 'AB') }
+          .to raise_error(CnpjGen::InvalidArgumentCombinationError, /options.*keyword arguments.*not both/)
       end
     end
 
