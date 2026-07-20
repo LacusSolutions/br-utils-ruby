@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'exceptions'
+require_relative 'errors'
 
 module CnpjDV
   # Minimum number of characters required for the CNPJ check digits calculation.
