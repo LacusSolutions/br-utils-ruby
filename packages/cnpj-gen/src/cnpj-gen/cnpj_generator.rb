@@ -132,7 +132,7 @@ module CnpjGen
       cnpj_with_digits = CnpjDV::CnpjCheckDigits.new(generated_cnpj).cnpj
 
       yield cnpj_with_digits
-    rescue CnpjDV::CnpjCheckDigitsException
+    rescue CnpjDV::DomainError
       generate(options, **keywords)
     end
   end
