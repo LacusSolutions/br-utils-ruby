@@ -24,8 +24,7 @@ require_relative 'cnpj-dv/cnpj_check_digits'
 # - {CnpjDV::CNPJ_MIN_LENGTH}, {CnpjDV::CNPJ_MAX_LENGTH}
 # - Error marker {CnpjDV::Error}; domain ancestor {CnpjDV::DomainError};
 #   raised leaves {CnpjDV::TypeMismatchError}, {CnpjDV::InvalidLengthError},
-#   {CnpjDV::ValidationError} (plus unused skeleton leaves for monorepo
-#   consistency)
+#   {CnpjDV::ValidationError}
 #
 # @example
 #   require 'cnpj-dv'

@@ -45,38 +45,6 @@ RSpec.describe CnpjDV::TypeMismatchError do
   end
 end
 
-RSpec.describe CnpjDV::MissingArgumentError do
-  subject(:error) { described_class.new('missing') }
-
-  it 'is an ArgumentError' do
-    expect(error).to be_a(ArgumentError)
-  end
-
-  it 'includes CnpjDV::Error' do
-    expect(error).to be_a(CnpjDV::Error)
-  end
-
-  it 'is not a DomainError' do
-    expect(error).not_to be_a(CnpjDV::DomainError)
-  end
-end
-
-RSpec.describe CnpjDV::InvalidArgumentCombinationError do
-  subject(:error) { described_class.new('invalid combination') }
-
-  it 'is an ArgumentError' do
-    expect(error).to be_a(ArgumentError)
-  end
-
-  it 'includes CnpjDV::Error' do
-    expect(error).to be_a(CnpjDV::Error)
-  end
-
-  it 'is not a DomainError' do
-    expect(error).not_to be_a(CnpjDV::DomainError)
-  end
-end
-
 RSpec.describe CnpjDV::DomainError do
   before do
     stub_const('CnpjDV::TestDomainError', Class.new(described_class))
@@ -104,22 +72,6 @@ RSpec.describe CnpjDV::DomainError do
     it 'exposes the message' do
       expect(error.message).to eq('some error')
     end
-  end
-end
-
-RSpec.describe CnpjDV::OutOfRangeError do
-  subject(:error) { described_class.new('out of range') }
-
-  it 'is a DomainError' do
-    expect(error).to be_a(CnpjDV::DomainError)
-  end
-
-  it 'is a RangeError' do
-    expect(error).to be_a(RangeError)
-  end
-
-  it 'includes CnpjDV::Error' do
-    expect(error).to be_a(CnpjDV::Error)
   end
 end
 
