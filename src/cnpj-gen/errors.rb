@@ -78,7 +78,7 @@ module CnpjGen
       @option_name = option_name
       @actual_input = actual_input
       @reason = reason
-      @expected_values = expected_values&.dup
+      @expected_values = expected_values&.dup&.freeze
     end
 
     private
