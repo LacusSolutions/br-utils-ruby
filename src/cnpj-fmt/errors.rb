@@ -23,8 +23,8 @@ module CnpjFmt
   # ancestry.
   module Error; end
 
-  # Raised when an argument's runtime type does not match the type required by
-  # the API contract (CNPJ input or a formatting option).
+  # API misuse error raised when an argument's runtime type does not match the
+  # type required by the API contract (CNPJ input or a formatting option).
   class TypeMismatchError < TypeError
     include Error
 
@@ -63,20 +63,20 @@ module CnpjFmt
     end
   end
 
-  # Raised when the combination of provided arguments does not match any valid
-  # overload-style signature.
+  # API misuse error raised when the combination of provided arguments does not
+  # match any valid overload-style signature.
   class InvalidArgumentCombinationError < ArgumentError
     include Error
   end
 
-  # Raised when arguments have invalid value or key constraints and rules are
-  # violated.
+  # Domain error ancestor for business-rule failures (length, range, validation,
+  # and other domain leaves). Prefer raising or constructing a leaf subclass.
   class DomainError < RangeError
     include Error
   end
 
-  # Raised when +hidden_start+ or +hidden_end+ falls outside the valid index
-  # range for CNPJ formatting.
+  # Domain error raised when +hidden_start+ or +hidden_end+ falls outside the
+  # valid index range for CNPJ formatting.
   class OutOfRangeError < DomainError
     # @return [String] the offending option name
     attr_reader :option_name
@@ -106,7 +106,8 @@ module CnpjFmt
     end
   end
 
-  # Constructed when the sanitized CNPJ input does not have the required length.
+  # Domain error constructed when the sanitized CNPJ input does not have the
+  # required length.
   #
   # Passed to the +on_fail+ callback as a {DomainError}; not raised from
   # {CnpjFormatter#format}.
@@ -146,7 +147,7 @@ module CnpjFmt
     end
   end
 
-  # Raised when a key option contains a disallowed character.
+  # Domain error raised when a key option contains a disallowed character.
   class ValidationError < DomainError
     # @return [String] the offending option name
     attr_reader :option_name
