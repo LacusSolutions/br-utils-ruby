@@ -242,8 +242,8 @@ module CnpjFmt
     # Returns the callback executed when formatting fails.
     #
     # This function is called when the formatter encounters an error (e.g.,
-    # invalid input length). It receives the input value and an exception object,
-    # and should return a string to use as the fallback output.
+    # invalid input length). It receives the input value and a {DomainError}, and
+    # should return a string to use as the fallback output.
     #
     # @return [Proc] failure callback
     def on_fail
@@ -253,8 +253,8 @@ module CnpjFmt
     # Sets the callback executed when formatting fails.
     #
     # This function is called when the formatter encounters an error (e.g.,
-    # invalid input length). It receives the input value and an exception object,
-    # and should return a string to use as the fallback output.
+    # invalid input length). It receives the input value and a {DomainError}, and
+    # should return a string to use as the fallback output.
     #
     # @param value [Proc, nil] callback; +nil+ uses {CnpjFormatterOptions.default_on_fail}
     # @raise [TypeMismatchError] if the value is not callable

@@ -122,6 +122,7 @@ RSpec.describe CnpjFmt::Utils do
       on_fail = lambda { |value, raised|
         expect(value).to eq('short')
         expect(raised).to equal(error)
+        expect(raised).to be_a(CnpjFmt::DomainError)
         'fallback'
       }
 

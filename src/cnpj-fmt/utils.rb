@@ -78,11 +78,11 @@ module CnpjFmt
     #
     # @param on_fail [Proc] failure callback
     # @param cnpj_input [String, Array<String>] original input
-    # @param exception [InvalidLengthError] length error
+    # @param error [DomainError] domain failure passed to the callback
     # @return [String] callback result
     # @raise [TypeMismatchError] if the callback does not return a +String+
-    def invoke_on_fail(on_fail, cnpj_input, exception)
-      result = on_fail.call(cnpj_input, exception)
+    def invoke_on_fail(on_fail, cnpj_input, error)
+      result = on_fail.call(cnpj_input, error)
       raise TypeMismatchError.new(result, 'string', option_name: 'on_fail') unless result.is_a?(String)
 
       result

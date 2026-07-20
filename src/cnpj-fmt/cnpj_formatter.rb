@@ -56,8 +56,8 @@ module CnpjFmt
     #
     # Input is normalized by stripping non-alphanumeric characters and converting
     # to uppercase. If the result length is not exactly 14, the configured
-    # +on_fail+ callback is invoked with the original value and an error; its
-    # return value is used as the result.
+    # +on_fail+ callback is invoked with the original value and a {DomainError};
+    # its return value is used as the result.
     #
     # When valid, the result may be further transformed according to options:
     #
@@ -105,13 +105,13 @@ module CnpjFmt
     end
 
     def handle_invalid_length(cnpj_input, formatted_cnpj, actual_options)
-      exception = InvalidLengthError.new(
+      error = InvalidLengthError.new(
         cnpj_input,
         formatted_cnpj,
         CnpjFormatterOptions::CNPJ_LENGTH
       )
 
-      Utils.invoke_on_fail(actual_options.on_fail, cnpj_input, exception)
+      Utils.invoke_on_fail(actual_options.on_fail, cnpj_input, error)
     end
 
     def format_valid_cnpj(formatted_cnpj, actual_options)
