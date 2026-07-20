@@ -208,9 +208,9 @@ RSpec.describe CnpjFmt::CnpjFormatter do
 
     context 'when input is not a string or string array' do
       INVALID_TYPE_CASES.each do |input_value, actual_type|
-        it "raises CnpjFormatterInputTypeError for #{actual_type}" do
+        it "raises TypeMismatchError for #{actual_type}" do
           expect { format.call(input_value) }
-            .to raise_error(CnpjFmt::CnpjFormatterInputTypeError) do |error|
+            .to raise_error(CnpjFmt::TypeMismatchError) do |error|
               aggregate_failures do
                 expect(error.expected_type).to eq('string or string[]')
                 expect(error.actual_input).to equal(input_value)
@@ -220,11 +220,11 @@ RSpec.describe CnpjFmt::CnpjFormatter do
         end
       end
 
-      it 'raises CnpjFormatterInputTypeError for arrays with non-strings' do
+      it 'raises TypeMismatchError for arrays with non-strings' do
         input_value = ['12', 34, '56']
 
         expect { format.call(input_value) }
-          .to raise_error(CnpjFmt::CnpjFormatterInputTypeError) do |error|
+          .to raise_error(CnpjFmt::TypeMismatchError) do |error|
             aggregate_failures do
               expect(error.expected_type).to eq('string or string[]')
               expect(error.actual_input).to eq(input_value)
@@ -238,7 +238,8 @@ RSpec.describe CnpjFmt::CnpjFormatter do
         it "invokes on_fail for #{length}-char input" do
           on_fail = lambda do |value, error|
             aggregate_failures do
-              expect(error).to be_a(CnpjFmt::CnpjFormatterInputLengthException)
+              expect(error).to be_a(CnpjFmt::DomainError)
+              expect(error).to be_a(CnpjFmt::InvalidLengthError)
               expect(error.evaluated_input.length).to eq(length)
               expect(error.actual_input).to eq(value)
             end
@@ -259,11 +260,11 @@ RSpec.describe CnpjFmt::CnpjFormatter do
 
     context 'when on_fail does not return a string' do
       ON_FAIL_INVALID_RETURN_CASES.each do |return_value, actual_type|
-        it "raises CnpjFormatterOptionsTypeError for #{actual_type}" do
+        it "raises TypeMismatchError for #{actual_type}" do
           on_fail = ->(_value, _error) { return_value }
 
           expect { format.call('short', { on_fail: on_fail }) }
-            .to raise_error(CnpjFmt::CnpjFormatterOptionsTypeError) do |error|
+            .to raise_error(CnpjFmt::TypeMismatchError) do |error|
               aggregate_failures do
                 expect(error.option_name).to eq('on_fail')
                 expect(error.actual_input).to equal(return_value)

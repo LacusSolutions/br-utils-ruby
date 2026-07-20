@@ -1,24 +1,30 @@
 # frozen_string_literal: true
 
 require_relative 'cnpj-dv/version'
-require_relative 'cnpj-dv/exceptions'
+require_relative 'cnpj-dv/errors'
 require_relative 'cnpj-dv/cnpj_check_digits'
 
 # Check-digit calculation for Brazilian CNPJ (numeric and alphanumeric formats).
 #
-# The package distinguishes between **errors** and **exceptions**:
+# Errors fall into two categories:
 #
-# - {CnpjDV::CnpjCheckDigitsTypeError} (extends the native {TypeError})
-#   signals incorrect API usage (the input is of the wrong *type*).
-# - {CnpjDV::CnpjCheckDigitsException} (extends the native {StandardError})
-#   signals invalid or ineligible data (right type, bad value).
+# - *API misuse* — the caller invoked the library incorrectly (wrong type).
+#   Raised as {CnpjDV::TypeMismatchError} (+TypeError+).
+# - *Domain errors* — the call shape was valid, but a value violates a business
+#   rule (invalid length, ineligible base/branch, repeated digits). Length
+#   failures raise {CnpjDV::InvalidLengthError}; other domain failures raise
+#   {CnpjDV::ValidationError} (both under {CnpjDV::DomainError} / +RangeError+).
+#
+# Every custom error includes the {CnpjDV::Error} marker module so consumers can
+# +rescue CnpjDV::Error+ for a library-wide catch.
 #
 # Public API:
 #
 # - {CnpjDV::CnpjCheckDigits}
 # - {CnpjDV::CNPJ_MIN_LENGTH}, {CnpjDV::CNPJ_MAX_LENGTH}
-# - Exception hierarchy under {CnpjDV::CnpjCheckDigitsTypeError} /
-#   {CnpjDV::CnpjCheckDigitsException}
+# - Error marker {CnpjDV::Error}; domain ancestor {CnpjDV::DomainError};
+#   raised leaves {CnpjDV::TypeMismatchError}, {CnpjDV::InvalidLengthError},
+#   {CnpjDV::ValidationError}
 #
 # @example
 #   require 'cnpj-dv'

@@ -18,11 +18,17 @@ module CnpjDV
   end
   private_constant :FormatActualInput
 
-  # Base error for all `cnpj-dv` type-related errors.
+  # Marker module mixed into every custom error raised by this library.
   #
-  # This class extends the native {TypeError} and serves as the base for all
-  # type validation errors in {CnpjCheckDigits}.
-  class CnpjCheckDigitsTypeError < TypeError
+  # Use +rescue CnpjDV::Error+ to catch every library error regardless of native
+  # ancestry.
+  module Error; end
+
+  # API misuse error raised when an argument's runtime type does not match the
+  # type required by the API contract.
+  class TypeMismatchError < TypeError
+    include Error
+
     # @return [Object] the offending input value
     attr_reader :actual_input
 
@@ -32,53 +38,29 @@ module CnpjDV
     # @return [String] description of the expected type
     attr_reader :expected_type
 
-    # @param actual_input [Object] the offending input value
-    # @param actual_type [String] human-readable type of +actual_input+
-    # @param expected_type [String] description of the expected type
-    # @param message [String] error message
-    def initialize(actual_input, actual_type, expected_type, message)
-      super(message)
+    # @param actual_input [Object] the offending input value (the whole array
+    #   when a non-string element is found)
+    # @param expected_type [String] description of the expected type (e.g.
+    #   +"string or string[]"+)
+    def initialize(actual_input, expected_type)
+      actual_type = LacusUtils.describe_type(actual_input)
+
+      super("CNPJ input must be of type #{expected_type}. Got #{actual_type}.")
       @actual_input = actual_input
       @actual_type = actual_type
       @expected_type = expected_type
     end
   end
 
-  # Error raised when the input provided to {CnpjCheckDigits} is not of the
-  # expected type (+String+ or +Array<String>+). The error message includes both
-  # the actual type of the input and the expected type.
-  class CnpjCheckDigitsInputTypeError < CnpjCheckDigitsTypeError
-    # @param actual_input [Object] the offending input value (the whole array when
-    #   a non-string element is found)
-    # @param expected_type [String] description of the expected type (e.g.
-    #   +"string or string[]"+)
-    def initialize(actual_input, expected_type)
-      actual_type = LacusUtils.describe_type(actual_input)
-
-      super(
-        actual_input,
-        actual_type,
-        expected_type,
-        "CNPJ input must be of type #{expected_type}. Got #{actual_type}."
-      )
-    end
+  # Domain error ancestor for business-rule failures (length, validation, and
+  # other domain leaves). Prefer raising a leaf subclass.
+  class DomainError < RangeError
+    include Error
   end
 
-  # Base exception for all `cnpj-dv` rules-related errors.
-  #
-  # This class extends the native {StandardError} and serves as the base for all
-  # non-type-related errors in {CnpjCheckDigits}. It is suitable for validation
-  # errors, range errors, and other business logic exceptions that are not
-  # strictly type-related.
-  class CnpjCheckDigitsException < StandardError
-  end
-
-  # Error raised when the input (after optional processing) does not have the
-  # required length to calculate the check digits. A valid CNPJ input must
-  # contain between 12 and 14 alphanumeric characters. The error message
-  # distinguishes between the original input and the evaluated one (which strips
-  # punctuation characters).
-  class CnpjCheckDigitsInputLengthException < CnpjCheckDigitsException
+  # Domain error raised when a string, array, or other collection has a length
+  # outside the bounds required by the domain rule.
+  class InvalidLengthError < DomainError
     # @return [String, Array<String>] the original input
     attr_reader :actual_input
 
@@ -119,11 +101,10 @@ module CnpjDV
     end
   end
 
-  # Exception raised when the CNPJ input contains invalid character sequences,
-  # like all digits are repeated. This is a business logic exception and it is
-  # highly recommended that users of the library catch it and handle it
-  # appropriately.
-  class CnpjCheckDigitsInputInvalidException < CnpjCheckDigitsException
+  # Domain error raised when a value has a valid type and length but violates a
+  # validation rule that is not numeric-range or length-based (e.g. ineligible
+  # base/branch ID or repeated numeric digits).
+  class ValidationError < DomainError
     # @return [String, Array<String>] the original input
     attr_reader :actual_input
 

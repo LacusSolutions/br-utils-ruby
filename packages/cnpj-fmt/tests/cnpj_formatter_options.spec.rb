@@ -240,32 +240,32 @@ RSpec.describe CnpjFmt::CnpjFormatterOptions do
     end
 
     context 'when setting to a non-string value' do
-      it 'raises CnpjFormatterOptionsTypeError for an object' do
+      it 'raises TypeMismatchError for an object' do
         options = described_class.new
 
         expect { options.hidden_key = { not: 'a string' } }
           .to raise_error(
-            CnpjFmt::CnpjFormatterOptionsTypeError,
+            CnpjFmt::TypeMismatchError,
             'CNPJ formatting option "hidden_key" must be of type string. Got hash.'
           )
       end
 
-      it 'raises CnpjFormatterOptionsTypeError for a number' do
+      it 'raises TypeMismatchError for a number' do
         options = described_class.new
 
         expect { options.hidden_key = 123 }
           .to raise_error(
-            CnpjFmt::CnpjFormatterOptionsTypeError,
+            CnpjFmt::TypeMismatchError,
             'CNPJ formatting option "hidden_key" must be of type string. Got integer number.'
           )
       end
 
-      it 'raises CnpjFormatterOptionsTypeError for a boolean' do
+      it 'raises TypeMismatchError for a boolean' do
         options = described_class.new
 
         expect { options.hidden_key = true }
           .to raise_error(
-            CnpjFmt::CnpjFormatterOptionsTypeError,
+            CnpjFmt::TypeMismatchError,
             'CNPJ formatting option "hidden_key" must be of type string. Got boolean.'
           )
       end
@@ -273,12 +273,12 @@ RSpec.describe CnpjFmt::CnpjFormatterOptions do
 
     context 'when setting to a forbidden key character' do
       described_class::DISALLOWED_KEY_CHARACTERS.each do |forbidden_char|
-        it "raises CnpjFormatterOptionsForbiddenKeyCharacterException for #{forbidden_char}" do
+        it "raises ValidationError for #{forbidden_char}" do
           options = described_class.new
 
           expect { options.hidden_key = forbidden_char }
             .to raise_error(
-              CnpjFmt::CnpjFormatterOptionsForbiddenKeyCharacterException,
+              CnpjFmt::ValidationError,
               forbidden_key_message('hidden_key', forbidden_char)
             )
         end
@@ -297,22 +297,22 @@ RSpec.describe CnpjFmt::CnpjFormatterOptions do
     end
 
     context 'when setting to an invalid range' do
-      it 'raises CnpjFormatterOptionsHiddenRangeInvalidException for -1' do
+      it 'raises OutOfRangeError for -1' do
         options = described_class.new
 
         expect { options.hidden_start = -1 }
           .to raise_error(
-            CnpjFmt::CnpjFormatterOptionsHiddenRangeInvalidException,
+            CnpjFmt::OutOfRangeError,
             'CNPJ formatting option "hidden_start" must be an integer between 0 and 13. Got -1.'
           )
       end
 
-      it 'raises CnpjFormatterOptionsHiddenRangeInvalidException for 14' do
+      it 'raises OutOfRangeError for 14' do
         options = described_class.new
 
         expect { options.hidden_start = 14 }
           .to raise_error(
-            CnpjFmt::CnpjFormatterOptionsHiddenRangeInvalidException,
+            CnpjFmt::OutOfRangeError,
             'CNPJ formatting option "hidden_start" must be an integer between 0 and 13. Got 14.'
           )
       end
@@ -328,42 +328,42 @@ RSpec.describe CnpjFmt::CnpjFormatterOptions do
     end
 
     context 'when setting to a non-integer value' do
-      it 'raises CnpjFormatterOptionsTypeError for an object' do
+      it 'raises TypeMismatchError for an object' do
         options = described_class.new
 
         expect { options.hidden_start = { not: 'a number' } }
           .to raise_error(
-            CnpjFmt::CnpjFormatterOptionsTypeError,
+            CnpjFmt::TypeMismatchError,
             'CNPJ formatting option "hidden_start" must be of type integer. Got hash.'
           )
       end
 
-      it 'raises CnpjFormatterOptionsTypeError for a string' do
+      it 'raises TypeMismatchError for a string' do
         options = described_class.new
 
         expect { options.hidden_start = 'not a number' }
           .to raise_error(
-            CnpjFmt::CnpjFormatterOptionsTypeError,
+            CnpjFmt::TypeMismatchError,
             'CNPJ formatting option "hidden_start" must be of type integer. Got string.'
           )
       end
 
-      it 'raises CnpjFormatterOptionsTypeError for a boolean' do
+      it 'raises TypeMismatchError for a boolean' do
         options = described_class.new
 
         expect { options.hidden_start = true }
           .to raise_error(
-            CnpjFmt::CnpjFormatterOptionsTypeError,
+            CnpjFmt::TypeMismatchError,
             'CNPJ formatting option "hidden_start" must be of type integer. Got boolean.'
           )
       end
 
-      it 'raises CnpjFormatterOptionsTypeError for a float' do
+      it 'raises TypeMismatchError for a float' do
         options = described_class.new
 
         expect { options.hidden_start = 1.5 }
           .to raise_error(
-            CnpjFmt::CnpjFormatterOptionsTypeError,
+            CnpjFmt::TypeMismatchError,
             'CNPJ formatting option "hidden_start" must be of type integer. Got float number.'
           )
       end
@@ -381,22 +381,22 @@ RSpec.describe CnpjFmt::CnpjFormatterOptions do
     end
 
     context 'when setting to an invalid range' do
-      it 'raises CnpjFormatterOptionsHiddenRangeInvalidException for -1' do
+      it 'raises OutOfRangeError for -1' do
         options = described_class.new
 
         expect { options.hidden_end = -1 }
           .to raise_error(
-            CnpjFmt::CnpjFormatterOptionsHiddenRangeInvalidException,
+            CnpjFmt::OutOfRangeError,
             'CNPJ formatting option "hidden_end" must be an integer between 0 and 13. Got -1.'
           )
       end
 
-      it 'raises CnpjFormatterOptionsHiddenRangeInvalidException for 14' do
+      it 'raises OutOfRangeError for 14' do
         options = described_class.new
 
         expect { options.hidden_end = 14 }
           .to raise_error(
-            CnpjFmt::CnpjFormatterOptionsHiddenRangeInvalidException,
+            CnpjFmt::OutOfRangeError,
             'CNPJ formatting option "hidden_end" must be an integer between 0 and 13. Got 14.'
           )
       end
@@ -412,42 +412,42 @@ RSpec.describe CnpjFmt::CnpjFormatterOptions do
     end
 
     context 'when setting to a non-integer value' do
-      it 'raises CnpjFormatterOptionsTypeError for an object' do
+      it 'raises TypeMismatchError for an object' do
         options = described_class.new
 
         expect { options.hidden_end = { not: 'a number' } }
           .to raise_error(
-            CnpjFmt::CnpjFormatterOptionsTypeError,
+            CnpjFmt::TypeMismatchError,
             'CNPJ formatting option "hidden_end" must be of type integer. Got hash.'
           )
       end
 
-      it 'raises CnpjFormatterOptionsTypeError for a string' do
+      it 'raises TypeMismatchError for a string' do
         options = described_class.new
 
         expect { options.hidden_end = 'not a number' }
           .to raise_error(
-            CnpjFmt::CnpjFormatterOptionsTypeError,
+            CnpjFmt::TypeMismatchError,
             'CNPJ formatting option "hidden_end" must be of type integer. Got string.'
           )
       end
 
-      it 'raises CnpjFormatterOptionsTypeError for a boolean' do
+      it 'raises TypeMismatchError for a boolean' do
         options = described_class.new
 
         expect { options.hidden_end = true }
           .to raise_error(
-            CnpjFmt::CnpjFormatterOptionsTypeError,
+            CnpjFmt::TypeMismatchError,
             'CNPJ formatting option "hidden_end" must be of type integer. Got boolean.'
           )
       end
 
-      it 'raises CnpjFormatterOptionsTypeError for a float' do
+      it 'raises TypeMismatchError for a float' do
         options = described_class.new
 
         expect { options.hidden_end = 1.5 }
           .to raise_error(
-            CnpjFmt::CnpjFormatterOptionsTypeError,
+            CnpjFmt::TypeMismatchError,
             'CNPJ formatting option "hidden_end" must be of type integer. Got float number.'
           )
       end
@@ -474,32 +474,32 @@ RSpec.describe CnpjFmt::CnpjFormatterOptions do
     end
 
     context 'when setting to a non-string value' do
-      it 'raises CnpjFormatterOptionsTypeError for an object' do
+      it 'raises TypeMismatchError for an object' do
         options = described_class.new
 
         expect { options.dot_key = { not: 'a string' } }
           .to raise_error(
-            CnpjFmt::CnpjFormatterOptionsTypeError,
+            CnpjFmt::TypeMismatchError,
             'CNPJ formatting option "dot_key" must be of type string. Got hash.'
           )
       end
 
-      it 'raises CnpjFormatterOptionsTypeError for a number' do
+      it 'raises TypeMismatchError for a number' do
         options = described_class.new
 
         expect { options.dot_key = 123 }
           .to raise_error(
-            CnpjFmt::CnpjFormatterOptionsTypeError,
+            CnpjFmt::TypeMismatchError,
             'CNPJ formatting option "dot_key" must be of type string. Got integer number.'
           )
       end
 
-      it 'raises CnpjFormatterOptionsTypeError for a boolean' do
+      it 'raises TypeMismatchError for a boolean' do
         options = described_class.new
 
         expect { options.dot_key = true }
           .to raise_error(
-            CnpjFmt::CnpjFormatterOptionsTypeError,
+            CnpjFmt::TypeMismatchError,
             'CNPJ formatting option "dot_key" must be of type string. Got boolean.'
           )
       end
@@ -507,12 +507,12 @@ RSpec.describe CnpjFmt::CnpjFormatterOptions do
 
     context 'when setting to a forbidden key character' do
       described_class::DISALLOWED_KEY_CHARACTERS.each do |forbidden_char|
-        it "raises CnpjFormatterOptionsForbiddenKeyCharacterException for #{forbidden_char}" do
+        it "raises ValidationError for #{forbidden_char}" do
           options = described_class.new
 
           expect { options.dot_key = forbidden_char }
             .to raise_error(
-              CnpjFmt::CnpjFormatterOptionsForbiddenKeyCharacterException,
+              CnpjFmt::ValidationError,
               forbidden_key_message('dot_key', forbidden_char)
             )
         end
@@ -540,32 +540,32 @@ RSpec.describe CnpjFmt::CnpjFormatterOptions do
     end
 
     context 'when setting to a non-string value' do
-      it 'raises CnpjFormatterOptionsTypeError for an object' do
+      it 'raises TypeMismatchError for an object' do
         options = described_class.new
 
         expect { options.slash_key = { not: 'a string' } }
           .to raise_error(
-            CnpjFmt::CnpjFormatterOptionsTypeError,
+            CnpjFmt::TypeMismatchError,
             'CNPJ formatting option "slash_key" must be of type string. Got hash.'
           )
       end
 
-      it 'raises CnpjFormatterOptionsTypeError for a number' do
+      it 'raises TypeMismatchError for a number' do
         options = described_class.new
 
         expect { options.slash_key = 123 }
           .to raise_error(
-            CnpjFmt::CnpjFormatterOptionsTypeError,
+            CnpjFmt::TypeMismatchError,
             'CNPJ formatting option "slash_key" must be of type string. Got integer number.'
           )
       end
 
-      it 'raises CnpjFormatterOptionsTypeError for a boolean' do
+      it 'raises TypeMismatchError for a boolean' do
         options = described_class.new
 
         expect { options.slash_key = true }
           .to raise_error(
-            CnpjFmt::CnpjFormatterOptionsTypeError,
+            CnpjFmt::TypeMismatchError,
             'CNPJ formatting option "slash_key" must be of type string. Got boolean.'
           )
       end
@@ -573,12 +573,12 @@ RSpec.describe CnpjFmt::CnpjFormatterOptions do
 
     context 'when setting to a forbidden key character' do
       described_class::DISALLOWED_KEY_CHARACTERS.each do |forbidden_char|
-        it "raises CnpjFormatterOptionsForbiddenKeyCharacterException for #{forbidden_char}" do
+        it "raises ValidationError for #{forbidden_char}" do
           options = described_class.new
 
           expect { options.slash_key = forbidden_char }
             .to raise_error(
-              CnpjFmt::CnpjFormatterOptionsForbiddenKeyCharacterException,
+              CnpjFmt::ValidationError,
               forbidden_key_message('slash_key', forbidden_char)
             )
         end
@@ -606,32 +606,32 @@ RSpec.describe CnpjFmt::CnpjFormatterOptions do
     end
 
     context 'when setting to a non-string value' do
-      it 'raises CnpjFormatterOptionsTypeError for an object' do
+      it 'raises TypeMismatchError for an object' do
         options = described_class.new
 
         expect { options.dash_key = { not: 'a string' } }
           .to raise_error(
-            CnpjFmt::CnpjFormatterOptionsTypeError,
+            CnpjFmt::TypeMismatchError,
             'CNPJ formatting option "dash_key" must be of type string. Got hash.'
           )
       end
 
-      it 'raises CnpjFormatterOptionsTypeError for a number' do
+      it 'raises TypeMismatchError for a number' do
         options = described_class.new
 
         expect { options.dash_key = 123 }
           .to raise_error(
-            CnpjFmt::CnpjFormatterOptionsTypeError,
+            CnpjFmt::TypeMismatchError,
             'CNPJ formatting option "dash_key" must be of type string. Got integer number.'
           )
       end
 
-      it 'raises CnpjFormatterOptionsTypeError for a boolean' do
+      it 'raises TypeMismatchError for a boolean' do
         options = described_class.new
 
         expect { options.dash_key = true }
           .to raise_error(
-            CnpjFmt::CnpjFormatterOptionsTypeError,
+            CnpjFmt::TypeMismatchError,
             'CNPJ formatting option "dash_key" must be of type string. Got boolean.'
           )
       end
@@ -639,12 +639,12 @@ RSpec.describe CnpjFmt::CnpjFormatterOptions do
 
     context 'when setting to a forbidden key character' do
       described_class::DISALLOWED_KEY_CHARACTERS.each do |forbidden_char|
-        it "raises CnpjFormatterOptionsForbiddenKeyCharacterException for #{forbidden_char}" do
+        it "raises ValidationError for #{forbidden_char}" do
           options = described_class.new
 
           expect { options.dash_key = forbidden_char }
             .to raise_error(
-              CnpjFmt::CnpjFormatterOptionsForbiddenKeyCharacterException,
+              CnpjFmt::ValidationError,
               forbidden_key_message('dash_key', forbidden_char)
             )
         end
@@ -808,42 +808,42 @@ RSpec.describe CnpjFmt::CnpjFormatterOptions do
     end
 
     context 'when setting to a non-callable value' do
-      it 'raises CnpjFormatterOptionsTypeError for an object' do
+      it 'raises TypeMismatchError for an object' do
         options = described_class.new
 
         expect { options.on_fail = { not: 'a function' } }
           .to raise_error(
-            CnpjFmt::CnpjFormatterOptionsTypeError,
+            CnpjFmt::TypeMismatchError,
             'CNPJ formatting option "on_fail" must be of type function. Got hash.'
           )
       end
 
-      it 'raises CnpjFormatterOptionsTypeError for a string' do
+      it 'raises TypeMismatchError for a string' do
         options = described_class.new
 
         expect { options.on_fail = 'not a function' }
           .to raise_error(
-            CnpjFmt::CnpjFormatterOptionsTypeError,
+            CnpjFmt::TypeMismatchError,
             'CNPJ formatting option "on_fail" must be of type function. Got string.'
           )
       end
 
-      it 'raises CnpjFormatterOptionsTypeError for a number' do
+      it 'raises TypeMismatchError for a number' do
         options = described_class.new
 
         expect { options.on_fail = 123 }
           .to raise_error(
-            CnpjFmt::CnpjFormatterOptionsTypeError,
+            CnpjFmt::TypeMismatchError,
             'CNPJ formatting option "on_fail" must be of type function. Got integer number.'
           )
       end
 
-      it 'raises CnpjFormatterOptionsTypeError for a boolean' do
+      it 'raises TypeMismatchError for a boolean' do
         options = described_class.new
 
         expect { options.on_fail = true }
           .to raise_error(
-            CnpjFmt::CnpjFormatterOptionsTypeError,
+            CnpjFmt::TypeMismatchError,
             'CNPJ formatting option "on_fail" must be of type function. Got boolean.'
           )
       end
@@ -954,128 +954,128 @@ RSpec.describe CnpjFmt::CnpjFormatterOptions do
 
     context 'when called with invalid values' do
       context 'when hidden_start is out of range' do
-        it 'raises CnpjFormatterOptionsHiddenRangeInvalidException for -1' do
+        it 'raises OutOfRangeError for -1' do
           options = described_class.new
 
           expect { options.set_hidden_range(-1, 13) }
             .to raise_error(
-              CnpjFmt::CnpjFormatterOptionsHiddenRangeInvalidException,
+              CnpjFmt::OutOfRangeError,
               'CNPJ formatting option "hidden_start" must be an integer between 0 and 13. Got -1.'
             )
         end
 
-        it 'raises CnpjFormatterOptionsHiddenRangeInvalidException for 14' do
+        it 'raises OutOfRangeError for 14' do
           options = described_class.new
 
           expect { options.set_hidden_range(14, 13) }
             .to raise_error(
-              CnpjFmt::CnpjFormatterOptionsHiddenRangeInvalidException,
+              CnpjFmt::OutOfRangeError,
               'CNPJ formatting option "hidden_start" must be an integer between 0 and 13. Got 14.'
             )
         end
       end
 
       context 'when hidden_end is out of range' do
-        it 'raises CnpjFormatterOptionsHiddenRangeInvalidException for -1' do
+        it 'raises OutOfRangeError for -1' do
           options = described_class.new
 
           expect { options.set_hidden_range(0, -1) }
             .to raise_error(
-              CnpjFmt::CnpjFormatterOptionsHiddenRangeInvalidException,
+              CnpjFmt::OutOfRangeError,
               'CNPJ formatting option "hidden_end" must be an integer between 0 and 13. Got -1.'
             )
         end
 
-        it 'raises CnpjFormatterOptionsHiddenRangeInvalidException for 14' do
+        it 'raises OutOfRangeError for 14' do
           options = described_class.new
 
           expect { options.set_hidden_range(0, 14) }
             .to raise_error(
-              CnpjFmt::CnpjFormatterOptionsHiddenRangeInvalidException,
+              CnpjFmt::OutOfRangeError,
               'CNPJ formatting option "hidden_end" must be an integer between 0 and 13. Got 14.'
             )
         end
       end
 
       context 'when hidden_start is not an integer' do
-        it 'raises CnpjFormatterOptionsTypeError for an object' do
+        it 'raises TypeMismatchError for an object' do
           options = described_class.new
 
           expect { options.set_hidden_range({ not: 'a number' }, 13) }
             .to raise_error(
-              CnpjFmt::CnpjFormatterOptionsTypeError,
+              CnpjFmt::TypeMismatchError,
               'CNPJ formatting option "hidden_start" must be of type integer. Got hash.'
             )
         end
 
-        it 'raises CnpjFormatterOptionsTypeError for a string' do
+        it 'raises TypeMismatchError for a string' do
           options = described_class.new
 
           expect { options.set_hidden_range('not a number', 13) }
             .to raise_error(
-              CnpjFmt::CnpjFormatterOptionsTypeError,
+              CnpjFmt::TypeMismatchError,
               'CNPJ formatting option "hidden_start" must be of type integer. Got string.'
             )
         end
 
-        it 'raises CnpjFormatterOptionsTypeError for a boolean' do
+        it 'raises TypeMismatchError for a boolean' do
           options = described_class.new
 
           expect { options.set_hidden_range(true, 13) }
             .to raise_error(
-              CnpjFmt::CnpjFormatterOptionsTypeError,
+              CnpjFmt::TypeMismatchError,
               'CNPJ formatting option "hidden_start" must be of type integer. Got boolean.'
             )
         end
 
-        it 'raises CnpjFormatterOptionsTypeError for a float' do
+        it 'raises TypeMismatchError for a float' do
           options = described_class.new
 
           expect { options.set_hidden_range(1.5, 13) }
             .to raise_error(
-              CnpjFmt::CnpjFormatterOptionsTypeError,
+              CnpjFmt::TypeMismatchError,
               'CNPJ formatting option "hidden_start" must be of type integer. Got float number.'
             )
         end
       end
 
       context 'when hidden_end is not an integer' do
-        it 'raises CnpjFormatterOptionsTypeError for an object' do
+        it 'raises TypeMismatchError for an object' do
           options = described_class.new
 
           expect { options.set_hidden_range(0, { not: 'a number' }) }
             .to raise_error(
-              CnpjFmt::CnpjFormatterOptionsTypeError,
+              CnpjFmt::TypeMismatchError,
               'CNPJ formatting option "hidden_end" must be of type integer. Got hash.'
             )
         end
 
-        it 'raises CnpjFormatterOptionsTypeError for a string' do
+        it 'raises TypeMismatchError for a string' do
           options = described_class.new
 
           expect { options.set_hidden_range(0, 'not a number') }
             .to raise_error(
-              CnpjFmt::CnpjFormatterOptionsTypeError,
+              CnpjFmt::TypeMismatchError,
               'CNPJ formatting option "hidden_end" must be of type integer. Got string.'
             )
         end
 
-        it 'raises CnpjFormatterOptionsTypeError for a boolean' do
+        it 'raises TypeMismatchError for a boolean' do
           options = described_class.new
 
           expect { options.set_hidden_range(0, true) }
             .to raise_error(
-              CnpjFmt::CnpjFormatterOptionsTypeError,
+              CnpjFmt::TypeMismatchError,
               'CNPJ formatting option "hidden_end" must be of type integer. Got boolean.'
             )
         end
 
-        it 'raises CnpjFormatterOptionsTypeError for a float' do
+        it 'raises TypeMismatchError for a float' do
           options = described_class.new
 
           expect { options.set_hidden_range(0, 1.5) }
             .to raise_error(
-              CnpjFmt::CnpjFormatterOptionsTypeError,
+              CnpjFmt::TypeMismatchError,
               'CNPJ formatting option "hidden_end" must be of type integer. Got float number.'
             )
         end

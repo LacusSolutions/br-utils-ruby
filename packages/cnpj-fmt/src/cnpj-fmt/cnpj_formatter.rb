@@ -38,10 +38,10 @@ module CnpjFmt
     # @param extra_overrides [Array<CnpjFormatterOptions, Hash>] additional option
     #   layers merged in order (later overrides win)
     # @param keywords [Hash] option keyword overrides (see {CnpjFormatterOptions})
-    # @raise [CnpjFormatterOptionsTypeError] if any option has an invalid type
-    # @raise [CnpjFormatterOptionsHiddenRangeInvalidException] if +hidden_start+ or
+    # @raise [TypeMismatchError] if any option has an invalid type
+    # @raise [OutOfRangeError] if +hidden_start+ or
     #   +hidden_end+ are out of valid range
-    # @raise [CnpjFormatterOptionsForbiddenKeyCharacterException] if any key
+    # @raise [ValidationError] if any key
     #   option contains a disallowed character
     def initialize(options = nil, *extra_overrides, **keywords)
       @options =
@@ -56,8 +56,8 @@ module CnpjFmt
     #
     # Input is normalized by stripping non-alphanumeric characters and converting
     # to uppercase. If the result length is not exactly 14, the configured
-    # +on_fail+ callback is invoked with the original value and an error; its
-    # return value is used as the result.
+    # +on_fail+ callback is invoked with the original value and a {DomainError};
+    # its return value is used as the result.
     #
     # When valid, the result may be further transformed according to options:
     #
@@ -77,21 +77,21 @@ module CnpjFmt
     # @param options [CnpjFormatterOptions, Hash, nil] per-call option overrides
     # @param keywords [Hash] per-call option keyword overrides
     # @return [String] formatted CNPJ string, or the +on_fail+ callback result
-    # @raise [CnpjFormatterInputTypeError] if the input is not a +String+ or
+    # @raise [TypeMismatchError] if the input is not a +String+ or
     #   +Array<String>+
-    # @raise [CnpjFormatterOptionsTypeError] if any option has an invalid type
-    # @raise [CnpjFormatterOptionsHiddenRangeInvalidException] if +hidden_start+
+    # @raise [TypeMismatchError] if any option has an invalid type
+    # @raise [OutOfRangeError] if +hidden_start+
     #   or +hidden_end+ are out of valid range
-    # @raise [CnpjFormatterOptionsForbiddenKeyCharacterException] if any key
+    # @raise [ValidationError] if any key
     #   option contains a disallowed character
     #
     # @example
     #   formatter = CnpjFmt::CnpjFormatter.new
     #   formatter.format('12345678000910') # => "12.345.678/0009-10"
     def format(cnpj_input, options = nil, **keywords)
-      actual_input = FormatterSupport.to_string_input(cnpj_input)
+      actual_input = Utils.to_string_input(cnpj_input)
       actual_options = resolve_format_options(options, keywords)
-      formatted_cnpj = FormatterSupport.sanitize_cnpj_input(actual_input)
+      formatted_cnpj = Utils.sanitize_cnpj_input(actual_input)
 
       return handle_invalid_length(cnpj_input, formatted_cnpj, actual_options) unless valid_length?(formatted_cnpj)
 
@@ -105,27 +105,27 @@ module CnpjFmt
     end
 
     def handle_invalid_length(cnpj_input, formatted_cnpj, actual_options)
-      exception = CnpjFormatterInputLengthException.new(
+      error = InvalidLengthError.new(
         cnpj_input,
         formatted_cnpj,
         CnpjFormatterOptions::CNPJ_LENGTH
       )
 
-      FormatterSupport.invoke_on_fail(actual_options.on_fail, cnpj_input, exception)
+      Utils.invoke_on_fail(actual_options.on_fail, cnpj_input, error)
     end
 
     def format_valid_cnpj(formatted_cnpj, actual_options)
-      formatted_cnpj = FormatterSupport.apply_hidden_mask(formatted_cnpj, actual_options) if actual_options.hidden
-      formatted_cnpj = FormatterSupport.insert_delimiters(formatted_cnpj, actual_options)
+      formatted_cnpj = Utils.apply_hidden_mask(formatted_cnpj, actual_options) if actual_options.hidden
+      formatted_cnpj = Utils.insert_delimiters(formatted_cnpj, actual_options)
 
       if actual_options.hidden
-        formatted_cnpj = FormatterSupport.replace_hidden_placeholders(
+        formatted_cnpj = Utils.replace_hidden_placeholders(
           formatted_cnpj,
           actual_options.hidden_key
         )
       end
 
-      FormatterSupport.apply_post_processing(formatted_cnpj, actual_options)
+      Utils.apply_post_processing(formatted_cnpj, actual_options)
     end
 
     def resolve_format_options(options, keywords)

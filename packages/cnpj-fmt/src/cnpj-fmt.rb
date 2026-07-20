@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
 require_relative 'cnpj-fmt/version'
-require_relative 'cnpj-fmt/exceptions'
+require_relative 'cnpj-fmt/errors'
 require_relative 'cnpj-fmt/types'
 require_relative 'cnpj-fmt/cnpj_formatter_options'
-require_relative 'cnpj-fmt/formatter_support'
+require_relative 'cnpj-fmt/utils'
 require_relative 'cnpj-fmt/cnpj_formatter'
 require_relative 'cnpj-fmt/cnpj_fmt'
 
@@ -12,19 +12,30 @@ require_relative 'cnpj-fmt/cnpj_fmt'
 # human-readable string. Supports the 14-character alphanumeric CNPJ format
 # (digits and uppercase letters).
 #
-# The package distinguishes between **errors** and **exceptions**:
+# Errors fall into two categories:
 #
-# - {CnpjFormatterTypeError} (extends the native {TypeError}) signals incorrect
-#   API usage (the input or option is of the wrong *type*).
-# - {CnpjFormatterException} (extends the native {StandardError}) signals invalid
-#   or ineligible data (right type, bad value).
+# - *API misuse* — the caller supplied a wrong type or an incompatible argument
+#   combination. Raised as {CnpjFmt::TypeMismatchError} or
+#   {CnpjFmt::InvalidArgumentCombinationError}.
+# - *Domain errors* — the call shape was valid, but a value violates a business
+#   rule. Length failures construct {CnpjFmt::InvalidLengthError} and pass it to
+#   +on_fail+ as a {CnpjFmt::DomainError}. Hidden-range failures raise
+#   {CnpjFmt::OutOfRangeError}; forbidden key characters raise
+#   {CnpjFmt::ValidationError}.
+#
+# Every custom error includes the {CnpjFmt::Error} marker module so consumers can
+# +rescue CnpjFmt::Error+ for a library-wide catch.
 #
 # Public API:
 #
 # - {CnpjFmt.cnpj_fmt}
 # - {CnpjFormatter}, {CnpjFormatterOptions}
 # - {CNPJ_LENGTH}, {VERSION}
-# - Exception hierarchy under {CnpjFmt}
+# - Error marker {CnpjFmt::Error}; domain ancestor {CnpjFmt::DomainError};
+#   misuse errors {CnpjFmt::TypeMismatchError} and
+#   {CnpjFmt::InvalidArgumentCombinationError}; domain leaves
+#   {CnpjFmt::InvalidLengthError}, {CnpjFmt::OutOfRangeError}, and
+#   {CnpjFmt::ValidationError}
 #
 # @example
 #   require 'cnpj-fmt'

@@ -1,5 +1,18 @@
 # cnpj-dv
 
+## 2.0.0
+
+### 🎉 v2 at a glance 🎊
+
+- **Error hierarchy**: Aligns with the monorepo standard — API misuse vs domain errors, `CnpjDV::Error` marker, and native-compatible rescue.
+
+### BREAKING CHANGES
+
+- **Error classes**: Removed `CnpjCheckDigitsTypeError`, `CnpjCheckDigitsInputTypeError`, `CnpjCheckDigitsException`, `CnpjCheckDigitsInputLengthException`, and `CnpjCheckDigitsInputInvalidException`.
+- **Migration map**: `InputTypeError` → `TypeMismatchError`; `InputLengthException` → `InvalidLengthError`; `InputInvalidException` → `ValidationError`.
+- **Rescue targets**: `rescue CnpjCheckDigitsException` no longer applies; use `rescue CnpjDV::Error` for a library-wide catch, or `rescue DomainError` for `InvalidLengthError` and `ValidationError`.
+- **Docs**: READMEs now document misuse vs domain categories, per-class rescue guidance, and four rescue granularity levels — see [README](./README.md).
+
 ## 1.0.0
 
 ### 🚀 Stable Version Released!

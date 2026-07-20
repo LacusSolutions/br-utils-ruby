@@ -245,45 +245,65 @@ RSpec.describe CnpjDV::CnpjCheckDigits do
   describe '#initialize' do
     context 'when given invalid input type' do
       CNPJ_DV_INVALID_TYPE_INPUTS.each do |cnpj_input|
-        it 'raises InputTypeError' do
+        it 'raises TypeMismatchError' do
           expect { described_class.new(cnpj_input) }
-            .to raise_error(CnpjDV::CnpjCheckDigitsInputTypeError)
+            .to raise_error(CnpjDV::TypeMismatchError)
         end
+      end
+
+      it 'is rescuable as CnpjDV::Error' do
+        expect { described_class.new(12_345) }
+          .to raise_error(CnpjDV::Error)
       end
     end
 
     context 'when given invalid input length' do
       CNPJ_DV_INVALID_LENGTH_INPUTS.each do |cnpj_input|
-        it 'raises InputLengthException' do
+        it 'raises InvalidLengthError' do
           expect { described_class.new(cnpj_input) }
-            .to raise_error(CnpjDV::CnpjCheckDigitsInputLengthException)
+            .to raise_error(CnpjDV::InvalidLengthError)
         end
+      end
+
+      it 'is rescuable as CnpjDV::DomainError and CnpjDV::Error' do
+        expect { described_class.new('12345678901') }
+          .to raise_error(CnpjDV::DomainError)
+        expect { described_class.new('12345678901') }
+          .to raise_error(CnpjDV::Error)
       end
     end
 
     context 'when given invalid CNPJ base ID' do
       CNPJ_DV_INVALID_BASE_ID_INPUTS.each do |cnpj_input|
-        it 'raises InputInvalidException' do
+        it 'raises ValidationError' do
           expect { described_class.new(cnpj_input) }
-            .to raise_error(CnpjDV::CnpjCheckDigitsInputInvalidException, /base id/i)
+            .to raise_error(CnpjDV::ValidationError, /base id/i)
         end
+      end
+
+      it 'is rescuable as CnpjDV::DomainError and CnpjDV::Error' do
+        expect { described_class.new('000000000001') }
+          .to raise_error(CnpjDV::ValidationError) { |error|
+            expect(error).to be_a(CnpjDV::DomainError)
+            expect(error).to be_a(CnpjDV::Error)
+          }
       end
     end
 
     context 'when given invalid CNPJ branch ID' do
       CNPJ_DV_INVALID_BRANCH_ID_INPUTS.each do |cnpj_input|
-        it 'raises InputInvalidException' do
+        it 'raises ValidationError' do
           expect { described_class.new(cnpj_input) }
-            .to raise_error(CnpjDV::CnpjCheckDigitsInputInvalidException, /branch id/i)
+            .to raise_error(CnpjDV::ValidationError, /branch id/i)
         end
       end
     end
 
     context 'when given repeated numeric characters' do
       CNPJ_DV_REPEATED_DIGIT_INPUTS.each do |cnpj_input|
-        it 'raises InputInvalidException' do
+        it 'raises ValidationError' do
           expect { described_class.new(cnpj_input) }
-            .to raise_error(CnpjDV::CnpjCheckDigitsInputInvalidException, /repeated digits/i)
+            .to raise_error(CnpjDV::ValidationError, /repeated digits/i)
         end
       end
     end

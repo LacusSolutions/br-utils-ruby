@@ -26,11 +26,11 @@ module CnpjFmt
   #
   # This function is invoked when the CNPJ formatter encounters an error during
   # formatting, such as invalid input length or other formatting issues. The
-  # callback receives the original input value and the exception object, and
-  # should return a string to use as the fallback output.
+  # callback receives the original input value and a {DomainError}, and should
+  # return a string to use as the fallback output.
   #
   # @yieldparam original_input [String, Array<String>] the raw input value
-  # @yieldparam exception [CnpjFormatterInputLengthException] the length error
+  # @yieldparam error [DomainError] the domain failure (currently {InvalidLengthError})
   # @yieldreturn [String] fallback output
   OnFailCallback = Object
 

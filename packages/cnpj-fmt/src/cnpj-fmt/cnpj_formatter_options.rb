@@ -23,13 +23,13 @@ module CnpjFmt
     def assert_string_option!(option_name, value)
       return if value.is_a?(String)
 
-      raise CnpjFormatterOptionsTypeError.new(option_name, value, 'string')
+      raise TypeMismatchError.new(value, 'string', option_name: option_name)
     end
 
     def assert_no_disallowed_key_characters!(option_name, value, forbidden_characters)
       return unless value.chars.intersect?(forbidden_characters)
 
-      raise CnpjFormatterOptionsForbiddenKeyCharacterException.new(
+      raise ValidationError.new(
         option_name,
         value,
         forbidden_characters
@@ -39,13 +39,13 @@ module CnpjFmt
     def assert_hidden_index_type!(option_name, value)
       return if valid_integer?(value)
 
-      raise CnpjFormatterOptionsTypeError.new(option_name, value, 'integer')
+      raise TypeMismatchError.new(value, 'integer', option_name: option_name)
     end
 
     def assert_hidden_index!(option_name, value, min_value, max_value)
       return if value.between?(min_value, max_value)
 
-      raise CnpjFormatterOptionsHiddenRangeInvalidException.new(
+      raise OutOfRangeError.new(
         option_name,
         value,
         min_value,
@@ -166,10 +166,10 @@ module CnpjFmt
     # @param extra_overrides [Array<CnpjFormatterOptions, Hash>] additional option
     #   layers merged in order (later overrides win)
     # @param keywords [Hash] option keyword overrides
-    # @raise [CnpjFormatterOptionsTypeError] if any option has an invalid type
-    # @raise [CnpjFormatterOptionsHiddenRangeInvalidException] if +hidden_start+ or
+    # @raise [TypeMismatchError] if any option has an invalid type
+    # @raise [OutOfRangeError] if +hidden_start+ or
     #   +hidden_end+ are out of valid range
-    # @raise [CnpjFormatterOptionsForbiddenKeyCharacterException] if any key option
+    # @raise [ValidationError] if any key option
     #   contains a disallowed character
     def initialize(options = nil, *extra_overrides, **keywords)
       @options = {}
@@ -193,8 +193,8 @@ module CnpjFmt
     # @param hidden_start [Integer, nil] inclusive start index (0–13)
     # @param hidden_end [Integer, nil] inclusive end index (0–13)
     # @return [CnpjFormatterOptions] +self+
-    # @raise [CnpjFormatterOptionsTypeError] if either value is not an integer
-    # @raise [CnpjFormatterOptionsHiddenRangeInvalidException] if either value is
+    # @raise [TypeMismatchError] if either value is not an integer
+    # @raise [OutOfRangeError] if either value is
     #   out of valid range +[0, CNPJ_LENGTH - 1]+
     def set_hidden_range(hidden_start, hidden_end)
       start_index, end_index = OptionsValidation.normalize_hidden_range(
@@ -224,10 +224,10 @@ module CnpjFmt
     #
     # @param options [CnpjFormatterOptions, Hash, nil] options to merge
     # @return [CnpjFormatterOptions] +self+
-    # @raise [CnpjFormatterOptionsTypeError] if any option has an invalid type
-    # @raise [CnpjFormatterOptionsHiddenRangeInvalidException] if +hidden_start+ or
+    # @raise [TypeMismatchError] if any option has an invalid type
+    # @raise [OutOfRangeError] if +hidden_start+ or
     #   +hidden_end+ are out of valid range
-    # @raise [CnpjFormatterOptionsForbiddenKeyCharacterException] if any key option
+    # @raise [ValidationError] if any key option
     #   contains a disallowed character
     def set(options)
       return self if options.nil?
