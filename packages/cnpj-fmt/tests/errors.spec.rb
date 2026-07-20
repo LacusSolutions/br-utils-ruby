@@ -49,30 +49,26 @@ RSpec.describe CnpjFmt::TypeMismatchError do
   end
 
   context 'when instantiated for an option' do
-    subject(:error) { described_class.new(123, 'boolean', option_name: 'hidden') }
+    subject(:error) { described_class.new(123, 'string', option_name: 'hidden_key') }
 
     it 'sets option_name' do
-      expect(described_class.new(123, 'string', option_name: 'hidden_key').option_name)
-        .to eq('hidden_key')
+      expect(error.option_name).to eq('hidden_key')
     end
 
     it 'sets actual_input' do
-      expect(described_class.new(123, 'string', option_name: 'hidden_key').actual_input)
-        .to eq(123)
+      expect(error.actual_input).to eq(123)
     end
 
     it 'sets actual_type' do
-      expect(described_class.new(123, 'string', option_name: 'hidden_key').actual_type)
-        .to eq('integer number')
+      expect(error.actual_type).to eq('integer number')
     end
 
     it 'sets expected_type' do
-      expect(described_class.new(123, 'string', option_name: 'hidden_key').expected_type)
-        .to eq('string')
+      expect(error.expected_type).to eq('string')
     end
 
     it 'builds a descriptive message' do
-      expect(described_class.new(123, 'string', option_name: 'hidden_key').message).to eq(
+      expect(error.message).to eq(
         'CNPJ formatting option "hidden_key" must be of type string. Got integer number.'
       )
     end
