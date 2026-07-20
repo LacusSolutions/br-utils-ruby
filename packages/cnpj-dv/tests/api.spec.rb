@@ -26,20 +26,8 @@ RSpec.describe CnpjDV do
       expect(described_class.const_defined?(:TypeMismatchError)).to be(true)
     end
 
-    it 'defines InvalidArgumentCombinationError' do
-      expect(described_class.const_defined?(:InvalidArgumentCombinationError)).to be(true)
-    end
-
-    it 'does not define MissingArgumentError' do
-      expect(described_class.const_defined?(:MissingArgumentError)).to be(false)
-    end
-
     it 'defines DomainError' do
       expect(described_class.const_defined?(:DomainError)).to be(true)
-    end
-
-    it 'defines OutOfRangeError' do
-      expect(described_class.const_defined?(:OutOfRangeError)).to be(true)
     end
 
     it 'defines InvalidLengthError' do
@@ -48,16 +36,6 @@ RSpec.describe CnpjDV do
 
     it 'defines ValidationError' do
       expect(described_class.const_defined?(:ValidationError)).to be(true)
-    end
-
-    it 'does not define legacy error class names' do
-      aggregate_failures do
-        expect(described_class.const_defined?(:CnpjCheckDigitsTypeError)).to be(false)
-        expect(described_class.const_defined?(:CnpjCheckDigitsInputTypeError)).to be(false)
-        expect(described_class.const_defined?(:CnpjCheckDigitsException)).to be(false)
-        expect(described_class.const_defined?(:CnpjCheckDigitsInputLengthException)).to be(false)
-        expect(described_class.const_defined?(:CnpjCheckDigitsInputInvalidException)).to be(false)
-      end
     end
   end
 

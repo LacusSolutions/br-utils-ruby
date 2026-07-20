@@ -52,24 +52,10 @@ module CnpjDV
     end
   end
 
-  # Raised when a required argument is not provided.
-  class MissingArgumentError < ArgumentError
-    include Error
-  end
-
-  # Raised when the combination of provided arguments does not match any valid
-  # overload-style signature.
-  class InvalidArgumentCombinationError < ArgumentError
-    include Error
-  end
-
   # Ancestor for numeric and length-based domain failures.
   class DomainError < RangeError
     include Error
   end
-
-  # Raised when a numeric argument is outside an accepted domain range.
-  class OutOfRangeError < DomainError; end
 
   # Raised when a string, array, or other collection has a length outside the
   # bounds required by the domain rule.

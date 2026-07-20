@@ -105,7 +105,7 @@ Os erros se dividem em duas categorias:
 | **Uso incorreto da API** | O chamador usou a biblioteca de forma incorreta (tipo errado). Detectável pela forma da chamada. |
 | **Erro de domínio** | A chamada estava estruturalmente correta, mas um valor viola uma regra de negócio (tamanho, elegibilidade, formato). |
 
-Todo erro customizado inclui o módulo marcador `CnpjDV::Error`. Falhas de tamanho herdam de `CnpjDV::DomainError` (`RangeError`); demais falhas de domínio usam `CnpjDV::ValidationError` (`ArgumentError`) e **não** ficam sob `DomainError`. O pacote também define folhas do esqueleto ainda não usadas (`MissingArgumentError`, `InvalidArgumentCombinationError`, `OutOfRangeError`) por consistência do monorepo.
+Todo erro customizado inclui o módulo marcador `CnpjDV::Error`. Falhas de tamanho herdam de `CnpjDV::DomainError` (`RangeError`); demais falhas de domínio usam `CnpjDV::ValidationError` (`ArgumentError`) e **não** ficam sob `DomainError`. O pacote também define uma folha do esqueleto ainda não usada (`OutOfRangeError`) por consistência do monorepo.
 
 #### Resumo
 

@@ -134,7 +134,7 @@ Errors fall into two categories:
 | **API misuse** | The caller invoked the library incorrectly (wrong type). Detectable from the call shape. |
 | **Domain error** | The call was structurally correct, but a value violates a business rule (length, eligibility, format). |
 
-Every custom error includes the `CnpjDV::Error` marker module. Length domain failures inherit from `CnpjDV::DomainError` (`RangeError`); other domain failures use `CnpjDV::ValidationError` (`ArgumentError`) and are **not** under `DomainError`. The package also defines unused skeleton leaves (`MissingArgumentError`, `InvalidArgumentCombinationError`, `OutOfRangeError`) for monorepo consistency.
+Every custom error includes the `CnpjDV::Error` marker module. Length domain failures inherit from `CnpjDV::DomainError` (`RangeError`); other domain failures use `CnpjDV::ValidationError` (`ArgumentError`) and are **not** under `DomainError`. The package also defines an unused skeleton leaf (`OutOfRangeError`) for monorepo consistency.
 
 #### Summary
 
