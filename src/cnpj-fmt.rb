@@ -14,9 +14,8 @@ require_relative 'cnpj-fmt/cnpj_fmt'
 #
 # Errors fall into two categories:
 #
-# - *API misuse* — the caller supplied a wrong type, omitted a required
-#   argument, or provided an incompatible argument combination. Raised as
-#   {CnpjFmt::TypeMismatchError}, {CnpjFmt::MissingArgumentError}, or
+# - *API misuse* — the caller supplied a wrong type or an incompatible argument
+#   combination. Raised as {CnpjFmt::TypeMismatchError} or
 #   {CnpjFmt::InvalidArgumentCombinationError}.
 # - *Domain errors* — the call shape was valid, but a value violates a business
 #   rule. Length failures construct {CnpjFmt::InvalidLengthError} and pass it to
@@ -33,8 +32,7 @@ require_relative 'cnpj-fmt/cnpj_fmt'
 # - {CnpjFormatter}, {CnpjFormatterOptions}
 # - {CNPJ_LENGTH}, {VERSION}
 # - Error marker {CnpjFmt::Error}; domain ancestor {CnpjFmt::DomainError};
-#   misuse errors {CnpjFmt::TypeMismatchError},
-#   {CnpjFmt::MissingArgumentError}, and
+#   misuse errors {CnpjFmt::TypeMismatchError} and
 #   {CnpjFmt::InvalidArgumentCombinationError}; domain leaves
 #   {CnpjFmt::InvalidLengthError}, {CnpjFmt::OutOfRangeError}, and
 #   {CnpjFmt::ValidationError}

@@ -222,9 +222,9 @@ Os erros se dividem em duas categorias:
 | **Uso incorreto da API** | O chamador usou a biblioteca de forma incorreta (tipo errado para entrada ou opções). |
 | **Erro de domínio** | A chamada estava estruturalmente correta, mas um valor viola uma regra de negócio (tamanho, intervalo, caracteres proibidos). |
 
-Todo erro customizado inclui o módulo marcador `CnpjFmt::Error`. Falhas de tamanho e intervalo herdam de `CnpjFmt::DomainError` (`RangeError`); falhas por caracteres proibidos usam `CnpjFmt::ValidationError` (`ArgumentError`) e **não** ficam sob `DomainError`.
+Todo erro customizado inclui o módulo marcador `CnpjFmt::Error`. Falhas de domínio (`InvalidLengthError`, `OutOfRangeError`, `ValidationError`) herdam de `CnpjFmt::DomainError` (`RangeError`).
 
-**Importante:** `InvalidLengthError` é **construído e passado ao `on_fail`**, não levantado por `format` / `cnpj_fmt`. O pacote também define folhas do esqueleto ainda não usadas (`MissingArgumentError`, `InvalidArgumentCombinationError`) por consistência do monorepo.
+**Importante:** `InvalidLengthError` é **construído e passado ao `on_fail`**, não levantado por `format` / `cnpj_fmt`. O pacote também define uma folha do esqueleto ainda não usada (`InvalidArgumentCombinationError`) por consistência do monorepo.
 
 #### Resumo
 
@@ -233,7 +233,7 @@ Todo erro customizado inclui o módulo marcador `CnpjFmt::Error`. Falhas de tama
 | `CnpjFmt::TypeMismatchError` | `TypeError` (+ `include Error`) | Uso incorreto da API | Entrada de CNPJ ou opção com tipo de dado incorreto |
 | `CnpjFmt::InvalidLengthError` | `CnpjFmt::DomainError` | Erro de domínio | Tamanho após sanitização não é exatamente 14 (passado ao `on_fail`) |
 | `CnpjFmt::OutOfRangeError` | `CnpjFmt::DomainError` | Erro de domínio | `hidden_start` / `hidden_end` fora de `0`–`13` |
-| `CnpjFmt::ValidationError` | `ArgumentError` (+ `include Error`) | Erro de domínio | Opção de chave contém caractere proibido |
+| `CnpjFmt::ValidationError` | `CnpjFmt::DomainError` | Erro de domínio | Opção de chave contém caractere proibido |
 
 #### `CnpjFmt::Error` (módulo marcador)
 
@@ -258,7 +258,7 @@ rescue CnpjFmt::Error
 
 ```ruby
 rescue CnpjFmt::DomainError
-  # OutOfRangeError, InvalidLengthError (quando você o reerguer) e outras subclasses de DomainError
+  # OutOfRangeError, InvalidLengthError, ValidationError e outras subclasses de DomainError
 ```
 
 #### `CnpjFmt::TypeMismatchError`
@@ -332,7 +332,7 @@ rescue CnpjFmt::DomainError
 
 #### `CnpjFmt::ValidationError`
 
-- **Herança:** `CnpjFmt::ValidationError < ArgumentError` (inclui `CnpjFmt::Error`)
+- **Herança:** `CnpjFmt::ValidationError < CnpjFmt::DomainError < RangeError` (inclui `CnpjFmt::Error`)
 - **Categoria:** Erro de domínio — um valor falha uma regra de domínio que não é numérica nem de tamanho.
 - **Quando é levantado:** Levantado quando uma opção de chave (`hidden_key`, `dot_key`, `slash_key`, `dash_key`) contém um caractere proibido.
 - **Exemplo:**
@@ -347,20 +347,21 @@ CnpjFmt::CnpjFormatterOptions.new(dot_key: 'å') # levanta CnpjFmt::ValidationEr
 rescue CnpjFmt::ValidationError
   # esta falha exata de validação de domínio
 
-rescue CnpjFmt::Error
-  # qualquer erro levantado por esta biblioteca
+rescue CnpjFmt::DomainError
+  # falhas de domínio enraizadas em RangeError desta biblioteca
 ```
 
 #### Granularidade de rescue
 
 ```ruby
-# 1) Uma classe nativa — captura uso incorreto (e ValidationError, que herda ArgumentError).
-rescue ArgumentError
-  # CnpjFmt::ValidationError e qualquer outro ArgumentError (da biblioteca ou não)
+# 1) Uma classe nativa — captura uso incorreto de tipo desta biblioteca (e outros TypeError).
+rescue TypeError
+  # CnpjFmt::TypeMismatchError e qualquer outro TypeError (da biblioteca ou não)
 
-# 2) CnpjFmt::DomainError — captura apenas violações de regra enraizadas em RangeError.
+# 2) CnpjFmt::DomainError — captura violações de regra de negócio sob DomainError.
 rescue CnpjFmt::DomainError
-  # CnpjFmt::OutOfRangeError, CnpjFmt::InvalidLengthError e outras subclasses de DomainError
+  # CnpjFmt::OutOfRangeError, CnpjFmt::InvalidLengthError, CnpjFmt::ValidationError
+  # e outras subclasses de DomainError
 
 # 3) CnpjFmt::Error — captura tudo o que a biblioteca levanta.
 rescue CnpjFmt::Error
@@ -370,7 +371,6 @@ rescue CnpjFmt::Error
 rescue CnpjFmt::OutOfRangeError
   # apenas CnpjFmt::OutOfRangeError
 ```
-
 Atributos relevantes:
 
 - `TypeMismatchError`: `actual_input`, `actual_type`, `expected_type`, `option_name` (nil para entrada de CNPJ)
@@ -389,7 +389,7 @@ Após `require 'cnpj-fmt'`:
 - **`CnpjFmt::CnpjFormatterOptions`**: Classe que armazena opções; suporta mesclagem via construtor, `set` e argumentos nomeados.
 - **`CnpjFmt::CNPJ_LENGTH`**: `14` (constante).
 - **`CnpjFmt::VERSION`**: string de versão da gem.
-- **Erros**: `CnpjFmt::Error`, `CnpjFmt::DomainError`, `CnpjFmt::TypeMismatchError`, `CnpjFmt::InvalidLengthError`, `CnpjFmt::OutOfRangeError`, `CnpjFmt::ValidationError` (mais folhas do esqueleto ainda não usadas).
+- **Erros**: `CnpjFmt::Error`, `CnpjFmt::DomainError`, `CnpjFmt::TypeMismatchError`, `CnpjFmt::InvalidLengthError`, `CnpjFmt::OutOfRangeError`, `CnpjFmt::ValidationError` (mais a folha do esqueleto ainda não usada `InvalidArgumentCombinationError`).
 
 ### Outros recursos disponíveis
 
