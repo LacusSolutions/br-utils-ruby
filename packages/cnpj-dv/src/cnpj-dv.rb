@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'cnpj-dv/version'
-require_relative 'cnpj-dv/exceptions'
+require_relative 'cnpj-dv/errors'
 require_relative 'cnpj-dv/cnpj_check_digits'
 
 # Check-digit calculation for Brazilian CNPJ (numeric and alphanumeric formats).

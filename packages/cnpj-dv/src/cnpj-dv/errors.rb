@@ -38,8 +38,8 @@ module CnpjDV
     # @return [String] description of the expected type
     attr_reader :expected_type
 
-    # @param actual_input [Object] the offending input value (the whole array when
-    #   a non-string element is found)
+    # @param actual_input [Object] the offending input value (the whole array
+    #   when a non-string element is found)
     # @param expected_type [String] description of the expected type (e.g.
     #   +"string or string[]"+)
     def initialize(actual_input, expected_type)
