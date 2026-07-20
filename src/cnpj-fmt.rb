@@ -4,7 +4,7 @@ require_relative 'cnpj-fmt/version'
 require_relative 'cnpj-fmt/errors'
 require_relative 'cnpj-fmt/types'
 require_relative 'cnpj-fmt/cnpj_formatter_options'
-require_relative 'cnpj-fmt/formatter_support'
+require_relative 'cnpj-fmt/utils'
 require_relative 'cnpj-fmt/cnpj_formatter'
 require_relative 'cnpj-fmt/cnpj_fmt'
 

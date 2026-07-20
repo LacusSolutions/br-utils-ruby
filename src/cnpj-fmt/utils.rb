@@ -4,7 +4,7 @@ module CnpjFmt
   # Low-level formatting helpers used by {CnpjFormatter}.
   #
   # @api private
-  module FormatterSupport
+  module Utils
     # A rarely-used 1-length character that is replaced with +hidden_key+ when
     # +hidden+ is +true+.
     HIDDEN_KEY_PLACEHOLDER = CnpjFormatterOptions::DISALLOWED_KEY_CHARACTERS[0]
