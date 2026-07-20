@@ -235,9 +235,9 @@ Errors fall into two categories:
 | **API misuse** | The caller invoked the library incorrectly (wrong type for input or options). |
 | **Domain error** | The call was structurally correct, but a value violates a business rule (length, range, forbidden characters). |
 
-Every custom error includes the `CnpjFmt::Error` marker module. Length and range domain failures inherit from `CnpjFmt::DomainError` (`RangeError`); forbidden-character failures use `CnpjFmt::ValidationError` (`ArgumentError`) and are **not** under `DomainError`.
+Every custom error includes the `CnpjFmt::Error` marker module. Domain failures (`InvalidLengthError`, `OutOfRangeError`, `ValidationError`) inherit from `CnpjFmt::DomainError` (`RangeError`).
 
-**Important:** `InvalidLengthError` is **constructed and passed to `on_fail`**, not raised from `format` / `cnpj_fmt`. The package also defines unused skeleton leaves (`MissingArgumentError`, `InvalidArgumentCombinationError`) for monorepo consistency.
+**Important:** `InvalidLengthError` is **constructed and passed to `on_fail`**, not raised from `format` / `cnpj_fmt`. The package also defines an unused skeleton leaf (`InvalidArgumentCombinationError`) for monorepo consistency.
 
 #### Summary
 
@@ -246,7 +246,7 @@ Every custom error includes the `CnpjFmt::Error` marker module. Length and range
 | `CnpjFmt::TypeMismatchError` | `TypeError` (+ `include Error`) | API misuse | CNPJ input or option has the wrong data type |
 | `CnpjFmt::InvalidLengthError` | `CnpjFmt::DomainError` | Domain error | Sanitized length is not exactly 14 (passed to `on_fail`) |
 | `CnpjFmt::OutOfRangeError` | `CnpjFmt::DomainError` | Domain error | `hidden_start` / `hidden_end` outside `0`–`13` |
-| `CnpjFmt::ValidationError` | `ArgumentError` (+ `include Error`) | Domain error | Key option contains a disallowed character |
+| `CnpjFmt::ValidationError` | `CnpjFmt::DomainError` | Domain error | Key option contains a disallowed character |
 
 #### `CnpjFmt::Error` (marker module)
 
@@ -271,7 +271,7 @@ rescue CnpjFmt::Error
 
 ```ruby
 rescue CnpjFmt::DomainError
-  # OutOfRangeError, InvalidLengthError (when raised by you), and other DomainError subclasses
+  # OutOfRangeError, InvalidLengthError, ValidationError, and other DomainError subclasses
 ```
 
 #### `CnpjFmt::TypeMismatchError`
@@ -345,7 +345,7 @@ rescue CnpjFmt::DomainError
 
 #### `CnpjFmt::ValidationError`
 
-- **Inheritance:** `CnpjFmt::ValidationError < ArgumentError` (includes `CnpjFmt::Error`)
+- **Inheritance:** `CnpjFmt::ValidationError < CnpjFmt::DomainError < RangeError` (includes `CnpjFmt::Error`)
 - **Category:** Domain error — a value fails a non-numeric, non-length domain rule.
 - **When it is raised:** Raised when a key option (`hidden_key`, `dot_key`, `slash_key`, `dash_key`) contains a disallowed character.
 - **Example:**
@@ -360,20 +360,21 @@ CnpjFmt::CnpjFormatterOptions.new(dot_key: 'å') # raises CnpjFmt::ValidationErr
 rescue CnpjFmt::ValidationError
   # this exact domain validation failure
 
-rescue CnpjFmt::Error
-  # any error raised by this library
+rescue CnpjFmt::DomainError
+  # RangeError-rooted domain failures from this library
 ```
 
 #### Rescue granularity
 
 ```ruby
-# 1) Single native class — catches misuse (and ValidationError, which inherits ArgumentError).
-rescue ArgumentError
-  # CnpjFmt::ValidationError and any other ArgumentError (library or not)
+# 1) Single native class — catches type misuse from this library (and other TypeErrors).
+rescue TypeError
+  # CnpjFmt::TypeMismatchError and any other TypeError (library or not)
 
-# 2) CnpjFmt::DomainError — catches only RangeError-rooted business-rule violations.
+# 2) CnpjFmt::DomainError — catches business-rule violations under DomainError.
 rescue CnpjFmt::DomainError
-  # CnpjFmt::OutOfRangeError, CnpjFmt::InvalidLengthError, and other DomainError subclasses
+  # CnpjFmt::OutOfRangeError, CnpjFmt::InvalidLengthError, CnpjFmt::ValidationError,
+  # and other DomainError subclasses
 
 # 3) CnpjFmt::Error — catches everything the library raises.
 rescue CnpjFmt::Error
@@ -402,7 +403,7 @@ After `require 'cnpj-fmt'`:
 - **`CnpjFmt::CnpjFormatterOptions`**: Class holding options; supports merge via constructor, `set`, and keyword arguments.
 - **`CnpjFmt::CNPJ_LENGTH`**: `14` (constant).
 - **`CnpjFmt::VERSION`**: gem version string.
-- **Errors**: `CnpjFmt::Error`, `CnpjFmt::DomainError`, `CnpjFmt::TypeMismatchError`, `CnpjFmt::InvalidLengthError`, `CnpjFmt::OutOfRangeError`, `CnpjFmt::ValidationError` (plus unused skeleton leaves).
+- **Errors**: `CnpjFmt::Error`, `CnpjFmt::DomainError`, `CnpjFmt::TypeMismatchError`, `CnpjFmt::InvalidLengthError`, `CnpjFmt::OutOfRangeError`, `CnpjFmt::ValidationError` (plus unused skeleton leaf `InvalidArgumentCombinationError`).
 
 ### Other available resources
 

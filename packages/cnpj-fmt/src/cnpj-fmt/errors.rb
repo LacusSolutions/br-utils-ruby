@@ -63,18 +63,14 @@ module CnpjFmt
     end
   end
 
-  # Raised when a required argument is not provided.
-  class MissingArgumentError < ArgumentError
-    include Error
-  end
-
   # Raised when the combination of provided arguments does not match any valid
   # overload-style signature.
   class InvalidArgumentCombinationError < ArgumentError
     include Error
   end
 
-  # Ancestor for numeric and length-based domain failures.
+  # Raised when arguments have invalid value or key constraints and rules are
+  # violated.
   class DomainError < RangeError
     include Error
   end
@@ -150,9 +146,7 @@ module CnpjFmt
   end
 
   # Raised when a key option contains a disallowed character.
-  class ValidationError < ArgumentError
-    include Error
-
+  class ValidationError < DomainError
     # @return [String] the offending option name
     attr_reader :option_name
 
