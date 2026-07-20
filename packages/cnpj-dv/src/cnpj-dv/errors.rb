@@ -24,8 +24,8 @@ module CnpjDV
   # ancestry.
   module Error; end
 
-  # Raised when an argument's runtime type does not match the type required by
-  # the API contract.
+  # API misuse error raised when an argument's runtime type does not match the
+  # type required by the API contract.
   class TypeMismatchError < TypeError
     include Error
 
@@ -52,14 +52,14 @@ module CnpjDV
     end
   end
 
-  # Raised when arguments have invalid value or key constraints and rules are
-  # violated.
+  # Domain error ancestor for business-rule failures (length, validation, and
+  # other domain leaves). Prefer raising a leaf subclass.
   class DomainError < RangeError
     include Error
   end
 
-  # Raised when a string, array, or other collection has a length outside the
-  # bounds required by the domain rule.
+  # Domain error raised when a string, array, or other collection has a length
+  # outside the bounds required by the domain rule.
   class InvalidLengthError < DomainError
     # @return [String, Array<String>] the original input
     attr_reader :actual_input
@@ -101,7 +101,7 @@ module CnpjDV
     end
   end
 
-  # Raised when a value has a valid type and length but violates a domain
+  # Domain error raised when a value has a valid type and length but violates a
   # validation rule that is not numeric-range or length-based (e.g. ineligible
   # base/branch ID or repeated numeric digits).
   class ValidationError < DomainError
