@@ -87,6 +87,22 @@ RSpec.describe CnpjFmt::CnpjFormatter do
         expect(described_class.new(options).options.all).to eq(options.all)
       end
     end
+
+    context 'when called with both an options instance and keyword arguments' do
+      it 'raises InvalidArgumentCombinationError' do
+        options = CnpjFmt::CnpjFormatterOptions.new(slash_key: '|')
+
+        expect { described_class.new(options, hidden: true) }
+          .to raise_error(CnpjFmt::InvalidArgumentCombinationError, /options.*keyword arguments.*not both/)
+      end
+    end
+
+    context 'when called with both an options Hash and keyword arguments' do
+      it 'raises InvalidArgumentCombinationError' do
+        expect { described_class.new({ slash_key: '|' }, hidden: true) }
+          .to raise_error(CnpjFmt::InvalidArgumentCombinationError, /options.*keyword arguments.*not both/)
+      end
+    end
   end
 
   describe '#format' do
@@ -290,10 +306,9 @@ RSpec.describe CnpjFmt::CnpjFormatter do
         end
       end
 
-      it 'gives options precedence over keywords' do
-        result = format.call('12ABC34500DE99', { hidden: false }, hidden: true)
-
-        expect(result.count('*')).to eq(0)
+      it 'raises InvalidArgumentCombinationError when options and keywords are both given' do
+        expect { format.call('12ABC34500DE99', { hidden: false }, hidden: true) }
+          .to raise_error(CnpjFmt::InvalidArgumentCombinationError, /options.*keyword arguments.*not both/)
       end
 
       it 'applies encode via keyword override' do

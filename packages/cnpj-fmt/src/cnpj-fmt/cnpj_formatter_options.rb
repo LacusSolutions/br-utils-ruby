@@ -1,69 +1,236 @@
 # frozen_string_literal: true
 
 require_relative 'types'
-require_relative 'cnpj_formatter_option_properties'
 
 module CnpjFmt
-  # Internal validation helpers for {CnpjFormatterOptions}.
-  module OptionsValidation
-    module_function
+  # Layered option-resolution helpers for {CnpjFormatterOptions}.
+  module FormatterOptionsResolution
+    private
 
-    def valid_integer?(value)
-      value.is_a?(Integer)
+    def fold_layers(layers)
+      resolved = {}
+
+      layers.each do |layer|
+        source = layer_source(layer)
+        next if source.nil?
+
+        CnpjFormatterOptions::OPTION_KEYS.each do |key|
+          value = Utils.fetch_option(source, key)
+          resolved[key] = value unless value.nil?
+        end
+      end
+
+      resolved
     end
 
-    # rubocop:disable Naming/PredicateMethod -- coercion helper, not a predicate query
-    def normalize_boolean(value)
-      return false if [false, '', 0].include?(value)
+    def layer_source(layer)
+      return layer.all if layer.is_a?(CnpjFormatterOptions)
+      return layer if layer.is_a?(Hash)
 
-      !!value
-    end
-    # rubocop:enable Naming/PredicateMethod
-
-    def assert_string_option!(option_name, value)
-      return if value.is_a?(String)
-
-      raise TypeMismatchError.new(value, 'string', option_name: option_name)
+      nil
     end
 
-    def assert_no_disallowed_key_characters!(option_name, value, forbidden_characters)
-      return unless value.chars.intersect?(forbidden_characters)
+    def apply_keyword_overrides(resolved, keywords)
+      CnpjFormatterOptions::OPTION_KEYS.each do |key|
+        value = keywords[key]
+        resolved[key] = value unless value.nil?
+      end
+    end
 
-      raise ValidationError.new(
-        option_name,
-        value,
-        forbidden_characters
+    def assign_resolved_or_default(resolved)
+      CnpjFormatterOptions::SIMPLE_OPTION_KEYS.each do |key|
+        value = resolved.key?(key) ? resolved[key] : CnpjFormatterOptions::DEFAULTS[key]
+        public_send("#{key}=", value)
+      end
+
+      set_hidden_range(
+        resolved.key?(:hidden_start) ? resolved[:hidden_start] : CnpjFormatterOptions::DEFAULTS[:hidden_start],
+        resolved.key?(:hidden_end) ? resolved[:hidden_end] : CnpjFormatterOptions::DEFAULTS[:hidden_end]
       )
     end
 
-    def assert_hidden_index_type!(option_name, value)
-      return if valid_integer?(value)
+    def assign_resolved_keeping_current(resolved)
+      CnpjFormatterOptions::SIMPLE_OPTION_KEYS.each do |key|
+        next unless resolved.key?(key)
 
-      raise TypeMismatchError.new(value, 'integer', option_name: option_name)
-    end
+        public_send("#{key}=", resolved[key])
+      end
 
-    def assert_hidden_index!(option_name, value, min_value, max_value)
-      return if value.between?(min_value, max_value)
+      return unless resolved.key?(:hidden_start) || resolved.key?(:hidden_end)
 
-      raise OutOfRangeError.new(
-        option_name,
-        value,
-        min_value,
-        max_value
+      set_hidden_range(
+        resolved.key?(:hidden_start) ? resolved[:hidden_start] : hidden_start,
+        resolved.key?(:hidden_end) ? resolved[:hidden_end] : hidden_end
       )
     end
 
-    def normalize_hidden_range(hidden_start, hidden_end, defaults)
-      actual_start = hidden_start.nil? ? defaults[:hidden_start] : hidden_start
-      actual_end = hidden_end.nil? ? defaults[:hidden_end] : hidden_end
+    def assign_string_key_option(option_name, value)
+      Utils.assert_string_option!(option_name, value)
+      Utils.assert_no_disallowed_key_characters!(
+        option_name,
+        value,
+        CnpjFormatterOptions::DISALLOWED_KEY_CHARACTERS
+      )
+      @options[option_name.to_sym] = value
+    end
+  end
 
-      assert_hidden_index_type!('hidden_start', actual_start)
-      assert_hidden_index_type!('hidden_end', actual_end)
-      assert_hidden_index!('hidden_start', actual_start, defaults[:min], defaults[:max])
-      assert_hidden_index!('hidden_end', actual_end, defaults[:min], defaults[:max])
+  # Property accessors for {CnpjFormatterOptions}. Kept as a sibling module in this
+  # file (not a separate public API) so the options class stays under RuboCop's
+  # +Metrics/ClassLength+ budget.
+  module CnpjFormatterOptionProperties
+    # @return [Boolean]
+    def hidden
+      @options[:hidden]
+    end
 
-      actual_start, actual_end = actual_end, actual_start if actual_start > actual_end
-      [actual_start, actual_end]
+    # Sets whether hidden character replacement is enabled. +nil+ is not accepted:
+    # pass {CnpjFormatterOptions::DEFAULT_HIDDEN} to reset explicitly.
+    #
+    # @param value [Boolean] enable masking when truthy
+    # @raise [TypeMismatchError] if the value is +nil+
+    def hidden=(value)
+      raise TypeMismatchError.new(value, 'boolean', option_name: 'hidden') if value.nil?
+
+      @options[:hidden] = Utils.normalize_boolean(value)
+    end
+
+    # @return [String]
+    def hidden_key
+      @options[:hidden_key]
+    end
+
+    # Sets the string used to replace hidden CNPJ characters. +nil+ is not
+    # accepted: pass {CnpjFormatterOptions::DEFAULT_HIDDEN_KEY} to reset explicitly.
+    #
+    # @param value [String] replacement string
+    # @raise [TypeMismatchError] if the value is not a +String+
+    # @raise [ValidationError] if the value contains any disallowed key character
+    def hidden_key=(value)
+      assign_string_key_option('hidden_key', value)
+    end
+
+    # @return [Integer]
+    def hidden_start
+      @options[:hidden_start]
+    end
+
+    # Sets the start index for hiding CNPJ characters. +nil+ is not accepted:
+    # pass {CnpjFormatterOptions::DEFAULT_HIDDEN_START} to reset explicitly.
+    #
+    # @param value [Integer] start index
+    # @raise [TypeMismatchError] if the value is not an integer
+    # @raise [OutOfRangeError] if the value is out of valid range
+    def hidden_start=(value)
+      set_hidden_range(value, @options[:hidden_end])
+    end
+
+    # @return [Integer]
+    def hidden_end
+      @options[:hidden_end]
+    end
+
+    # Sets the end index for hiding CNPJ characters. +nil+ is not accepted: pass
+    # {CnpjFormatterOptions::DEFAULT_HIDDEN_END} to reset explicitly.
+    #
+    # @param value [Integer] end index
+    # @raise [TypeMismatchError] if the value is not an integer
+    # @raise [OutOfRangeError] if the value is out of valid range
+    def hidden_end=(value)
+      set_hidden_range(@options[:hidden_start], value)
+    end
+
+    # @return [String]
+    def dot_key
+      @options[:dot_key]
+    end
+
+    # Sets the dot delimiter. +nil+ is not accepted: pass
+    # {CnpjFormatterOptions::DEFAULT_DOT_KEY} to reset explicitly.
+    #
+    # @param value [String] delimiter string
+    # @raise [TypeMismatchError] if the value is not a +String+
+    # @raise [ValidationError] if the value contains any disallowed key character
+    def dot_key=(value)
+      assign_string_key_option('dot_key', value)
+    end
+
+    # @return [String]
+    def slash_key
+      @options[:slash_key]
+    end
+
+    # Sets the slash delimiter. +nil+ is not accepted: pass
+    # {CnpjFormatterOptions::DEFAULT_SLASH_KEY} to reset explicitly.
+    #
+    # @param value [String] delimiter string
+    # @raise [TypeMismatchError] if the value is not a +String+
+    # @raise [ValidationError] if the value contains any disallowed key character
+    def slash_key=(value)
+      assign_string_key_option('slash_key', value)
+    end
+
+    # @return [String]
+    def dash_key
+      @options[:dash_key]
+    end
+
+    # Sets the dash delimiter. +nil+ is not accepted: pass
+    # {CnpjFormatterOptions::DEFAULT_DASH_KEY} to reset explicitly.
+    #
+    # @param value [String] delimiter string
+    # @raise [TypeMismatchError] if the value is not a +String+
+    # @raise [ValidationError] if the value contains any disallowed key character
+    def dash_key=(value)
+      assign_string_key_option('dash_key', value)
+    end
+
+    # @return [Boolean]
+    def escape
+      @options[:escape]
+    end
+
+    # Sets whether HTML escaping is enabled. +nil+ is not accepted: pass
+    # {CnpjFormatterOptions::DEFAULT_ESCAPE} to reset explicitly.
+    #
+    # @param value [Boolean] enable escaping when truthy
+    # @raise [TypeMismatchError] if the value is +nil+
+    def escape=(value)
+      raise TypeMismatchError.new(value, 'boolean', option_name: 'escape') if value.nil?
+
+      @options[:escape] = Utils.normalize_boolean(value)
+    end
+
+    # @return [Boolean]
+    def encode
+      @options[:encode]
+    end
+
+    # Sets whether URL encoding is enabled. +nil+ is not accepted: pass
+    # {CnpjFormatterOptions::DEFAULT_ENCODE} to reset explicitly.
+    #
+    # @param value [Boolean] enable encoding when truthy
+    # @raise [TypeMismatchError] if the value is +nil+
+    def encode=(value)
+      raise TypeMismatchError.new(value, 'boolean', option_name: 'encode') if value.nil?
+
+      @options[:encode] = Utils.normalize_boolean(value)
+    end
+
+    # @return [Proc] failure callback
+    def on_fail
+      @options[:on_fail]
+    end
+
+    # Sets the callback executed when formatting fails. +nil+ is not accepted:
+    # pass {CnpjFormatterOptions::DEFAULT_ON_FAIL} to reset explicitly.
+    #
+    # @param value [Proc] callback
+    # @raise [TypeMismatchError] if the value is not callable
+    def on_fail=(value)
+      raise TypeMismatchError.new(value, 'function', option_name: 'on_fail') unless value.respond_to?(:call)
+
+      @options[:on_fail] = value
     end
   end
 
@@ -73,6 +240,7 @@ module CnpjFmt
   # including delimiters, hidden character ranges, HTML escaping, URL encoding,
   # and error handling callbacks.
   class CnpjFormatterOptions
+    include FormatterOptionsResolution
     include CnpjFormatterOptionProperties
 
     # The standard length of a CNPJ (Cadastro Nacional da Pessoa Jurídica)
@@ -131,7 +299,16 @@ module CnpjFmt
     # for future use already.
     DISALLOWED_KEY_CHARACTERS = %w[å ë ï ö].freeze
 
-    SIMPLE_OPTION_KEYS = (FORMATTER_OPTION_KEYS - %i[hidden_start hidden_end]).freeze
+    # Option keys managed by this class, in assignment order.
+    OPTION_KEYS = FORMATTER_OPTION_KEYS
+
+    # The +hidden_start+/+hidden_end+ pair is resolved and assigned together (via
+    # {#set_hidden_range}) because their validation (range + swap) is coupled.
+    RANGE_OPTION_KEYS = %i[hidden_start hidden_end].freeze
+
+    # Every option key except {RANGE_OPTION_KEYS}, each assignable independently
+    # through its own property setter.
+    SIMPLE_OPTION_KEYS = (OPTION_KEYS - RANGE_OPTION_KEYS).freeze
 
     class << self
       # Returns the shared default +on_fail+ callback.
@@ -149,38 +326,53 @@ module CnpjFmt
     # string by default.
     DEFAULT_ON_FAIL = default_on_fail
 
-    # Creates a new options instance.
+    # Default value for each key in {OPTION_KEYS}, used to fill any option that is
+    # still unresolved once {#initialize} finishes merging its arguments.
+    DEFAULTS = {
+      hidden: DEFAULT_HIDDEN,
+      hidden_key: DEFAULT_HIDDEN_KEY,
+      hidden_start: DEFAULT_HIDDEN_START,
+      hidden_end: DEFAULT_HIDDEN_END,
+      dot_key: DEFAULT_DOT_KEY,
+      slash_key: DEFAULT_SLASH_KEY,
+      dash_key: DEFAULT_DASH_KEY,
+      escape: DEFAULT_ESCAPE,
+      encode: DEFAULT_ENCODE,
+      on_fail: DEFAULT_ON_FAIL
+    }.freeze
+
+    # Creates a new {CnpjFormatterOptions} instance.
     #
-    # Options can be provided in multiple ways:
+    # Options are resolved in three steps. Each step only overrides a key when it
+    # is given a non-+nil+ value; a +nil+ is always ignored in favor of whatever
+    # was resolved by a previous step.
     #
-    # 1. As a single options {Hash} or another {CnpjFormatterOptions} instance.
-    # 2. As multiple override objects that are merged in order (later overrides
-    #    take precedence).
+    # 1. Every positional +options+ layer (each either a {Hash} or another
+    #    {CnpjFormatterOptions} instance) is folded left to right, so later layers
+    #    take precedence over earlier ones.
+    # 2. The keyword arguments are then applied on top of the folded layers.
+    #    Keywords always have the highest precedence, overriding every positional
+    #    layer.
+    # 3. Any option that is still unresolved after steps 1 and 2 is assigned its
+    #    +DEFAULT_*+ value (see {DEFAULTS}).
     #
-    # All options are optional and will default to their predefined values if not
-    # provided. The +hidden_start+ and +hidden_end+ options are validated to ensure
-    # they are within the valid range +[0, CNPJ_LENGTH - 1]+ and will be swapped
-    # if +hidden_start > hidden_end+.
+    # Because every option is fully resolved to a concrete, non-+nil+ value before
+    # assignment, the individual property setters (e.g. {#hidden=}) never receive
+    # +nil+ from this method — they always raise if given +nil+ directly.
     #
-    # @param options [CnpjFormatterOptions, Hash, nil] initial options
-    # @param extra_overrides [Array<CnpjFormatterOptions, Hash>] additional option
-    #   layers merged in order (later overrides win)
-    # @param keywords [Hash] option keyword overrides
+    # @param options [Array<CnpjFormatterOptions, Hash>] option layers merged in
+    #   order (later layers win); a missing or +nil+ value for a key inside a
+    #   layer is ignored and the previously resolved value is kept
+    # @param keywords [Hash] highest-precedence option overrides (see {OPTION_KEYS})
     # @raise [TypeMismatchError] if any option has an invalid type
-    # @raise [OutOfRangeError] if +hidden_start+ or
-    #   +hidden_end+ are out of valid range
-    # @raise [ValidationError] if any key option
-    #   contains a disallowed character
-    def initialize(options = nil, *extra_overrides, **keywords)
+    # @raise [OutOfRangeError] if +hidden_start+ or +hidden_end+ are out of valid range
+    # @raise [ValidationError] if any key option contains a disallowed character
+    def initialize(*options, **keywords)
       @options = {}
 
-      apply_initial_keywords(keywords)
-      set_hidden_range(keywords[:hidden_start], keywords[:hidden_end])
-
-      to_merge = []
-      to_merge << options unless options.nil?
-      to_merge.concat(extra_overrides)
-      to_merge.each { |item| set(item) }
+      resolved = fold_layers(options)
+      apply_keyword_overrides(resolved, keywords)
+      assign_resolved_or_default(resolved)
     end
 
     # Sets +hidden_start+ and +hidden_end+ with validation.
@@ -188,19 +380,22 @@ module CnpjFmt
     # Validates that both indices are integers within the valid range
     # +[0, CNPJ_LENGTH - 1]+. If +hidden_start > hidden_end+, the values are
     # automatically swapped to ensure a valid range. This method is used internally
-    # by the +hidden_start+ and +hidden_end+ setters to maintain consistency.
+    # to keep both bounds consistent whenever either one changes.
     #
-    # @param hidden_start [Integer, nil] inclusive start index (0–13)
-    # @param hidden_end [Integer, nil] inclusive end index (0–13)
+    # Neither argument accepts +nil+: pass the current or default value explicitly
+    # if only the other bound is changing.
+    #
+    # @param hidden_start [Integer] inclusive start index (0–13)
+    # @param hidden_end [Integer] inclusive end index (0–13)
     # @return [CnpjFormatterOptions] +self+
     # @raise [TypeMismatchError] if either value is not an integer
-    # @raise [OutOfRangeError] if either value is
-    #   out of valid range +[0, CNPJ_LENGTH - 1]+
+    # @raise [OutOfRangeError] if either value is out of valid range +[0, CNPJ_LENGTH - 1]+
     def set_hidden_range(hidden_start, hidden_end)
-      start_index, end_index = OptionsValidation.normalize_hidden_range(
+      start_index, end_index = Utils.normalize_hidden_range(
         hidden_start,
         hidden_end,
-        hidden_range_defaults
+        MIN_HIDDEN_RANGE,
+        MAX_HIDDEN_RANGE
       )
       @options[:hidden_start] = start_index
       @options[:hidden_end] = end_index
@@ -216,78 +411,33 @@ module CnpjFmt
       duplicate
     end
 
-    # Sets multiple options at once.
+    # Sets multiple options at once, following the same layered-override
+    # semantics as {#initialize} (positional layers folded left to right, then
+    # keyword arguments applied with the highest precedence; +nil+ is always
+    # ignored). Unlike {#initialize}, any option that is still unresolved after
+    # merging keeps its **current** value on this instance instead of falling
+    # back to its default — this method performs a partial update, not a
+    # re-initialization.
     #
-    # Only the provided options are updated; options not included in the object
-    # retain their current values. You can pass either a partial options {Hash} or
-    # another {CnpjFormatterOptions} instance.
-    #
-    # @param options [CnpjFormatterOptions, Hash, nil] options to merge
+    # @param options [Array<CnpjFormatterOptions, Hash>] option layers merged in
+    #   order (later layers win)
+    # @param keywords [Hash] highest-precedence option overrides (see {OPTION_KEYS})
     # @return [CnpjFormatterOptions] +self+
     # @raise [TypeMismatchError] if any option has an invalid type
-    # @raise [OutOfRangeError] if +hidden_start+ or
-    #   +hidden_end+ are out of valid range
-    # @raise [ValidationError] if any key option
-    #   contains a disallowed character
-    def set(options)
-      return self if options.nil?
-
-      source = options_source(options)
-      return self if source.nil?
-
-      apply_option_updates(source)
+    # @raise [OutOfRangeError] if +hidden_start+ or +hidden_end+ are out of valid range
+    # @raise [ValidationError] if any key option contains a disallowed character
+    def set(*options, **keywords)
+      resolved = fold_layers(options)
+      apply_keyword_overrides(resolved, keywords)
+      assign_resolved_keeping_current(resolved)
       self
     end
 
-    private
-
-    def apply_initial_keywords(keywords)
-      SIMPLE_OPTION_KEYS.each { |key| public_send("#{key}=", keywords[key]) }
-    end
-
-    def hidden_range_defaults
-      {
-        hidden_start: DEFAULT_HIDDEN_START,
-        hidden_end: DEFAULT_HIDDEN_END,
-        min: MIN_HIDDEN_RANGE,
-        max: MAX_HIDDEN_RANGE
-      }
-    end
-
-    def assign_string_key_option(option_name, value, default_value)
-      actual_value = value.nil? ? default_value : value
-      OptionsValidation.assert_string_option!(option_name, actual_value)
-      OptionsValidation.assert_no_disallowed_key_characters!(
-        option_name,
-        actual_value,
-        DISALLOWED_KEY_CHARACTERS
-      )
-      @options[option_name.to_sym] = actual_value
-    end
-
-    def options_source(options)
-      return options.all if options.is_a?(CnpjFormatterOptions)
-      return options if options.is_a?(Hash)
-
-      nil
-    end
-
-    def apply_option_updates(source)
-      SIMPLE_OPTION_KEYS.each do |key|
-        public_send("#{key}=", coalesce_option(source, key, public_send(key)))
-      end
-
-      set_hidden_range(
-        coalesce_option(source, :hidden_start, hidden_start),
-        coalesce_option(source, :hidden_end, hidden_end)
-      )
-    end
-
-    def coalesce_option(source, key, current)
-      return current unless source.key?(key) || source.key?(key.to_s)
-
-      value = source.fetch(key) { source.fetch(key.to_s) }
-      value.nil? ? current : value
+    # Returns a shallow copy of all current options.
+    #
+    # @return [Hash{Symbol => Object}] shallow copy of option values
+    def all
+      @options.dup
     end
   end
 end
