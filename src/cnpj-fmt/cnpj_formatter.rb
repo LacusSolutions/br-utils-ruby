@@ -28,28 +28,29 @@ module CnpjFmt
     # per-call +options+ argument or keyword overrides. Options control masking,
     # HTML escaping, URL encoding, and the callback used when formatting fails.
     #
+    # +options+ and the keyword arguments are never merged with each other: when
+    # +options+ is given (a {CnpjFormatterOptions} instance or a {Hash}), it alone
+    # determines the default options; otherwise, the default options are built
+    # exclusively from the keyword arguments, with {CnpjFormatterOptions} filling
+    # in its own defaults for every keyword left as +nil+. Passing +options+
+    # together with any non-+nil+ keyword argument raises
+    # {InvalidArgumentCombinationError} instead of silently ignoring the keywords.
+    #
     # When +options+ is a {CnpjFormatterOptions} instance, that instance is used
     # directly (no copy is created). Mutating it later (e.g. via the {#options}
     # reader or the original reference) affects future {#format} calls that do
-    # not pass per-call options. When a plain {Hash} or nothing is passed, a new
+    # not pass per-call options. When a plain {Hash} is passed instead, a new
     # {CnpjFormatterOptions} instance is created from it.
     #
     # @param options [CnpjFormatterOptions, Hash, nil] default formatter options
-    # @param extra_overrides [Array<CnpjFormatterOptions, Hash>] additional option
-    #   layers merged in order (later overrides win)
-    # @param keywords [Hash] option keyword overrides (see {CnpjFormatterOptions})
+    # @param keywords [Hash] option keyword overrides (mutually exclusive with +options+;
+    #   see {CnpjFormatterOptions})
+    # @raise [InvalidArgumentCombinationError] if +options+ and a keyword argument are both given
     # @raise [TypeMismatchError] if any option has an invalid type
-    # @raise [OutOfRangeError] if +hidden_start+ or
-    #   +hidden_end+ are out of valid range
-    # @raise [ValidationError] if any key
-    #   option contains a disallowed character
-    def initialize(options = nil, *extra_overrides, **keywords)
-      @options =
-        if options.is_a?(CnpjFormatterOptions)
-          options
-        else
-          CnpjFormatterOptions.new(options, *extra_overrides, **keywords)
-        end
+    # @raise [OutOfRangeError] if +hidden_start+ or +hidden_end+ are out of valid range
+    # @raise [ValidationError] if any key option contains a disallowed character
+    def initialize(options = nil, **keywords)
+      @options = resolve_default_options(options, keywords)
     end
 
     # Formats a CNPJ value into a human-readable string.
@@ -67,30 +68,34 @@ module CnpjFmt
     # - If +encode+ is +true+, the string is URL-encoded (similar to JavaScript's
     #   +encodeURIComponent+).
     #
-    # Per-call +options+ and keyword overrides are merged over the instance
-    # default options for this call only; the instance defaults are unchanged.
-    # When both the +options+ argument and keyword parameters are provided,
-    # +options+ takes precedence.
+    # +options+ and the keyword arguments are never merged with each other: when
+    # +options+ is given (a {CnpjFormatterOptions} instance or a {Hash}), it alone
+    # overrides the instance default options for this call; otherwise, any
+    # non-+nil+ keyword argument overrides the instance default options for this
+    # call. When neither +options+ nor any keyword argument is given, the
+    # instance default options are used as-is. In every case, the instance
+    # default options themselves are left unchanged. Passing +options+ together
+    # with any non-+nil+ keyword argument raises {InvalidArgumentCombinationError}
+    # instead of silently ignoring the keywords.
     #
     # @param cnpj_input [String, Array<String>] CNPJ value as a string or array of
     #   strings
     # @param options [CnpjFormatterOptions, Hash, nil] per-call option overrides
-    # @param keywords [Hash] per-call option keyword overrides
+    # @param keywords [Hash] per-call option keyword overrides (mutually exclusive
+    #   with +options+; see {CnpjFormatterOptions})
     # @return [String] formatted CNPJ string, or the +on_fail+ callback result
-    # @raise [TypeMismatchError] if the input is not a +String+ or
-    #   +Array<String>+
+    # @raise [InvalidArgumentCombinationError] if +options+ and a keyword argument are both given
+    # @raise [TypeMismatchError] if the input is not a +String+ or +Array<String>+
     # @raise [TypeMismatchError] if any option has an invalid type
-    # @raise [OutOfRangeError] if +hidden_start+
-    #   or +hidden_end+ are out of valid range
-    # @raise [ValidationError] if any key
-    #   option contains a disallowed character
+    # @raise [OutOfRangeError] if +hidden_start+ or +hidden_end+ are out of valid range
+    # @raise [ValidationError] if any key option contains a disallowed character
     #
     # @example
     #   formatter = CnpjFmt::CnpjFormatter.new
     #   formatter.format('12345678000910') # => "12.345.678/0009-10"
     def format(cnpj_input, options = nil, **keywords)
       actual_input = Utils.to_string_input(cnpj_input)
-      actual_options = resolve_format_options(options, keywords)
+      actual_options = resolve_call_options(options, keywords)
       formatted_cnpj = Utils.sanitize_cnpj_input(actual_input)
 
       return handle_invalid_length(cnpj_input, formatted_cnpj, actual_options) unless valid_length?(formatted_cnpj)
@@ -128,24 +133,37 @@ module CnpjFmt
       Utils.apply_post_processing(formatted_cnpj, actual_options)
     end
 
-    def resolve_format_options(options, keywords)
-      return @options unless per_call_overrides?(options, keywords)
+    def resolve_default_options(options, keywords)
+      keyword_overrides = compact_keyword_overrides(keywords)
+      raise_ambiguous_options! if options && !keyword_overrides.empty?
+      return options if options.is_a?(CnpjFormatterOptions)
+      return CnpjFormatterOptions.new(options) if options
 
-      actual_options = @options.copy
-      compact_keywords = compact_keyword_overrides(keywords)
-      actual_options.set(compact_keywords) unless compact_keywords.empty?
-      actual_options.set(options) unless options.nil?
-      actual_options
+      CnpjFormatterOptions.new(**keywords)
     end
 
-    def per_call_overrides?(options, keywords)
-      options || keywords.values.any? { |value| !value.nil? }
+    def resolve_call_options(options, keywords)
+      keyword_overrides = compact_keyword_overrides(keywords)
+      raise_ambiguous_options! if options && !keyword_overrides.empty?
+      return @options.copy.set(options) if options
+      return @options if keyword_overrides.empty?
+
+      @options.copy.set(keyword_overrides)
     end
 
     def compact_keyword_overrides(keywords)
-      keywords.each_with_object({}) do |(key, value), overrides|
+      CnpjFormatterOptions::OPTION_KEYS.each_with_object({}) do |key, overrides|
+        value = keywords[key]
         overrides[key] = value unless value.nil?
       end
+    end
+
+    def raise_ambiguous_options!
+      option_keywords = CnpjFormatterOptions::OPTION_KEYS.map { |key| "#{key}:" }.join(', ')
+
+      raise InvalidArgumentCombinationError,
+            "Pass either an options instance/Hash to `options`, or keyword arguments (#{option_keywords}), " \
+            'not both.'
     end
   end
 end

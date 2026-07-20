@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module CnpjFmt
-  # Low-level formatting helpers used by {CnpjFormatter}.
+  # Low-level helpers used by {CnpjFormatter} and {CnpjFormatterOptions}.
   #
   # @api private
   module Utils
@@ -11,6 +11,56 @@ module CnpjFmt
     ALPHANUMERIC_PATTERN = /[^0-9A-Za-z]/
 
     module_function
+
+    # rubocop:disable Naming/PredicateMethod -- coercion helper, not a predicate query
+    def normalize_boolean(value)
+      return false if [false, '', 0].include?(value)
+
+      !!value
+    end
+    # rubocop:enable Naming/PredicateMethod
+
+    def assert_string_option!(option_name, value)
+      return if value.is_a?(String)
+
+      raise TypeMismatchError.new(value, 'string', option_name: option_name)
+    end
+
+    def assert_no_disallowed_key_characters!(option_name, value, forbidden_characters)
+      return unless value.chars.intersect?(forbidden_characters)
+
+      raise ValidationError.new(option_name, value, forbidden_characters)
+    end
+
+    def assert_hidden_index_type!(option_name, value)
+      return if value.is_a?(Integer)
+
+      raise TypeMismatchError.new(value, 'integer', option_name: option_name)
+    end
+
+    def assert_hidden_index!(option_name, value, min_value, max_value)
+      return if value.between?(min_value, max_value)
+
+      raise OutOfRangeError.new(option_name, value, min_value, max_value)
+    end
+
+    def fetch_option(source, key)
+      return source[key] if source.key?(key)
+      return source[key.to_s] if source.key?(key.to_s)
+
+      nil
+    end
+
+    def normalize_hidden_range(hidden_start, hidden_end, min_value, max_value)
+      assert_hidden_index_type!('hidden_start', hidden_start)
+      assert_hidden_index_type!('hidden_end', hidden_end)
+      assert_hidden_index!('hidden_start', hidden_start, min_value, max_value)
+      assert_hidden_index!('hidden_end', hidden_end, min_value, max_value)
+
+      return [hidden_end, hidden_start] if hidden_start > hidden_end
+
+      [hidden_start, hidden_end]
+    end
 
     def sanitize_cnpj_input(value)
       if value.length == CnpjFormatterOptions::CNPJ_LENGTH &&
