@@ -26,12 +26,12 @@ RSpec.describe CnpjDV do
       expect(described_class.const_defined?(:TypeMismatchError)).to be(true)
     end
 
-    it 'defines MissingArgumentError' do
-      expect(described_class.const_defined?(:MissingArgumentError)).to be(true)
-    end
-
     it 'defines InvalidArgumentCombinationError' do
       expect(described_class.const_defined?(:InvalidArgumentCombinationError)).to be(true)
+    end
+
+    it 'does not define MissingArgumentError' do
+      expect(described_class.const_defined?(:MissingArgumentError)).to be(false)
     end
 
     it 'defines DomainError' do
