@@ -69,17 +69,17 @@ module CnpjGen
       )
     end
 
-    def validate_prefix_non_repeated_digits!(cnpj_prefix)
-      return if cnpj_prefix.length < CnpjGeneratorOptions::CNPJ_PREFIX_MAX_LENGTH
+    def validate_prefix_non_repeated_digits!(partial_cnpj)
+      return if partial_cnpj.length < CnpjGeneratorOptions::CNPJ_PREFIX_MAX_LENGTH
 
-      first_character = cnpj_prefix[0]
+      first_character = partial_cnpj[0]
 
       return unless first_character.match?(/\A\d\z/)
-      return unless cnpj_prefix == first_character * CnpjGeneratorOptions::CNPJ_PREFIX_MAX_LENGTH
+      return unless partial_cnpj == first_character * CnpjGeneratorOptions::CNPJ_PREFIX_MAX_LENGTH
 
       raise ValidationError.new(
         'prefix',
-        cnpj_prefix,
+        partial_cnpj,
         reason: 'Repeated digits are not considered valid.'
       )
     end
