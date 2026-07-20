@@ -91,9 +91,9 @@ RSpec.describe CnpjDV do
       aggregate_failures do
         expect(instance.actual_input).to eq('123')
         expect(instance.reason).to eq('some reason')
-        expect(instance).to be_a(ArgumentError)
+        expect(instance).to be_a(described_class::DomainError)
+        expect(instance).to be_a(RangeError)
         expect(instance).to be_a(described_class::Error)
-        expect(instance).not_to be_a(described_class::DomainError)
         expect(instance.message).to eq('CNPJ input "123" is invalid. some reason')
       end
     end

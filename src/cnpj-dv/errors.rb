@@ -52,7 +52,8 @@ module CnpjDV
     end
   end
 
-  # Ancestor for numeric and length-based domain failures.
+  # Raised when arguments have invalid value or key constraints and rules are
+  # violated.
   class DomainError < RangeError
     include Error
   end
@@ -103,9 +104,7 @@ module CnpjDV
   # Raised when a value has a valid type and length but violates a domain
   # validation rule that is not numeric-range or length-based (e.g. ineligible
   # base/branch ID or repeated numeric digits).
-  class ValidationError < ArgumentError
-    include Error
-
+  class ValidationError < DomainError
     # @return [String, Array<String>] the original input
     attr_reader :actual_input
 

@@ -281,11 +281,11 @@ RSpec.describe CnpjDV::CnpjCheckDigits do
         end
       end
 
-      it 'is rescuable as CnpjDV::Error but not DomainError' do
+      it 'is rescuable as CnpjDV::DomainError and CnpjDV::Error' do
         expect { described_class.new('000000000001') }
           .to raise_error(CnpjDV::ValidationError) { |error|
+            expect(error).to be_a(CnpjDV::DomainError)
             expect(error).to be_a(CnpjDV::Error)
-            expect(error).not_to be_a(CnpjDV::DomainError)
           }
       end
     end

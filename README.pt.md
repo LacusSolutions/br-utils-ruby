@@ -105,7 +105,7 @@ Os erros se dividem em duas categorias:
 | **Uso incorreto da API** | O chamador usou a biblioteca de forma incorreta (tipo errado). Detectável pela forma da chamada. |
 | **Erro de domínio** | A chamada estava estruturalmente correta, mas um valor viola uma regra de negócio (tamanho, elegibilidade, formato). |
 
-Todo erro customizado inclui o módulo marcador `CnpjDV::Error`. Falhas de tamanho herdam de `CnpjDV::DomainError` (`RangeError`); demais falhas de domínio usam `CnpjDV::ValidationError` (`ArgumentError`) e **não** ficam sob `DomainError`. O pacote também define uma folha do esqueleto ainda não usada (`OutOfRangeError`) por consistência do monorepo.
+Todo erro customizado inclui o módulo marcador `CnpjDV::Error`. Falhas de domínio (`InvalidLengthError`, `ValidationError`) herdam de `CnpjDV::DomainError` (`RangeError`).
 
 #### Resumo
 
@@ -113,7 +113,7 @@ Todo erro customizado inclui o módulo marcador `CnpjDV::Error`. Falhas de taman
 |---|---|---|---|
 | `CnpjDV::TypeMismatchError` | `TypeError` (+ `include Error`) | Uso incorreto da API | Argumento com tipo de dado incorreto |
 | `CnpjDV::InvalidLengthError` | `CnpjDV::DomainError` | Erro de domínio | Tamanho após sanitização não é 12–14 |
-| `CnpjDV::ValidationError` | `ArgumentError` (+ `include Error`) | Erro de domínio | Base/filial inelegível ou dígitos numéricos repetidos |
+| `CnpjDV::ValidationError` | `CnpjDV::DomainError` | Erro de domínio | Base/filial inelegível ou dígitos numéricos repetidos |
 
 #### `CnpjDV::Error` (módulo marcador)
 
@@ -138,7 +138,7 @@ rescue CnpjDV::Error
 
 ```ruby
 rescue CnpjDV::DomainError
-  # InvalidLengthError e qualquer outra subclasse de DomainError
+  # InvalidLengthError, ValidationError e qualquer outra subclasse de DomainError
 ```
 
 #### `CnpjDV::TypeMismatchError`
@@ -185,7 +185,7 @@ rescue CnpjDV::DomainError
 
 #### `CnpjDV::ValidationError`
 
-- **Herança:** `CnpjDV::ValidationError < ArgumentError` (inclui `CnpjDV::Error`)
+- **Herança:** `CnpjDV::ValidationError < CnpjDV::DomainError < RangeError` (inclui `CnpjDV::Error`)
 - **Categoria:** Erro de domínio — um valor falha uma regra de domínio que não é numérica nem de tamanho.
 - **Quando é levantado:** Levantado quando a base é `00000000`, a filial é `0000`, ou os 12 primeiros caracteres são o mesmo dígito numérico.
 - **Exemplo:**
@@ -200,20 +200,20 @@ CnpjDV::CnpjCheckDigits.new('000000000001') # levanta CnpjDV::ValidationError
 rescue CnpjDV::ValidationError
   # esta falha exata de validação de domínio
 
-rescue CnpjDV::Error
-  # qualquer erro levantado por esta biblioteca
+rescue CnpjDV::DomainError
+  # falhas de domínio enraizadas em RangeError desta biblioteca
 ```
 
 #### Granularidade de rescue
 
 ```ruby
-# 1) Uma classe nativa — captura uso incorreto (e ValidationError, que herda ArgumentError).
-rescue ArgumentError
-  # CnpjDV::ValidationError e qualquer outro ArgumentError (da biblioteca ou não)
+# 1) Uma classe nativa — captura uso incorreto de tipo desta biblioteca (e outros TypeError).
+rescue TypeError
+  # CnpjDV::TypeMismatchError e qualquer outro TypeError (da biblioteca ou não)
 
-# 2) CnpjDV::DomainError — captura apenas violações de regra enraizadas em RangeError.
+# 2) CnpjDV::DomainError — captura violações de regra de negócio sob DomainError.
 rescue CnpjDV::DomainError
-  # CnpjDV::InvalidLengthError e outras subclasses de DomainError
+  # CnpjDV::InvalidLengthError, CnpjDV::ValidationError e outras subclasses de DomainError
 
 # 3) CnpjDV::Error — captura tudo o que a biblioteca levanta.
 rescue CnpjDV::Error
@@ -236,7 +236,7 @@ Após `require 'cnpj-dv'`:
 
 - **`CnpjDV::CNPJ_MIN_LENGTH`**: `12`
 - **`CnpjDV::CNPJ_MAX_LENGTH`**: `14`
-- **Erros**: veja acima (`CnpjDV::Error`, `DomainError`, folhas levantadas e folhas do esqueleto)
+- **Erros**: veja acima (`CnpjDV::Error`, `DomainError` e folhas levantadas)
 
 ## Algoritmo de cálculo
 

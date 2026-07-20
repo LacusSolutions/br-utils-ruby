@@ -10,7 +10,7 @@
 
 - **Error classes**: Removed `CnpjCheckDigitsTypeError`, `CnpjCheckDigitsInputTypeError`, `CnpjCheckDigitsException`, `CnpjCheckDigitsInputLengthException`, and `CnpjCheckDigitsInputInvalidException`.
 - **Migration map**: `InputTypeError` → `TypeMismatchError`; `InputLengthException` → `InvalidLengthError`; `InputInvalidException` → `ValidationError`.
-- **Rescue targets**: `rescue CnpjCheckDigitsException` no longer covers invalid input (`ValidationError` inherits `ArgumentError`); use `rescue CnpjDV::Error` for a library-wide catch, or `rescue DomainError` for length-only domain failures.
+- **Rescue targets**: `rescue CnpjCheckDigitsException` no longer applies; use `rescue CnpjDV::Error` for a library-wide catch, or `rescue DomainError` for `InvalidLengthError` and `ValidationError`.
 - **Docs**: READMEs now document misuse vs domain categories, per-class rescue guidance, and four rescue granularity levels — see [README](./README.md).
 
 ## 1.0.0

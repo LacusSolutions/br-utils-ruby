@@ -134,7 +134,7 @@ Errors fall into two categories:
 | **API misuse** | The caller invoked the library incorrectly (wrong type). Detectable from the call shape. |
 | **Domain error** | The call was structurally correct, but a value violates a business rule (length, eligibility, format). |
 
-Every custom error includes the `CnpjDV::Error` marker module. Length domain failures inherit from `CnpjDV::DomainError` (`RangeError`); other domain failures use `CnpjDV::ValidationError` (`ArgumentError`) and are **not** under `DomainError`. The package also defines an unused skeleton leaf (`OutOfRangeError`) for monorepo consistency.
+Every custom error includes the `CnpjDV::Error` marker module. Domain failures (`InvalidLengthError`, `ValidationError`) inherit from `CnpjDV::DomainError` (`RangeError`).
 
 #### Summary
 
@@ -142,7 +142,7 @@ Every custom error includes the `CnpjDV::Error` marker module. Length domain fai
 |---|---|---|---|
 | `CnpjDV::TypeMismatchError` | `TypeError` (+ `include Error`) | API misuse | Argument has the wrong data type |
 | `CnpjDV::InvalidLengthError` | `CnpjDV::DomainError` | Domain error | Sanitized length is not 12–14 |
-| `CnpjDV::ValidationError` | `ArgumentError` (+ `include Error`) | Domain error | Ineligible base/branch ID or repeated numeric digits |
+| `CnpjDV::ValidationError` | `CnpjDV::DomainError` | Domain error | Ineligible base/branch ID or repeated numeric digits |
 
 #### `CnpjDV::Error` (marker module)
 
@@ -167,7 +167,7 @@ rescue CnpjDV::Error
 
 ```ruby
 rescue CnpjDV::DomainError
-  # InvalidLengthError and any other DomainError subclass
+  # InvalidLengthError, ValidationError, and any other DomainError subclass
 ```
 
 #### `CnpjDV::TypeMismatchError`
@@ -214,7 +214,7 @@ rescue CnpjDV::DomainError
 
 #### `CnpjDV::ValidationError`
 
-- **Inheritance:** `CnpjDV::ValidationError < ArgumentError` (includes `CnpjDV::Error`)
+- **Inheritance:** `CnpjDV::ValidationError < CnpjDV::DomainError < RangeError` (includes `CnpjDV::Error`)
 - **Category:** Domain error — a value fails a non-numeric, non-length domain rule.
 - **When it is raised:** Raised when the base ID is `00000000`, the branch ID is `0000`, or the first 12 characters are the same numeric digit.
 - **Example:**
@@ -229,20 +229,20 @@ CnpjDV::CnpjCheckDigits.new('000000000001') # raises CnpjDV::ValidationError
 rescue CnpjDV::ValidationError
   # this exact domain validation failure
 
-rescue CnpjDV::Error
-  # any error raised by this library
+rescue CnpjDV::DomainError
+  # RangeError-rooted domain failures from this library
 ```
 
 #### Rescue granularity
 
 ```ruby
-# 1) Single native class — catches misuse (and ValidationError, which inherits ArgumentError).
-rescue ArgumentError
-  # CnpjDV::ValidationError and any other ArgumentError (library or not)
+# 1) Single native class — catches type misuse from this library (and other TypeErrors).
+rescue TypeError
+  # CnpjDV::TypeMismatchError and any other TypeError (library or not)
 
-# 2) CnpjDV::DomainError — catches only RangeError-rooted business-rule violations.
+# 2) CnpjDV::DomainError — catches business-rule violations under DomainError.
 rescue CnpjDV::DomainError
-  # CnpjDV::InvalidLengthError and other DomainError subclasses
+  # CnpjDV::InvalidLengthError, CnpjDV::ValidationError, and other DomainError subclasses
 
 # 3) CnpjDV::Error — catches everything the library raises.
 rescue CnpjDV::Error
@@ -267,7 +267,7 @@ After `require 'cnpj-dv'`:
 
 - `CnpjDV::CNPJ_MIN_LENGTH`: `12`
 - `CnpjDV::CNPJ_MAX_LENGTH`: `14`
-- **Errors**: see above (`CnpjDV::Error`, `DomainError`, raised leaves, and skeleton leaves)
+- **Errors**: see above (`CnpjDV::Error`, `DomainError`, and raised leaves)
 
 
 
