@@ -12,7 +12,7 @@ module CnpjGen
   CNPJ_TYPE_VALUES = %w[alphabetic alphanumeric numeric].freeze
 
   # Order used in invalid-type error messages.
-  CNPJ_TYPE_OPTIONS_ORDER = CNPJ_TYPE_VALUES.freeze
+  CNPJ_TYPE_OPTIONS_ORDER = CNPJ_TYPE_VALUES.dup.freeze
 
   # Options input accepted by constructors and merge helpers.
   #
