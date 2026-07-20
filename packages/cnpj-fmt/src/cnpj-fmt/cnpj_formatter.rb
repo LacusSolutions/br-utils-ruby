@@ -89,9 +89,9 @@ module CnpjFmt
     #   formatter = CnpjFmt::CnpjFormatter.new
     #   formatter.format('12345678000910') # => "12.345.678/0009-10"
     def format(cnpj_input, options = nil, **keywords)
-      actual_input = FormatterSupport.to_string_input(cnpj_input)
+      actual_input = Utils.to_string_input(cnpj_input)
       actual_options = resolve_format_options(options, keywords)
-      formatted_cnpj = FormatterSupport.sanitize_cnpj_input(actual_input)
+      formatted_cnpj = Utils.sanitize_cnpj_input(actual_input)
 
       return handle_invalid_length(cnpj_input, formatted_cnpj, actual_options) unless valid_length?(formatted_cnpj)
 
@@ -111,21 +111,21 @@ module CnpjFmt
         CnpjFormatterOptions::CNPJ_LENGTH
       )
 
-      FormatterSupport.invoke_on_fail(actual_options.on_fail, cnpj_input, exception)
+      Utils.invoke_on_fail(actual_options.on_fail, cnpj_input, exception)
     end
 
     def format_valid_cnpj(formatted_cnpj, actual_options)
-      formatted_cnpj = FormatterSupport.apply_hidden_mask(formatted_cnpj, actual_options) if actual_options.hidden
-      formatted_cnpj = FormatterSupport.insert_delimiters(formatted_cnpj, actual_options)
+      formatted_cnpj = Utils.apply_hidden_mask(formatted_cnpj, actual_options) if actual_options.hidden
+      formatted_cnpj = Utils.insert_delimiters(formatted_cnpj, actual_options)
 
       if actual_options.hidden
-        formatted_cnpj = FormatterSupport.replace_hidden_placeholders(
+        formatted_cnpj = Utils.replace_hidden_placeholders(
           formatted_cnpj,
           actual_options.hidden_key
         )
       end
 
-      FormatterSupport.apply_post_processing(formatted_cnpj, actual_options)
+      Utils.apply_post_processing(formatted_cnpj, actual_options)
     end
 
     def resolve_format_options(options, keywords)
