@@ -1,12 +1,12 @@
 # AGENTS.md
 
-This file is the **primary entry point** for AI agents working in the Ruby monorepo. Apply the rules below whenever designing, implementing, renaming, raising, rescuing, or documenting error classes in any package under `packages/*`.
+This file is the **primary entry point** for AI agents working in the Ruby monorepo. Apply the rules below whenever designing, implementing, renaming, raising, constructing, rescuing, or documenting error classes in any package under `packages/*`.
 
 ---
 
 ## Error hierarchy standard
 
-Follow these rules **exactly** when describing, categorizing, and documenting every error class a library raises. Do not invent alternate hierarchies, mix categories, or skip required documentation sections.
+Follow these rules **exactly** when describing, categorizing, and documenting every error class a library raises or constructs for callbacks. Do not invent alternate hierarchies, mix categories, or skip required documentation sections.
 
 ### 1. Core principle
 
@@ -17,7 +17,7 @@ Every package must have **two distinguishable categories** of errors, and every 
 | **API misuse errors** | The caller invoked the library incorrectly (wrong type, missing argument, invalid argument combination). These are contract violations, generally detectable without running business logic. |
 | **Domain errors** | The call was structurally correct, but a value violates a business/domain rule (out-of-range number, invalid string/array length, invalid enum value, etc.). These are only detectable at runtime, against actual data. |
 
-When documenting any raised error, always state which of these two categories it belongs to and why.
+When documenting any raised or callback-delivered error, always state which of these two categories it belongs to and why.
 
 ### 2. Native superclass mapping
 
@@ -28,9 +28,9 @@ Every custom error class must inherit from the native Ruby exception class that 
 | Argument has the wrong data type | `TypeError` |
 | Required argument was not provided | `ArgumentError` |
 | Argument combination does not match the API's valid signatures (overload-style rules) | `ArgumentError` |
-| Argument has a valid type but an invalid value per business rules (e.g., negative number, out-of-range value) | `RangeError` |
-| Invalid string/array/collection length | `RangeError` |
-| A domain rule that is not numeric or length-based (e.g., invalid enum, invalid format) | `ArgumentError`, using a dedicated `ValidationError` subclass — do not force it into `RangeError` |
+| Argument has a valid type but an invalid value per business rules (e.g., negative number, out-of-range value) | `RangeError` (via `DomainError`) |
+| Invalid string/array/collection length | `RangeError` (via `DomainError`) |
+| A domain rule that is not numeric or length-based (e.g., invalid enum, invalid format, forbidden characters) | `RangeError` (via `DomainError`), using a dedicated `ValidationError` subclass |
 
 Never document or recommend `rescue Exception` or inheriting directly from `Exception`. All library errors must ultimately descend from `StandardError` through one of the native classes above.
 
@@ -50,11 +50,11 @@ Every custom error class must `include MyLib::Error` in addition to inheriting f
 
 **Reason:** Ruby only supports single inheritance, so a marker module is how the library achieves both native-compatible rescue behavior and a library-wide rescue at the same time.
 
-Replace `MyLib` with the package's public root namespace (e.g. `CnpjFmt`, `CpfDV`).
+Replace `MyLib` with the package's public root namespace (e.g. `CnpjFmt`, `CnpjDV`).
 
 ### 4. Required intermediate class for domain errors
 
-Every package must define an intermediate class that groups all domain/business-rule errors under one rescuable ancestor, separate from misuse errors:
+Every package must define an intermediate class that groups **all** domain/business-rule errors under one rescuable ancestor, separate from misuse errors:
 
 ```ruby
 module MyLib
@@ -66,9 +66,9 @@ end
 
 Rules:
 
-- All domain-error subclasses that are numeric or length-based (`OutOfRangeError`, `InvalidLengthError`, etc.) must inherit from `DomainError`, not directly from `RangeError`.
+- Every domain leaf (`OutOfRangeError`, `InvalidLengthError`, `ValidationError`, etc.) must inherit from `DomainError`, not directly from `RangeError` and not from `ArgumentError`.
 - Misuse errors (`TypeError` / `ArgumentError`-based contract violations) must **not** inherit from `DomainError`.
-- Non-numeric, non-length domain failures use a dedicated `ValidationError < ArgumentError` that `include`s `Error`. Categorize and document `ValidationError` as a **domain error**, not API misuse. It is rescued via `MyLib::ValidationError`, `ArgumentError`, or `MyLib::Error` — not via `MyLib::DomainError` (Ruby single inheritance: `DomainError` remains `RangeError`-rooted).
+- `ValidationError` is a **domain** leaf for non-numeric, non-length rule failures. It inherits from `DomainError` so `rescue MyLib::DomainError` covers length, range, and validation failures together. It is also rescuable via `MyLib::ValidationError`, `RangeError`, or `MyLib::Error`.
 
 ### 5. Naming conventions
 
@@ -76,13 +76,15 @@ Rules:
 - Domain error class names must describe the **violated rule**: `OutOfRangeError`, `InvalidLengthError`, `ValidationError`.
 - Do not use generic names like `Error`, `Invalid`, or `Failure` for leaf classes — reserve unqualified `Error` for the root marker module only.
 
-### 6. Required skeleton (all packages)
+### 6. Catalog of standard leaves (define only what you use)
 
-Unless a package has no public raise surface yet, implement at least this skeleton (rename `MyLib` to the package namespace):
+The following is the **catalog** of standard leaf names and inheritance. Packages must define `Error`, `DomainError` (when they have any domain leaf), and every leaf they **raise or construct** for a public API. Do **not** define unused skeleton leaves just for monorepo consistency — omit classes with no raise/construct surface (prefer the lean approach used by `cnpj-dv`).
 
 ```ruby
 module MyLib
   module Error; end
+
+  # --- API misuse (define only leaves the package actually raises) ---
 
   class TypeMismatchError < TypeError
     include Error
@@ -96,6 +98,8 @@ module MyLib
     include Error
   end
 
+  # --- Domain (all domain leaves inherit DomainError) ---
+
   class DomainError < RangeError
     include Error
   end
@@ -104,25 +108,34 @@ module MyLib
 
   class InvalidLengthError < DomainError; end
 
-  class ValidationError < ArgumentError
-    include Error
-  end
+  class ValidationError < DomainError; end
 end
 ```
 
 Add further leaf classes only when a distinct failure mode needs its own rescue target; every new leaf must still follow sections 1–5.
 
-### 7. Required documentation structure per error class
+### 7. Raised vs constructed (callback-delivered) errors
 
-For every error class the library raises, produce a documentation entry containing, **in this order**:
+Most failures are **raised**. Some packages instead **construct** a domain error and pass it to a callback (e.g. `on_fail`) without raising from the public entry point.
+
+Rules:
+
+- Constructed errors still use the same hierarchy, naming, and marker rules as raised ones.
+- Type the callback’s error argument as `DomainError` (the grouping ancestor), even when the concrete instance is a leaf such as `InvalidLengthError`.
+- Document constructed errors with the same five-part entry shape, but state clearly that they are **not raised** from the entry point and show the callback signature / handling path instead of (or in addition to) a `rescue` example.
+- Include constructed leaves in the summary table; note in the trigger column that they are passed to the callback.
+
+### 8. Required documentation structure per error class
+
+For every error class the library raises or constructs for a public callback, produce a documentation entry containing, **in this order**:
 
 1. **Class name and full inheritance chain** (e.g., `MyLib::OutOfRangeError < MyLib::DomainError < RangeError`, includes `MyLib::Error`).
 2. **Category** — `"API misuse"` or `"Domain error"`.
-3. **When it is raised** — one sentence, concrete trigger condition.
-4. **Example** — a minimal code snippet showing the call that raises it.
-5. **How to rescue it** — show at least two valid `rescue` clauses: the most specific class, and one broader ancestor (native class or `MyLib::Error` / `MyLib::DomainError`) relevant to that error.
+3. **When it is raised / constructed** — one sentence, concrete trigger condition (say which applies).
+4. **Example** — a minimal code snippet showing the call that raises it, or the callback that receives it.
+5. **How to rescue / handle it** — for raised errors, show at least two valid `rescue` clauses (leaf + broader ancestor). For constructed errors, show typical callback handling and optional `rescue` if the consumer re-raises.
 
-Keep each error's "when it is raised" description to a **single, unambiguous sentence** — no compound conditions.
+Keep each error's trigger description to a **single, unambiguous sentence** — no compound conditions.
 
 #### Template (fill per class)
 
@@ -135,9 +148,9 @@ Use this shape for every error class entry:
 - **Example:** a minimal Ruby snippet that triggers the raise (e.g. `MyLib.process(count: -1)`).
 - **How to rescue it:** at least two `rescue` clauses — the leaf (`rescue MyLib::OutOfRangeError`) and a broader ancestor (`rescue MyLib::DomainError` or `rescue MyLib::Error` / native class).
 
-### 8. Required per-class documentation (standard leaves)
+### 9. Required per-class documentation (standard leaves)
 
-Document every leaf the package raises. For the standard skeleton, use entries equivalent to the following (adapt examples to the package's real API; keep category/inheritance/rescue rules unchanged).
+Document every leaf the package raises or constructs. When a catalog leaf is used, use entries equivalent to the following (adapt examples to the package's real API; keep category/inheritance/rescue rules unchanged). Skip documentation for leaves the package does not define.
 
 #### `MyLib::TypeMismatchError`
 
@@ -220,34 +233,46 @@ rescue MyLib::OutOfRangeError
   # this exact range violation
 
 rescue MyLib::DomainError
-  # RangeError-rooted domain failures from this library
+  # all domain failures from this library
 ```
 
 #### `MyLib::InvalidLengthError`
 
 - **Inheritance:** `MyLib::InvalidLengthError < MyLib::DomainError < RangeError` (includes `MyLib::Error`)
 - **Category:** Domain error — a collection or string length violates a business rule.
-- **When it is raised:** Raised when a string, array, or other collection has a length outside the bounds required by the domain rule.
-- **Example:**
+- **When it is raised:** Raised when a string, array, or other collection has a length outside the bounds required by the domain rule. (If the package delivers length failures via callback instead, say so and document the callback path.)
+- **Example (raised):**
 
 ```ruby
 MyLib.process(digits: "12") # raises MyLib::InvalidLengthError when length must be 11
 ```
 
-- **How to rescue it:**
+- **Example (callback-delivered):**
+
+```ruby
+MyLib.process(
+  digits: "12",
+  on_fail: ->(_value, error) {
+    error # => #<MyLib::InvalidLengthError ...> (a DomainError)
+    "invalid"
+  }
+)
+```
+
+- **How to rescue / handle it:**
 
 ```ruby
 rescue MyLib::InvalidLengthError
   # this exact length violation
 
-rescue RangeError
-  # native range errors, including DomainError descendants
+rescue MyLib::DomainError
+  # all domain failures from this library
 ```
 
 #### `MyLib::ValidationError`
 
-- **Inheritance:** `MyLib::ValidationError < ArgumentError` (includes `MyLib::Error`)
-- **Category:** Domain error — a value fails a non-numeric, non-length domain rule (e.g., invalid enum or format).
+- **Inheritance:** `MyLib::ValidationError < MyLib::DomainError < RangeError` (includes `MyLib::Error`)
+- **Category:** Domain error — a value fails a non-numeric, non-length domain rule (e.g., invalid enum, format, or forbidden characters).
 - **When it is raised:** Raised when a value has a valid type and length but violates a domain validation rule that is not numeric-range or length-based.
 - **Example:**
 
@@ -261,8 +286,8 @@ MyLib.process(mode: :entropic) # raises MyLib::ValidationError when :entropic is
 rescue MyLib::ValidationError
   # this exact domain validation failure
 
-rescue MyLib::Error
-  # any error raised by this library
+rescue MyLib::DomainError
+  # OutOfRangeError, InvalidLengthError, ValidationError, and other DomainError subclasses
 ```
 
 Also document the intermediate ancestors consumers may rescue:
@@ -271,7 +296,7 @@ Also document the intermediate ancestors consumers may rescue:
 
 - **Inheritance:** module marker mixed into every library error via `include` (not a class).
 - **Category:** N/A (rescue target only) — not a failure mode by itself.
-- **When it is raised:** Never raised directly; included by every custom error the library raises.
+- **When it is raised:** Never raised directly; included by every custom error the library raises or constructs for callbacks.
 - **Example:** N/A
 - **How to rescue it:**
 
@@ -283,21 +308,21 @@ rescue MyLib::Error
 #### `MyLib::DomainError`
 
 - **Inheritance:** `MyLib::DomainError < RangeError` (includes `MyLib::Error`)
-- **Category:** Domain error — ancestor for numeric/length domain failures.
-- **When it is raised:** Not raised directly unless a package documents a generic domain failure; prefer raising a leaf subclass.
-- **Example:** Prefer `raise MyLib::OutOfRangeError` / `raise MyLib::InvalidLengthError` over raising `DomainError` directly.
+- **Category:** Domain error — ancestor for **all** domain failures (length, range, validation, and any other domain leaves).
+- **When it is raised:** Not raised directly unless a package documents a generic domain failure; prefer raising or constructing a leaf subclass.
+- **Example:** Prefer `raise MyLib::OutOfRangeError` / `raise MyLib::ValidationError` / construct `InvalidLengthError` over raising `DomainError` directly.
 - **How to rescue it:**
 
 ```ruby
 rescue MyLib::DomainError
-  # OutOfRangeError, InvalidLengthError, and any other DomainError subclass
+  # OutOfRangeError, InvalidLengthError, ValidationError, and any other DomainError subclass
 ```
 
-### 9. Required summary table
+### 10. Required summary table
 
-Include one consolidated table listing every error class in the library with columns: `Class`, `Inherits from`, `Category`, `Trigger condition`. Order rows by category (**misuse errors first**, **domain errors second**), then alphabetically within each category.
+Include one consolidated table listing every error class in the library that is raised or constructed for a public callback, with columns: `Class`, `Inherits from`, `Category`, `Trigger condition`. Order rows by category (**misuse errors first**, **domain errors second**), then alphabetically within each category.
 
-Standard skeleton table (adapt class prefixes to the package namespace; keep columns and ordering rules):
+Example table covering the full catalog (include only rows for leaves the package actually defines):
 
 | Class | Inherits from | Category | Trigger condition |
 |---|---|---|---|
@@ -306,25 +331,25 @@ Standard skeleton table (adapt class prefixes to the package namespace; keep col
 | `MyLib::TypeMismatchError` | `TypeError` (+ `include Error`) | API misuse | Argument has the wrong data type |
 | `MyLib::InvalidLengthError` | `MyLib::DomainError` | Domain error | String/array/collection length violates a domain rule |
 | `MyLib::OutOfRangeError` | `MyLib::DomainError` | Domain error | Numeric value is outside an accepted domain range |
-| `MyLib::ValidationError` | `ArgumentError` (+ `include Error`) | Domain error | Value fails a non-numeric, non-length domain rule |
+| `MyLib::ValidationError` | `MyLib::DomainError` | Domain error | Value fails a non-numeric, non-length domain rule |
 
-When documenting a package, also list `MyLib::DomainError` in narrative docs as the domain grouping ancestor; leaf rows above are what the summary table must cover for raised failure modes.
+When documenting a package, also describe `MyLib::DomainError` in narrative docs as the domain grouping ancestor; leaf rows above are what the summary table must cover for raised or callback-delivered failure modes. Do not list unused catalog leaves that the package does not define.
 
-### 10. Required "rescue granularity" section
+### 11. Required "rescue granularity" section
 
-Include a dedicated documentation section showing the four levels of granularity available to library consumers, using **real classes from the library** (not placeholders). For the standard skeleton:
+Include a dedicated documentation section showing the four levels of granularity available to library consumers, using **real classes from the library** (not placeholders). Adapt the comments to the leaves the package actually defines:
 
 ```ruby
-# 1) Single native class — catches all misuse errors of that kind,
+# 1) Single native class — catches misuse errors of that kind,
 #    including non-library ones already handled elsewhere in the consumer's code.
-rescue ArgumentError
-  # MyLib::MissingArgumentError, MyLib::InvalidArgumentCombinationError,
-  # and any other ArgumentError (library or not)
-  # Note: also catches MyLib::ValidationError because it inherits ArgumentError
+rescue TypeError
+  # MyLib::TypeMismatchError and any other TypeError (library or not)
 
-# 2) MyLib::DomainError — catches only business-rule violations under DomainError.
+# 2) MyLib::DomainError — catches all business-rule violations under DomainError
+#    (length, range, validation, and other domain leaves).
 rescue MyLib::DomainError
-  # MyLib::OutOfRangeError, MyLib::InvalidLengthError, and other DomainError subclasses
+  # MyLib::OutOfRangeError, MyLib::InvalidLengthError, MyLib::ValidationError,
+  # and other DomainError subclasses
 
 # 3) MyLib::Error — catches everything the library raises, regardless of native ancestry.
 rescue MyLib::Error
@@ -337,17 +362,19 @@ rescue MyLib::OutOfRangeError
 
 Never recommend or document `rescue Exception` as a pattern for consumers.
 
-### 11. Agent checklist
+### 12. Agent checklist
 
 Before finishing any task that adds, changes, or documents errors:
 
 1. Every custom error belongs to exactly one category: API misuse or domain.
 2. Every custom error inherits from the correct native superclass per the mapping table.
 3. Every custom error `include`s the package `Error` marker module.
-4. Numeric/length domain leaves inherit from `DomainError`, not bare `RangeError`.
+4. Every domain leaf (including `ValidationError`) inherits from `DomainError`, not bare `RangeError` or `ArgumentError`.
 5. Misuse errors do not inherit from `DomainError`.
-6. Leaf names follow the naming conventions; unqualified `Error` is only the marker module.
-7. Each raised error has a five-part documentation entry (chain, category, when, example, rescue).
-8. A summary table exists with the required columns and ordering.
-9. A rescue-granularity section exists with the four levels above, using real library classes.
-10. No docs mention `rescue Exception` or inheriting from `Exception` directly.
+6. Only define catalog leaves that the package raises or constructs; do not ship unused public error classes.
+7. Callback-delivered failures type the error argument as `DomainError` and document the construct-and-pass path.
+8. Leaf names follow the naming conventions; unqualified `Error` is only the marker module.
+9. Each raised or constructed error has a five-part documentation entry (chain, category, when, example, rescue/handle).
+10. A summary table exists with the required columns and ordering, listing only defined failure modes.
+11. A rescue-granularity section exists with the four levels above, using real library classes.
+12. No docs mention `rescue Exception` or inheriting from `Exception` directly.
