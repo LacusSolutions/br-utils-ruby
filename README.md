@@ -243,8 +243,8 @@ Every custom error includes the `CnpjFmt::Error` marker module. Domain failures 
 
 | Class | Inherits from | Category | Trigger condition |
 |---|---|---|---|
-| `CnpjFmt::TypeMismatchError` | `TypeError` (+ `include Error`) | API misuse | CNPJ input or option has the wrong data type |
 | `CnpjFmt::InvalidArgumentCombinationError` | `ArgumentError` (+ `include Error`) | API misuse | Both an `options` instance/`Hash` and keyword arguments are passed at once |
+| `CnpjFmt::TypeMismatchError` | `TypeError` (+ `include Error`) | API misuse | CNPJ input or option has the wrong data type |
 | `CnpjFmt::InvalidLengthError` | `CnpjFmt::DomainError` | Domain error | Sanitized length is not exactly 14 (passed to `on_fail` as `DomainError`) |
 | `CnpjFmt::OutOfRangeError` | `CnpjFmt::DomainError` | Domain error | `hidden_start` / `hidden_end` outside `0`–`13` |
 | `CnpjFmt::ValidationError` | `CnpjFmt::DomainError` | Domain error | Key option contains a disallowed character |
@@ -431,7 +431,7 @@ After `require 'cnpj-fmt'`:
 - **`CnpjFmt::CnpjFormatterOptions`**: Class holding options; supports merge via constructor, `set`, and keyword arguments.
 - **`CnpjFmt::CNPJ_LENGTH`**: `14` (constant).
 - **`CnpjFmt::VERSION`**: gem version string.
-- **Errors**: `CnpjFmt::Error`, `CnpjFmt::DomainError`, `CnpjFmt::TypeMismatchError`, `CnpjFmt::InvalidArgumentCombinationError`, `CnpjFmt::InvalidLengthError`, `CnpjFmt::OutOfRangeError`, `CnpjFmt::ValidationError`.
+- **Errors**: `CnpjFmt::Error`, `CnpjFmt::DomainError`, `CnpjFmt::InvalidArgumentCombinationError`, `CnpjFmt::TypeMismatchError`, `CnpjFmt::InvalidLengthError`, `CnpjFmt::OutOfRangeError`, `CnpjFmt::ValidationError`.
 
 ### Other available resources
 
