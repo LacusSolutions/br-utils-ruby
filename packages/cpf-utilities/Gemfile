@@ -4,7 +4,6 @@ source 'https://rubygems.org'
 
 gemspec
 
-gem 'cpf-dv', path: '../cpf-dv'
 gem 'cpf-fmt', path: '../cpf-fmt'
 gem 'cpf-gen', path: '../cpf-gen'
 gem 'cpf-val', path: '../cpf-val'

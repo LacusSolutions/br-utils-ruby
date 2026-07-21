@@ -99,7 +99,7 @@ Armazena todas as configurações do formatador, com validação e suporte a mes
 
 ### Helper funcional
 
-`CnpjFmt.cnpj_fmt` instancia um novo `CnpjFmt::CnpjFormatter` com os mesmos parâmetros do construtor e chama `format(cnpj_input)` uma vez. Passe argumentos nomeados **ou** um `Hash`/instância de `CnpjFmt::CnpjFormatterOptions` para as opções — não ambos (passar ambos lança `InvalidArgumentCombinationError`):
+`CnpjFmt.cnpj_fmt` instancia um novo `CnpjFmt::CnpjFormatter` com os mesmos parâmetros do construtor e chama `format(cnpj_input)` uma vez. Passe argumentos nomeados **ou** um `Hash`/instância de `CnpjFmt::CnpjFormatterOptions` para as opções — não ambos (passar `options` com qualquer argumento nomeado não-`nil` lança `InvalidArgumentCombinationError`):
 
 ```ruby
 require 'cnpj-fmt'
@@ -224,13 +224,13 @@ Os erros se dividem em duas categorias:
 
 Todo erro customizado inclui o módulo marcador `CnpjFmt::Error`. Falhas de domínio (`InvalidLengthError`, `OutOfRangeError`, `ValidationError`) herdam de `CnpjFmt::DomainError` (`RangeError`).
 
-**Importante:** falhas de tamanho são **construídas como `InvalidLengthError` e passadas ao `on_fail` como `DomainError`**, não levantadas por `format` / `cnpj_fmt`. Passar ao mesmo tempo um argumento `options` (instância/`Hash`) e argumentos nomeados lança `InvalidArgumentCombinationError`.
+**Importante:** falhas de tamanho são **construídas como `InvalidLengthError` e passadas ao `on_fail` como `DomainError`**, não levantadas por `format` / `cnpj_fmt`. Passar ao mesmo tempo um argumento `options` (instância/`Hash`) e qualquer argumento nomeado não-`nil` lança `InvalidArgumentCombinationError`.
 
 #### Resumo
 
 | Classe | Herda de | Categoria | Condição de disparo |
 |---|---|---|---|
-| `CnpjFmt::InvalidArgumentCombinationError` | `ArgumentError` (+ `include Error`) | Uso incorreto da API | Instância/`Hash` de `options` e argumentos nomeados passados ao mesmo tempo |
+| `CnpjFmt::InvalidArgumentCombinationError` | `ArgumentError` (+ `include Error`) | Uso incorreto da API | Instância/`Hash` de `options` e qualquer argumento nomeado não-`nil` passados ao mesmo tempo |
 | `CnpjFmt::TypeMismatchError` | `TypeError` (+ `include Error`) | Uso incorreto da API | Entrada de CNPJ ou opção com tipo de dado incorreto |
 | `CnpjFmt::InvalidLengthError` | `CnpjFmt::DomainError` | Erro de domínio | Tamanho após sanitização não é exatamente 14 (passado ao `on_fail` como `DomainError`) |
 | `CnpjFmt::OutOfRangeError` | `CnpjFmt::DomainError` | Erro de domínio | `hidden_start` / `hidden_end` fora de `0`–`13` |

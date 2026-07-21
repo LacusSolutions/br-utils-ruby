@@ -112,7 +112,7 @@ Holds all formatter settings, with validation and merge support. Exposes propert
 
 ### Functional helper
 
-`CnpjFmt.cnpj_fmt` builds a new `CnpjFmt::CnpjFormatter` from the same constructor parameters and calls `format(cnpj_input)` once. Pass either keyword arguments **or** a `Hash`/`CnpjFmt::CnpjFormatterOptions` instance for options — not both (passing both raises `InvalidArgumentCombinationError`):
+`CnpjFmt.cnpj_fmt` builds a new `CnpjFmt::CnpjFormatter` from the same constructor parameters and calls `format(cnpj_input)` once. Pass either keyword arguments **or** a `Hash`/`CnpjFmt::CnpjFormatterOptions` instance for options — not both (passing `options` with any non-`nil` keyword raises `InvalidArgumentCombinationError`):
 
 ```ruby
 require 'cnpj-fmt'
@@ -237,13 +237,13 @@ Errors fall into two categories:
 
 Every custom error includes the `CnpjFmt::Error` marker module. Domain failures (`InvalidLengthError`, `OutOfRangeError`, `ValidationError`) inherit from `CnpjFmt::DomainError` (`RangeError`).
 
-**Important:** length failures are **constructed as `InvalidLengthError` and passed to `on_fail` as a `DomainError`**, not raised from `format` / `cnpj_fmt`. Passing both an `options` instance/`Hash` and keyword arguments raises `InvalidArgumentCombinationError`.
+**Important:** length failures are **constructed as `InvalidLengthError` and passed to `on_fail` as a `DomainError`**, not raised from `format` / `cnpj_fmt`. Passing both an `options` instance/`Hash` and any non-`nil` keyword argument raises `InvalidArgumentCombinationError`.
 
 #### Summary
 
 | Class | Inherits from | Category | Trigger condition |
 |---|---|---|---|
-| `CnpjFmt::InvalidArgumentCombinationError` | `ArgumentError` (+ `include Error`) | API misuse | Both an `options` instance/`Hash` and keyword arguments are passed at once |
+| `CnpjFmt::InvalidArgumentCombinationError` | `ArgumentError` (+ `include Error`) | API misuse | Both an `options` instance/`Hash` and any non-`nil` keyword argument are passed at once |
 | `CnpjFmt::TypeMismatchError` | `TypeError` (+ `include Error`) | API misuse | CNPJ input or option has the wrong data type |
 | `CnpjFmt::InvalidLengthError` | `CnpjFmt::DomainError` | Domain error | Sanitized length is not exactly 14 (passed to `on_fail` as `DomainError`) |
 | `CnpjFmt::OutOfRangeError` | `CnpjFmt::DomainError` | Domain error | `hidden_start` / `hidden_end` outside `0`–`13` |

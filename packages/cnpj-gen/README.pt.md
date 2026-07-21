@@ -84,7 +84,7 @@ Regras do prefixo: a base (primeiros 8 caracteres) e a filial (caracteres 9–12
 Gera uma string de CNPJ válida. Sem opções, retorna um CNPJ alfanumérico de 14 caracteres. É um atalho para `CnpjGen::CnpjGenerator.new(...).generate`.
 
 - **`options`** (opcional): instância de `CnpjGen::CnpjGeneratorOptions`, `Hash` de chaves de opção ou `nil`. Veja [Opções do gerador](#opções-do-gerador).
-- **`format`**, **`prefix`**, **`type`** (argumentos nomeados): Usados apenas quando `options` é omitido (`nil`). Passar `options` **e** qualquer um desses argumentos nomeados ao mesmo tempo gera `InvalidArgumentCombinationError` — as duas formas de passar opções nunca são mescladas entre si.
+- **`format`**, **`prefix`**, **`type`** (argumentos nomeados): Usados apenas quando `options` é omitido (`nil`). Passar `options` **e** qualquer um desses argumentos nomeados não-`nil` ao mesmo tempo gera `InvalidArgumentCombinationError` — as duas formas de passar opções nunca são mescladas entre si.
 
 ### `CnpjGen::CnpjGenerator` (classe)
 
@@ -170,13 +170,13 @@ Os erros se dividem em duas categorias:
 
 Todo erro customizado inclui o módulo marcador `CnpjGen::Error`. Falhas de domínio (`ValidationError`) herdam de `CnpjGen::DomainError` (`RangeError`).
 
-**Importante:** passar ao mesmo tempo uma instância/`Hash` de `options` e argumentos nomeados levanta `InvalidArgumentCombinationError`.
+**Importante:** passar ao mesmo tempo uma instância/`Hash` de `options` e qualquer argumento nomeado não-`nil` levanta `InvalidArgumentCombinationError`.
 
 #### Resumo
 
 | Classe | Herda de | Categoria | Condição de disparo |
 |---|---|---|---|
-| `CnpjGen::InvalidArgumentCombinationError` | `ArgumentError` (+ `include Error`) | Uso incorreto da API | Instância/`Hash` de `options` e argumentos nomeados passados ao mesmo tempo |
+| `CnpjGen::InvalidArgumentCombinationError` | `ArgumentError` (+ `include Error`) | Uso incorreto da API | Instância/`Hash` de `options` e qualquer argumento nomeado não-`nil` passados ao mesmo tempo |
 | `CnpjGen::TypeMismatchError` | `TypeError` (+ `include Error`) | Uso incorreto da API | Uma opção do gerador tem o tipo de dado incorreto |
 | `CnpjGen::ValidationError` | `CnpjGen::DomainError` | Erro de domínio | `prefix` inelegível, ou `type` fora dos valores permitidos |
 
