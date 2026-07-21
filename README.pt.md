@@ -221,8 +221,8 @@ Todo erro customizado inclui o módulo marcador `CpfFmt::Error`. Falhas de domí
 
 | Classe | Herda de | Categoria | Condição de disparo |
 |---|---|---|---|
-| `CpfFmt::TypeMismatchError` | `TypeError` (+ `include Error`) | Uso incorreto da API | Entrada de CPF ou opção com tipo de dado incorreto |
 | `CpfFmt::InvalidArgumentCombinationError` | `ArgumentError` (+ `include Error`) | Uso incorreto da API | Instância/`Hash` de `options` e argumentos nomeados passados ao mesmo tempo |
+| `CpfFmt::TypeMismatchError` | `TypeError` (+ `include Error`) | Uso incorreto da API | Entrada de CPF ou opção com tipo de dado incorreto |
 | `CpfFmt::InvalidLengthError` | `CpfFmt::DomainError` | Erro de domínio | Tamanho após sanitização não é exatamente 11 (passado ao `on_fail` como `DomainError`) |
 | `CpfFmt::OutOfRangeError` | `CpfFmt::DomainError` | Erro de domínio | `hidden_start` / `hidden_end` fora de `0`–`10` |
 | `CpfFmt::ValidationError` | `CpfFmt::DomainError` | Erro de domínio | Opção de chave contém caractere proibido |
@@ -408,7 +408,7 @@ Após `require 'cpf-fmt'`:
 - **`CpfFmt::CpfFormatterOptions`**: Classe que armazena opções; suporta mesclagem via construtor, `set` e argumentos nomeados.
 - **`CpfFmt::CPF_LENGTH`**: `11` (constante).
 - **`CpfFmt::VERSION`**: string de versão da gem.
-- **Erros**: `CpfFmt::Error`, `CpfFmt::DomainError`, `CpfFmt::TypeMismatchError`, `CpfFmt::InvalidArgumentCombinationError`, `CpfFmt::InvalidLengthError`, `CpfFmt::OutOfRangeError`, `CpfFmt::ValidationError`.
+- **Erros**: `CpfFmt::Error`, `CpfFmt::DomainError`, `CpfFmt::InvalidArgumentCombinationError`, `CpfFmt::TypeMismatchError`, `CpfFmt::InvalidLengthError`, `CpfFmt::OutOfRangeError`, `CpfFmt::ValidationError`.
 
 ### Outros recursos disponíveis
 

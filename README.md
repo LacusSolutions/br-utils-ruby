@@ -234,8 +234,8 @@ Every custom error includes the `CpfFmt::Error` marker module. Domain failures (
 
 | Class | Inherits from | Category | Trigger condition |
 |---|---|---|---|
-| `CpfFmt::TypeMismatchError` | `TypeError` (+ `include Error`) | API misuse | CPF input or option has the wrong data type |
 | `CpfFmt::InvalidArgumentCombinationError` | `ArgumentError` (+ `include Error`) | API misuse | Both an `options` instance/`Hash` and keyword arguments are passed at once |
+| `CpfFmt::TypeMismatchError` | `TypeError` (+ `include Error`) | API misuse | CPF input or option has the wrong data type |
 | `CpfFmt::InvalidLengthError` | `CpfFmt::DomainError` | Domain error | Sanitized length is not exactly 11 (passed to `on_fail` as `DomainError`) |
 | `CpfFmt::OutOfRangeError` | `CpfFmt::DomainError` | Domain error | `hidden_start` / `hidden_end` outside `0`–`10` |
 | `CpfFmt::ValidationError` | `CpfFmt::DomainError` | Domain error | Key option contains a disallowed character |
@@ -422,7 +422,7 @@ After `require 'cpf-fmt'`:
 - **`CpfFmt::CpfFormatterOptions`**: Class holding options; supports merge via constructor, `set`, and keyword arguments.
 - **`CpfFmt::CPF_LENGTH`**: `11` (constant).
 - **`CpfFmt::VERSION`**: gem version string.
-- **Errors**: `CpfFmt::Error`, `CpfFmt::DomainError`, `CpfFmt::TypeMismatchError`, `CpfFmt::InvalidArgumentCombinationError`, `CpfFmt::InvalidLengthError`, `CpfFmt::OutOfRangeError`, `CpfFmt::ValidationError`.
+- **Errors**: `CpfFmt::Error`, `CpfFmt::DomainError`, `CpfFmt::InvalidArgumentCombinationError`, `CpfFmt::TypeMismatchError`, `CpfFmt::InvalidLengthError`, `CpfFmt::OutOfRangeError`, `CpfFmt::ValidationError`.
 
 ### Other available resources
 
