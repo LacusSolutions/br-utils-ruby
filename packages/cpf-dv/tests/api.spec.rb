@@ -1,0 +1,101 @@
+# frozen_string_literal: true
+
+require 'spec_helper'
+
+RSpec.describe CpfDV do
+  context 'when inspecting constants' do
+    it 'exposes CPF_MIN_LENGTH as 9' do
+      expect(described_class::CPF_MIN_LENGTH).to eq(9)
+    end
+
+    it 'exposes CPF_MAX_LENGTH as 11' do
+      expect(described_class::CPF_MAX_LENGTH).to eq(11)
+    end
+  end
+
+  context 'when inspecting public constants' do
+    it 'defines CpfCheckDigits' do
+      expect(described_class.const_defined?(:CpfCheckDigits)).to be(true)
+    end
+
+    it 'defines Error' do
+      expect(described_class.const_defined?(:Error)).to be(true)
+    end
+
+    it 'defines TypeMismatchError' do
+      expect(described_class.const_defined?(:TypeMismatchError)).to be(true)
+    end
+
+    it 'defines DomainError' do
+      expect(described_class.const_defined?(:DomainError)).to be(true)
+    end
+
+    it 'defines InvalidLengthError' do
+      expect(described_class.const_defined?(:InvalidLengthError)).to be(true)
+    end
+
+    it 'defines ValidationError' do
+      expect(described_class.const_defined?(:ValidationError)).to be(true)
+    end
+  end
+
+  context 'when inspecting public types' do
+    it 'exposes an instantiable CpfCheckDigits' do
+      instance = described_class::CpfCheckDigits.new('123456789')
+
+      aggregate_failures do
+        expect(instance).to be_a(described_class::CpfCheckDigits)
+        expect(instance.first).to eq('0')
+        expect(instance.second).to eq('9')
+        expect(instance.cpf).to eq('12345678909')
+      end
+    end
+
+    it 'exposes TypeMismatchError as a TypeError' do
+      expect(described_class::TypeMismatchError < TypeError).to be(true)
+    end
+
+    it 'exposes instantiable TypeMismatchError' do
+      instance = described_class::TypeMismatchError.new(123, 'string')
+
+      aggregate_failures do
+        expect(instance.actual_input).to eq(123)
+        expect(instance).to be_a(described_class::Error)
+        expect(instance.message).to eq(
+          'CPF input must be of type string. Got integer number.'
+        )
+      end
+    end
+
+    it 'exposes DomainError as a RangeError' do
+      expect(described_class::DomainError < RangeError).to be(true)
+    end
+
+    it 'exposes instantiable InvalidLengthError' do
+      instance = described_class::InvalidLengthError.new('x', '1', 9, 11)
+
+      aggregate_failures do
+        expect(instance.min_expected_length).to eq(9)
+        expect(instance.max_expected_length).to eq(11)
+        expect(instance).to be_a(described_class::DomainError)
+        expect(instance).to be_a(described_class::Error)
+      end
+    end
+
+    it 'exposes instantiable ValidationError' do
+      instance = described_class::ValidationError.new(
+        '123',
+        'some reason'
+      )
+
+      aggregate_failures do
+        expect(instance.actual_input).to eq('123')
+        expect(instance.reason).to eq('some reason')
+        expect(instance).to be_a(described_class::DomainError)
+        expect(instance).to be_a(RangeError)
+        expect(instance).to be_a(described_class::Error)
+        expect(instance.message).to eq('CPF input "123" is invalid. some reason')
+      end
+    end
+  end
+end
