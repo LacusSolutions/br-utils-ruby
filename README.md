@@ -108,7 +108,7 @@ Holds all formatter settings, with validation and merge support. Exposes propert
 
 ### Functional helper
 
-`CpfFmt.cpf_fmt` builds a new `CpfFmt::CpfFormatter` from the same constructor parameters and calls `format(cpf_input)` once. Pass either keyword arguments **or** a `Hash`/`CpfFmt::CpfFormatterOptions` instance for options — not both (passing both raises `InvalidArgumentCombinationError`):
+`CpfFmt.cpf_fmt` builds a new `CpfFmt::CpfFormatter` from the same constructor parameters and calls `format(cpf_input)` once. Pass either keyword arguments **or** a `Hash`/`CpfFmt::CpfFormatterOptions` instance for options — not both (passing `options` with any non-`nil` keyword raises `InvalidArgumentCombinationError`):
 
 ```ruby
 require 'cpf-fmt'
@@ -228,13 +228,13 @@ Errors fall into two categories:
 
 Every custom error includes the `CpfFmt::Error` marker module. Domain failures (`InvalidLengthError`, `OutOfRangeError`, `ValidationError`) inherit from `CpfFmt::DomainError` (`RangeError`).
 
-**Important:** length failures are **constructed as `InvalidLengthError` and passed to `on_fail` as a `DomainError`**, not raised from `format` / `cpf_fmt`. Passing both an `options` instance/`Hash` and keyword arguments raises `InvalidArgumentCombinationError`.
+**Important:** length failures are **constructed as `InvalidLengthError` and passed to `on_fail` as a `DomainError`**, not raised from `format` / `cpf_fmt`. Passing both an `options` instance/`Hash` and any non-`nil` keyword argument raises `InvalidArgumentCombinationError`.
 
 #### Summary
 
 | Class | Inherits from | Category | Trigger condition |
 |---|---|---|---|
-| `CpfFmt::InvalidArgumentCombinationError` | `ArgumentError` (+ `include Error`) | API misuse | Both an `options` instance/`Hash` and keyword arguments are passed at once |
+| `CpfFmt::InvalidArgumentCombinationError` | `ArgumentError` (+ `include Error`) | API misuse | Both an `options` instance/`Hash` and any non-`nil` keyword argument are passed at once |
 | `CpfFmt::TypeMismatchError` | `TypeError` (+ `include Error`) | API misuse | CPF input or option has the wrong data type |
 | `CpfFmt::InvalidLengthError` | `CpfFmt::DomainError` | Domain error | Sanitized length is not exactly 11 (passed to `on_fail` as `DomainError`) |
 | `CpfFmt::OutOfRangeError` | `CpfFmt::DomainError` | Domain error | `hidden_start` / `hidden_end` outside `0`–`10` |
