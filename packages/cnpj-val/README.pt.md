@@ -123,7 +123,7 @@ options.all              # => snapshot congelado das opções atuais
 
 ### Helper funcional
 
-`CnpjVal.cnpj_val` instancia um novo `CnpjVal::CnpjValidator` com os mesmos parâmetros do construtor e chama `is_valid(cnpj_input)` uma vez. Passe argumentos nomeados **ou** um `Hash`/instância de `CnpjVal::CnpjValidatorOptions` para as opções — não ambos (passar ambos lança `InvalidArgumentCombinationError`):
+`CnpjVal.cnpj_val` instancia um novo `CnpjVal::CnpjValidator` com os mesmos parâmetros do construtor e chama `is_valid(cnpj_input)` uma vez. Passe argumentos nomeados **ou** um `Hash`/instância de `CnpjVal::CnpjValidatorOptions` para as opções — não ambos (passar `options` com qualquer argumento nomeado não-`nil` lança `InvalidArgumentCombinationError`):
 
 ```ruby
 require 'cnpj-val'
@@ -182,13 +182,13 @@ Os erros se dividem em duas categorias:
 
 Todo erro customizado inclui o módulo marcador `CnpjVal::Error`. Falhas de domínio (`ValidationError`) herdam de `CnpjVal::DomainError` (`RangeError`). Dados de CNPJ inválidos retornam `false` (não levantam erro).
 
-**Importante:** passar ao mesmo tempo uma instância/`Hash` de `options` e argumentos nomeados levanta `InvalidArgumentCombinationError`.
+**Importante:** passar ao mesmo tempo uma instância/`Hash` de `options` e qualquer argumento nomeado não-`nil` levanta `InvalidArgumentCombinationError`.
 
 #### Resumo
 
 | Classe | Herda de | Categoria | Condição de disparo |
 |---|---|---|---|
-| `CnpjVal::InvalidArgumentCombinationError` | `ArgumentError` (+ `include Error`) | Uso incorreto da API | Instância/`Hash` de `options` e argumentos nomeados passados ao mesmo tempo |
+| `CnpjVal::InvalidArgumentCombinationError` | `ArgumentError` (+ `include Error`) | Uso incorreto da API | Instância/`Hash` de `options` e qualquer argumento nomeado não-`nil` passados ao mesmo tempo |
 | `CnpjVal::TypeMismatchError` | `TypeError` (+ `include Error`) | Uso incorreto da API | Entrada CNPJ ou opção com tipo de dado incorreto |
 | `CnpjVal::ValidationError` | `CnpjVal::DomainError` | Erro de domínio | `type` fora dos valores permitidos |
 

@@ -136,7 +136,7 @@ options.all              # => frozen snapshot of current options
 
 ### Functional helper
 
-`CnpjVal.cnpj_val` builds a new `CnpjVal::CnpjValidator` from the same constructor parameters and calls `is_valid(cnpj_input)` once. Pass either keyword arguments **or** a `Hash`/`CnpjVal::CnpjValidatorOptions` instance for options — not both (passing both raises `InvalidArgumentCombinationError`):
+`CnpjVal.cnpj_val` builds a new `CnpjVal::CnpjValidator` from the same constructor parameters and calls `is_valid(cnpj_input)` once. Pass either keyword arguments **or** a `Hash`/`CnpjVal::CnpjValidatorOptions` instance for options — not both (passing `options` with any non-`nil` keyword raises `InvalidArgumentCombinationError`):
 
 ```ruby
 require 'cnpj-val'
@@ -195,13 +195,13 @@ Errors fall into two categories:
 
 Every custom error includes the `CnpjVal::Error` marker module. Domain failures (`ValidationError`) inherit from `CnpjVal::DomainError` (`RangeError`). Invalid CNPJ data returns `false` (it does not raise).
 
-**Important:** passing both an `options` instance/`Hash` and keyword arguments raises `InvalidArgumentCombinationError`.
+**Important:** passing both an `options` instance/`Hash` and any non-`nil` keyword argument raises `InvalidArgumentCombinationError`.
 
 #### Summary
 
 | Class | Inherits from | Category | Trigger condition |
 |---|---|---|---|
-| `CnpjVal::InvalidArgumentCombinationError` | `ArgumentError` (+ `include Error`) | API misuse | Both an `options` instance/`Hash` and keyword arguments are passed at once |
+| `CnpjVal::InvalidArgumentCombinationError` | `ArgumentError` (+ `include Error`) | API misuse | Both an `options` instance/`Hash` and any non-`nil` keyword argument are passed at once |
 | `CnpjVal::TypeMismatchError` | `TypeError` (+ `include Error`) | API misuse | CNPJ input or option has the wrong data type |
 | `CnpjVal::ValidationError` | `CnpjVal::DomainError` | Domain error | `type` is not one of the allowed values |
 
