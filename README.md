@@ -93,7 +93,7 @@ Prefix rules: the base (first 9 digits) cannot be all zeros; 9 repeated digits (
 Generates a valid CPF string. With no options, returns an 11-digit numeric CPF. This is a convenience wrapper around `CpfGen::CpfGenerator.new(...).generate`.
 
 - **`options`** (optional): `CpfGen::CpfGeneratorOptions` instance, a `Hash` of option keys, or `nil`. See [Generator options](#generator-options).
-- **`format`**, **`prefix`** (keyword arguments): Only used when `options` is omitted (`nil`). Passing `options` **and** any of these keywords at the same time raises `InvalidArgumentCombinationError` — the two ways of passing options are never merged together.
+- **`format`**, **`prefix`** (keyword arguments): Only used when `options` is omitted (`nil`). Passing `options` **and** any non-`nil` of these keywords at the same time raises `InvalidArgumentCombinationError` — the two ways of passing options are never merged.
 
 ### `CpfGen::CpfGenerator` (class)
 
@@ -176,13 +176,13 @@ Errors fall into two categories:
 
 Every custom error includes the `CpfGen::Error` marker module. Domain failures (`ValidationError`) inherit from `CpfGen::DomainError` (`RangeError`).
 
-**Important:** passing both an `options` instance/`Hash` and keyword arguments raises `InvalidArgumentCombinationError`.
+**Important:** passing both an `options` instance/`Hash` and any non-`nil` keyword argument raises `InvalidArgumentCombinationError`.
 
 #### Summary
 
 | Class | Inherits from | Category | Trigger condition |
 |---|---|---|---|
-| `CpfGen::InvalidArgumentCombinationError` | `ArgumentError` (+ `include Error`) | API misuse | Both an `options` instance/`Hash` and keyword arguments are passed at once |
+| `CpfGen::InvalidArgumentCombinationError` | `ArgumentError` (+ `include Error`) | API misuse | Both an `options` instance/`Hash` and any non-`nil` keyword argument are passed at once |
 | `CpfGen::TypeMismatchError` | `TypeError` (+ `include Error`) | API misuse | A generator option has the wrong data type |
 | `CpfGen::ValidationError` | `CpfGen::DomainError` | Domain error | `prefix` is ineligible (zeroed base ID or 9 repeated digits) |
 
