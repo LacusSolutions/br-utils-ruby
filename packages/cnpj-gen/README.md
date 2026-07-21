@@ -99,7 +99,7 @@ Prefix rules: base ID (first 8 chars) and branch ID (chars 9–12) cannot be all
 Generates a valid CNPJ string. With no options, returns a 14-character alphanumeric CNPJ. This is a convenience wrapper around `CnpjGen::CnpjGenerator.new(...).generate`.
 
 - **`options`** (optional): `CnpjGen::CnpjGeneratorOptions` instance, a `Hash` of option keys, or `nil`. See [Generator options](#generator-options).
-- **`format`**, **`prefix`**, **`type`** (keyword arguments): Only used when `options` is omitted (`nil`). Passing `options` **and** any of these keywords at the same time raises `InvalidArgumentCombinationError` — the two ways of passing options are never merged together.
+- **`format`**, **`prefix`**, **`type`** (keyword arguments): Only used when `options` is omitted (`nil`). Passing `options` **and** any non-`nil` of these keywords at the same time raises `InvalidArgumentCombinationError` — the two ways of passing options are never merged.
 
 ### `CnpjGen::CnpjGenerator` (class)
 
@@ -185,13 +185,13 @@ Errors fall into two categories:
 
 Every custom error includes the `CnpjGen::Error` marker module. Domain failures (`ValidationError`) inherit from `CnpjGen::DomainError` (`RangeError`).
 
-**Important:** passing both an `options` instance/`Hash` and keyword arguments raises `InvalidArgumentCombinationError`.
+**Important:** passing both an `options` instance/`Hash` and any non-`nil` keyword argument raises `InvalidArgumentCombinationError`.
 
 #### Summary
 
 | Class | Inherits from | Category | Trigger condition |
 |---|---|---|---|
-| `CnpjGen::InvalidArgumentCombinationError` | `ArgumentError` (+ `include Error`) | API misuse | Both an `options` instance/`Hash` and keyword arguments are passed at once |
+| `CnpjGen::InvalidArgumentCombinationError` | `ArgumentError` (+ `include Error`) | API misuse | Both an `options` instance/`Hash` and any non-`nil` keyword argument are passed at once |
 | `CnpjGen::TypeMismatchError` | `TypeError` (+ `include Error`) | API misuse | A generator option has the wrong data type |
 | `CnpjGen::ValidationError` | `CnpjGen::DomainError` | Domain error | `prefix` is ineligible, or `type` is not one of the allowed values |
 
