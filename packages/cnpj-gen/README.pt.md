@@ -157,7 +157,7 @@ Após `require 'cnpj-gen'`:
 - **`CnpjGen::CNPJ_PREFIX_MAX_LENGTH`**: `12` (constante).
 - **`CnpjGen::CNPJ_TYPE_VALUES`**: `%w[alphabetic alphanumeric numeric]` — valores permitidos para `type`.
 - **`CnpjGen::VERSION`**: string da versão da gem.
-- **Erros**: `CnpjGen::Error`, `CnpjGen::DomainError`, `CnpjGen::TypeMismatchError`, `CnpjGen::InvalidArgumentCombinationError`, `CnpjGen::ValidationError`.
+- **Erros**: `CnpjGen::Error`, `CnpjGen::DomainError`, `CnpjGen::InvalidArgumentCombinationError`, `CnpjGen::TypeMismatchError`, `CnpjGen::ValidationError`.
 
 ### Tratamento de erros
 
