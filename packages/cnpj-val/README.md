@@ -201,8 +201,8 @@ Every custom error includes the `CnpjVal::Error` marker module. Domain failures 
 
 | Class | Inherits from | Category | Trigger condition |
 |---|---|---|---|
-| `CnpjVal::TypeMismatchError` | `TypeError` (+ `include Error`) | API misuse | CNPJ input or option has the wrong data type |
 | `CnpjVal::InvalidArgumentCombinationError` | `ArgumentError` (+ `include Error`) | API misuse | Both an `options` instance/`Hash` and keyword arguments are passed at once |
+| `CnpjVal::TypeMismatchError` | `TypeError` (+ `include Error`) | API misuse | CNPJ input or option has the wrong data type |
 | `CnpjVal::ValidationError` | `CnpjVal::DomainError` | Domain error | `type` is not one of the allowed values |
 
 #### `CnpjVal::Error` (marker module)
@@ -337,7 +337,7 @@ After `require 'cnpj-val'`:
 - **`CnpjVal::CNPJ_LENGTH`**: `14` (constant).
 - **`CnpjVal::VERSION`**: gem version string.
 - **Type markers**: `CnpjVal::CnpjInput`, `CnpjVal::CnpjType`, `CnpjVal::CnpjValidatorOptionsInput`.
-- **Errors**: `CnpjVal::Error`, `CnpjVal::DomainError`, `CnpjVal::TypeMismatchError`, `CnpjVal::InvalidArgumentCombinationError`, `CnpjVal::ValidationError`.
+- **Errors**: `CnpjVal::Error`, `CnpjVal::DomainError`, `CnpjVal::InvalidArgumentCombinationError`, `CnpjVal::TypeMismatchError`, `CnpjVal::ValidationError`.
 
 ### Other available resources
 
