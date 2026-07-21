@@ -2,7 +2,8 @@
 
 require 'spec_helper'
 
-TYPE_INVALID_EXPECTED_VALUES = CnpjGen::CNPJ_TYPE_VALUES
+# Deliberately independent of CnpjGen::CNPJ_TYPE_VALUES so production changes fail loudly.
+TYPE_INVALID_EXPECTED_VALUES = %w[alphabetic alphanumeric numeric].freeze
 
 RSpec.describe CnpjGen::Error do
   it 'is a module' do

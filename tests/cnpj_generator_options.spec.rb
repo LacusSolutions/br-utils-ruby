@@ -43,8 +43,11 @@ CNPJ_GENERATOR_OPTIONS_REPEATED_LETTER_PREFIXES = %w[
   ZZZZZZZZZZZZ
 ].freeze
 
+# Deliberately independent of CnpjGen::CNPJ_TYPE_* so production changes fail loudly.
+CNPJ_GENERATOR_OPTIONS_TYPE_VALUES = %w[alphabetic alphanumeric numeric].freeze
+
 CNPJ_GENERATOR_OPTIONS_TYPE_INVALID_MESSAGE = begin
-  quoted = CnpjGen::CNPJ_TYPE_OPTIONS_ORDER.map { |value| %("#{value}") }.join(', ')
+  quoted = CNPJ_GENERATOR_OPTIONS_TYPE_VALUES.map { |value| %("#{value}") }.join(', ')
   %(CNPJ generator option "type" accepts only the following values: #{quoted}. Got "something".)
 end
 
@@ -348,7 +351,7 @@ RSpec.describe CnpjGen::CnpjGeneratorOptions do
 
   describe '#type=' do
     context 'when setting to a valid option value' do
-      CnpjGen::CNPJ_TYPE_VALUES.each do |type_value|
+      CNPJ_GENERATOR_OPTIONS_TYPE_VALUES.each do |type_value|
         it "sets type to #{type_value}" do
           options = described_class.new(type: type_value)
           options.type = type_value
