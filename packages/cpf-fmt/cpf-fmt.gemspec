@@ -7,8 +7,8 @@ Gem::Specification.new do |spec|
   spec.version       = CpfFmt::VERSION
   spec.authors       = ['Julio L. Muller']
   spec.email         = ['juliolmuller@outlook.com']
-  spec.summary       = 'Format and parse CPF strings (Brazilian personal ID)'
-  spec.description   = 'Format CPF with or without punctuation; strip to digits.'
+  spec.summary       = "Format CPF (Brazilian Individual's Taxpayer ID)"
+  spec.description   = "Utility to format CPF (Brazilian Individual's Taxpayer ID)"
   spec.homepage      = 'https://github.com/LacusSolutions/br-utils-ruby'
   spec.license       = 'MIT'
   spec.required_ruby_version = '>= 3.1'
