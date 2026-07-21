@@ -38,7 +38,8 @@ RSpec.describe CnpjFmt::Utils do
   end
 
   describe '.assert_no_disallowed_key_characters!' do
-    let(:forbidden) { CnpjFmt::CnpjFormatterOptions::DISALLOWED_KEY_CHARACTERS }
+    # Deliberately independent of CnpjFormatterOptions::DISALLOWED_KEY_CHARACTERS.
+    let(:forbidden) { %w[å ë ï ö].freeze }
 
     it 'accepts a value without disallowed characters' do
       expect do

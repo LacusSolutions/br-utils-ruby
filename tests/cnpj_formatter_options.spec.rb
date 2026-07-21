@@ -2,6 +2,10 @@
 
 require 'spec_helper'
 
+# Deliberately independent of CnpjFormatterOptions::DISALLOWED_KEY_CHARACTERS so
+# production changes fail loudly.
+DISALLOWED_KEY_CHARACTERS = %w[å ë ï ö].freeze
+
 RSpec.describe CnpjFmt::CnpjFormatterOptions do
   def expect_options_match(actual, expected)
     expected.each do |key, value|
@@ -14,7 +18,7 @@ RSpec.describe CnpjFmt::CnpjFormatterOptions do
   end
 
   def forbidden_key_message(option_name, value)
-    quoted = described_class::DISALLOWED_KEY_CHARACTERS.map { |char| %("#{char}") }.join(', ')
+    quoted = DISALLOWED_KEY_CHARACTERS.map { |char| %("#{char}") }.join(', ')
 
     %(Value "#{value}" for CNPJ formatting option "#{option_name}" contains disallowed characters (#{quoted}).)
   end
@@ -278,7 +282,7 @@ RSpec.describe CnpjFmt::CnpjFormatterOptions do
     end
 
     context 'when setting to a forbidden key character' do
-      described_class::DISALLOWED_KEY_CHARACTERS.each do |forbidden_char|
+      DISALLOWED_KEY_CHARACTERS.each do |forbidden_char|
         it "raises ValidationError for #{forbidden_char}" do
           options = described_class.new
 
@@ -521,7 +525,7 @@ RSpec.describe CnpjFmt::CnpjFormatterOptions do
     end
 
     context 'when setting to a forbidden key character' do
-      described_class::DISALLOWED_KEY_CHARACTERS.each do |forbidden_char|
+      DISALLOWED_KEY_CHARACTERS.each do |forbidden_char|
         it "raises ValidationError for #{forbidden_char}" do
           options = described_class.new
 
@@ -590,7 +594,7 @@ RSpec.describe CnpjFmt::CnpjFormatterOptions do
     end
 
     context 'when setting to a forbidden key character' do
-      described_class::DISALLOWED_KEY_CHARACTERS.each do |forbidden_char|
+      DISALLOWED_KEY_CHARACTERS.each do |forbidden_char|
         it "raises ValidationError for #{forbidden_char}" do
           options = described_class.new
 
@@ -659,7 +663,7 @@ RSpec.describe CnpjFmt::CnpjFormatterOptions do
     end
 
     context 'when setting to a forbidden key character' do
-      described_class::DISALLOWED_KEY_CHARACTERS.each do |forbidden_char|
+      DISALLOWED_KEY_CHARACTERS.each do |forbidden_char|
         it "raises ValidationError for #{forbidden_char}" do
           options = described_class.new
 
