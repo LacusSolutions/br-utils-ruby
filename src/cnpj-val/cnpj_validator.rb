@@ -169,7 +169,7 @@ module CnpjVal
       cnpj_check_digits = CnpjDV::CnpjCheckDigits.new(sanitized_cnpj)
 
       sanitized_cnpj == cnpj_check_digits.cnpj
-    rescue StandardError
+    rescue CnpjDV::Error
       false
     end
   end
