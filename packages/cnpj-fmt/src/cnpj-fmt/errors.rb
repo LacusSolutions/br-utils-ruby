@@ -169,7 +169,7 @@ module CnpjFmt
       )
       @option_name = option_name
       @actual_input = actual_input
-      @forbidden_characters = forbidden_characters.dup
+      @forbidden_characters = forbidden_characters.dup.freeze
     end
   end
 end

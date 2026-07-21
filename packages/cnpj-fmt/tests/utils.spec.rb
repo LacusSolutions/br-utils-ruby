@@ -5,6 +5,92 @@ require 'cgi'
 require 'erb'
 
 RSpec.describe CnpjFmt::Utils do
+  describe '.normalize_boolean' do
+    it 'returns false for false, empty string, and zero' do
+      aggregate_failures do
+        expect(described_class.normalize_boolean(false)).to be(false)
+        expect(described_class.normalize_boolean('')).to be(false)
+        expect(described_class.normalize_boolean(0)).to be(false)
+      end
+    end
+
+    it 'returns true for other truthy values' do
+      aggregate_failures do
+        expect(described_class.normalize_boolean(true)).to be(true)
+        expect(described_class.normalize_boolean('yes')).to be(true)
+        expect(described_class.normalize_boolean(1)).to be(true)
+      end
+    end
+  end
+
+  describe '.assert_string_option!' do
+    it 'accepts a string' do
+      expect { described_class.assert_string_option!('dot_key', '.') }.not_to raise_error
+    end
+
+    it 'raises TypeMismatchError for a non-string' do
+      expect { described_class.assert_string_option!('dot_key', 1) }
+        .to raise_error(CnpjFmt::TypeMismatchError) { |error|
+          expect(error.option_name).to eq('dot_key')
+          expect(error.expected_type).to eq('string')
+        }
+    end
+  end
+
+  describe '.assert_no_disallowed_key_characters!' do
+    # Deliberately independent of CnpjFormatterOptions::DISALLOWED_KEY_CHARACTERS.
+    let(:forbidden) { %w[å ë ï ö].freeze }
+
+    it 'accepts a value without disallowed characters' do
+      expect do
+        described_class.assert_no_disallowed_key_characters!('dot_key', '.', forbidden)
+      end.not_to raise_error
+    end
+
+    it 'raises ValidationError when a disallowed character is present' do
+      expect do
+        described_class.assert_no_disallowed_key_characters!('dot_key', forbidden.first, forbidden)
+      end.to raise_error(CnpjFmt::ValidationError) { |error|
+        expect(error.option_name).to eq('dot_key')
+        expect(error.forbidden_characters).to include(forbidden.first)
+      }
+    end
+  end
+
+  describe '.fetch_option' do
+    it 'reads a symbol key' do
+      expect(described_class.fetch_option({ hidden: true }, :hidden)).to be(true)
+    end
+
+    it 'reads a string key' do
+      expect(described_class.fetch_option({ 'hidden' => true }, :hidden)).to be(true)
+    end
+
+    it 'returns nil when the key is absent' do
+      expect(described_class.fetch_option({}, :hidden)).to be_nil
+    end
+  end
+
+  describe '.normalize_hidden_range' do
+    it 'returns the range unchanged when start is less than or equal to end' do
+      expect(described_class.normalize_hidden_range(2, 8, 0, 13)).to eq([2, 8])
+    end
+
+    it 'swaps the bounds when start is greater than end' do
+      expect(described_class.normalize_hidden_range(8, 2, 0, 13)).to eq([2, 8])
+    end
+
+    it 'raises TypeMismatchError for a non-integer bound' do
+      expect { described_class.normalize_hidden_range('a', 8, 0, 13) }
+        .to raise_error(CnpjFmt::TypeMismatchError)
+    end
+
+    it 'raises OutOfRangeError for an out-of-range bound' do
+      expect { described_class.normalize_hidden_range(-1, 8, 0, 13) }
+        .to raise_error(CnpjFmt::OutOfRangeError)
+    end
+  end
+
   describe '.sanitize_cnpj_input' do
     it 'returns an already clean uppercase alphanumeric string unchanged' do
       expect(described_class.sanitize_cnpj_input('12ABC34500DE35')).to eq('12ABC34500DE35')

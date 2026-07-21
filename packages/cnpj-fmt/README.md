@@ -86,7 +86,7 @@ The main entry points are the class `CnpjFmt::CnpjFormatter`, the options class 
 
 ### `CnpjFmt::CnpjFormatter`
 
-- **`initialize`**: Optional default formatting options. The first parameter may be `nil`, a `Hash` of option keys, or a `CnpjFmt::CnpjFormatterOptions` instance (that exact instance is stored; mutating it later affects subsequent `format` calls that do not pass per-call options). You may also pass option fields as keyword arguments (`hidden:`, `hidden_key:`, `dot_key:`, …). Example: `CnpjFmt::CnpjFormatter.new(hidden: true, slash_key: '|')`.
+- **`initialize(options = nil, **keywords)`**: Optional default formatting options. When `options` is given (a `CnpjFmt::CnpjFormatterOptions` instance or a `Hash`) alone, it determines the default options; a `CnpjFmt::CnpjFormatterOptions` instance is stored by reference (mutating it later affects future `format` calls that do not pass per-call options), while a `Hash` builds a new instance. When `options` is omitted (`nil`), the default options are built exclusively from the keyword arguments (`hidden:`, `hidden_key:`, `dot_key:`, …). Passing `options` together with any non-`nil` keyword raises `InvalidArgumentCombinationError` instead of silently ignoring the keywords. Example: `CnpjFmt::CnpjFormatter.new(hidden: true, slash_key: '|')`.
 - **`options`**: Returns the instance’s `CnpjFmt::CnpjFormatterOptions` (same object used internally).
 - **`format(cnpj_input, options = nil, **keywords)`**: Formats a CNPJ value.
 
@@ -94,7 +94,7 @@ The main entry points are the class `CnpjFmt::CnpjFormatter`, the options class 
 
   If the input is not a `String` or an `Array` of strings, **`CnpjFmt::TypeMismatchError`** is raised.
 
-  Per-call options are merged over the instance defaults for that call only (instance defaults are unchanged). Pass a `CnpjFmt::CnpjFormatterOptions` instance or a `Hash` as the second argument, in addition to keyword arguments; when both are provided, the `options` argument wins.
+  Per-call `options` and keyword arguments are never merged: a given `options` argument alone fully overrides the instance defaults for this call; otherwise, any given keyword overrides the instance defaults for this call. When neither is given, the instance defaults are used as-is. The instance defaults are never mutated by a per-call override. Passing `options` together with any non-`nil` keyword raises `InvalidArgumentCombinationError`.
 
 ### `CnpjFmt::CnpjFormatterOptions`
 
@@ -112,7 +112,7 @@ Holds all formatter settings, with validation and merge support. Exposes propert
 
 ### Functional helper
 
-`CnpjFmt.cnpj_fmt` builds a new `CnpjFmt::CnpjFormatter` from the same constructor parameters and calls `format(cnpj_input)` once. Use keyword arguments, a `Hash`, or a `CnpjFmt::CnpjFormatterOptions` instance for options:
+`CnpjFmt.cnpj_fmt` builds a new `CnpjFmt::CnpjFormatter` from the same constructor parameters and calls `format(cnpj_input)` once. Pass either keyword arguments **or** a `Hash`/`CnpjFmt::CnpjFormatterOptions` instance for options — not both (passing both raises `InvalidArgumentCombinationError`):
 
 ```ruby
 require 'cnpj-fmt'
@@ -232,18 +232,19 @@ Errors fall into two categories:
 
 | Category | Meaning |
 |---|---|
-| **API misuse** | The caller invoked the library incorrectly (wrong type for input or options). |
+| **API misuse** | The caller invoked the library incorrectly (wrong type for input or options, or an invalid argument combination). |
 | **Domain error** | The call was structurally correct, but a value violates a business rule (length, range, forbidden characters). |
 
 Every custom error includes the `CnpjFmt::Error` marker module. Domain failures (`InvalidLengthError`, `OutOfRangeError`, `ValidationError`) inherit from `CnpjFmt::DomainError` (`RangeError`).
 
-**Important:** length failures are **constructed as `InvalidLengthError` and passed to `on_fail` as a `DomainError`**, not raised from `format` / `cnpj_fmt`. The package also defines an unused skeleton leaf (`InvalidArgumentCombinationError`) for monorepo consistency.
+**Important:** length failures are **constructed as `InvalidLengthError` and passed to `on_fail` as a `DomainError`**, not raised from `format` / `cnpj_fmt`. Passing both an `options` instance/`Hash` and keyword arguments raises `InvalidArgumentCombinationError`.
 
 #### Summary
 
 | Class | Inherits from | Category | Trigger condition |
 |---|---|---|---|
 | `CnpjFmt::TypeMismatchError` | `TypeError` (+ `include Error`) | API misuse | CNPJ input or option has the wrong data type |
+| `CnpjFmt::InvalidArgumentCombinationError` | `ArgumentError` (+ `include Error`) | API misuse | Both an `options` instance/`Hash` and keyword arguments are passed at once |
 | `CnpjFmt::InvalidLengthError` | `CnpjFmt::DomainError` | Domain error | Sanitized length is not exactly 14 (passed to `on_fail` as `DomainError`) |
 | `CnpjFmt::OutOfRangeError` | `CnpjFmt::DomainError` | Domain error | `hidden_start` / `hidden_end` outside `0`–`13` |
 | `CnpjFmt::ValidationError` | `CnpjFmt::DomainError` | Domain error | Key option contains a disallowed character |
@@ -310,6 +311,7 @@ CnpjFmt::CnpjFormatter.new.format(
     'invalid'
   }
 ) # => "invalid"
+
 ```
 
 - **How to rescue it:** Handle inside `on_fail` (typical), or rescue if you re-raise:
@@ -320,6 +322,32 @@ rescue CnpjFmt::InvalidLengthError
 
 rescue CnpjFmt::DomainError
   # RangeError-rooted domain failures from this library
+```
+
+#### `CnpjFmt::InvalidArgumentCombinationError`
+
+- **Inheritance:** `CnpjFmt::InvalidArgumentCombinationError < ArgumentError` (includes `CnpjFmt::Error`)
+- **Category:** API misuse — the caller mixed mutually exclusive argument patterns.
+- **When it is raised:** Raised when `CnpjFormatter.new`, `#format`, or `cnpj_fmt` receives both an `options` argument (instance or `Hash`) and any non-`nil` keyword argument at the same time.
+- **Example:**
+
+```ruby
+begin
+  CnpjFmt::CnpjFormatter.new({ slash_key: '|' }, hidden: true)
+rescue CnpjFmt::InvalidArgumentCombinationError => e
+  puts e.message
+  # Pass either an options instance/Hash to `options`, or keyword arguments (hidden:, ...), not both.
+end
+```
+
+- **How to rescue it:**
+
+```ruby
+rescue CnpjFmt::InvalidArgumentCombinationError
+  # this library's invalid argument combination
+
+rescue ArgumentError
+  # native argument errors, including this library's InvalidArgumentCombinationError
 ```
 
 #### `CnpjFmt::OutOfRangeError`
@@ -403,7 +431,7 @@ After `require 'cnpj-fmt'`:
 - **`CnpjFmt::CnpjFormatterOptions`**: Class holding options; supports merge via constructor, `set`, and keyword arguments.
 - **`CnpjFmt::CNPJ_LENGTH`**: `14` (constant).
 - **`CnpjFmt::VERSION`**: gem version string.
-- **Errors**: `CnpjFmt::Error`, `CnpjFmt::DomainError`, `CnpjFmt::TypeMismatchError`, `CnpjFmt::InvalidLengthError`, `CnpjFmt::OutOfRangeError`, `CnpjFmt::ValidationError` (plus unused skeleton leaf `InvalidArgumentCombinationError`).
+- **Errors**: `CnpjFmt::Error`, `CnpjFmt::DomainError`, `CnpjFmt::TypeMismatchError`, `CnpjFmt::InvalidArgumentCombinationError`, `CnpjFmt::InvalidLengthError`, `CnpjFmt::OutOfRangeError`, `CnpjFmt::ValidationError`.
 
 ### Other available resources
 

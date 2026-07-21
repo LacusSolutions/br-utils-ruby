@@ -3,9 +3,26 @@
 require 'spec_helper'
 
 RSpec.describe CnpjGen do
-  describe '.hello' do
-    it 'returns cnpj-gen' do
-      expect(CnpjGen.hello).to eq('cnpj-gen')
+  describe '.cnpj_gen' do
+    context 'when called with no arguments' do
+      it 'returns a 14-character alphanumeric CNPJ' do
+        expect(described_class.cnpj_gen).to match(/\A[0-9A-Z]{14}\z/)
+      end
+    end
+
+    context 'when called with options' do
+      it 'forwards format, prefix, and type' do
+        result = described_class.cnpj_gen(format: true, prefix: '12345', type: 'numeric')
+
+        expect(result).to match(%r{\A12\.345\.\d{3}/\d{4}-\d{2}\z})
+      end
+    end
+
+    context 'when called with keyword options' do
+      it 'raises InvalidArgumentCombinationError when options and keywords are both given' do
+        expect { described_class.cnpj_gen({ format: true }, prefix: 'AB') }
+          .to raise_error(CnpjGen::InvalidArgumentCombinationError, /options.*keyword arguments.*not both/)
+      end
     end
   end
 end

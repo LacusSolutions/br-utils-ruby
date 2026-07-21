@@ -2,6 +2,10 @@
 
 require 'spec_helper'
 
+# Deliberately independent of CnpjFormatterOptions::DISALLOWED_KEY_CHARACTERS so
+# production changes fail loudly.
+DISALLOWED_KEY_CHARACTERS = %w[å ë ï ö].freeze
+
 RSpec.describe CnpjFmt::CnpjFormatterOptions do
   def expect_options_match(actual, expected)
     expected.each do |key, value|
@@ -14,7 +18,7 @@ RSpec.describe CnpjFmt::CnpjFormatterOptions do
   end
 
   def forbidden_key_message(option_name, value)
-    quoted = described_class::DISALLOWED_KEY_CHARACTERS.map { |char| %("#{char}") }.join(', ')
+    quoted = DISALLOWED_KEY_CHARACTERS.map { |char| %("#{char}") }.join(', ')
 
     %(Value "#{value}" for CNPJ formatting option "#{option_name}" contains disallowed characters (#{quoted}).)
   end
@@ -174,11 +178,14 @@ RSpec.describe CnpjFmt::CnpjFormatterOptions do
     end
 
     context 'when setting to a nil value' do
-      it 'restores the default value' do
+      it 'raises TypeMismatchError' do
         options = described_class.new(hidden: !default_parameters[:hidden])
-        options.hidden = nil
 
-        expect(options.hidden).to eq(default_parameters[:hidden])
+        expect { options.hidden = nil }
+          .to raise_error(
+            CnpjFmt::TypeMismatchError,
+            'CNPJ formatting option "hidden" must be of type boolean. Got nil.'
+          )
       end
     end
 
@@ -231,11 +238,14 @@ RSpec.describe CnpjFmt::CnpjFormatterOptions do
     end
 
     context 'when setting to a nil value' do
-      it 'restores the default value' do
+      it 'raises TypeMismatchError' do
         options = described_class.new(hidden_key: '#')
-        options.hidden_key = nil
 
-        expect(options.hidden_key).to eq(default_parameters[:hidden_key])
+        expect { options.hidden_key = nil }
+          .to raise_error(
+            CnpjFmt::TypeMismatchError,
+            'CNPJ formatting option "hidden_key" must be of type string. Got nil.'
+          )
       end
     end
 
@@ -272,7 +282,7 @@ RSpec.describe CnpjFmt::CnpjFormatterOptions do
     end
 
     context 'when setting to a forbidden key character' do
-      described_class::DISALLOWED_KEY_CHARACTERS.each do |forbidden_char|
+      DISALLOWED_KEY_CHARACTERS.each do |forbidden_char|
         it "raises ValidationError for #{forbidden_char}" do
           options = described_class.new
 
@@ -319,11 +329,14 @@ RSpec.describe CnpjFmt::CnpjFormatterOptions do
     end
 
     context 'when setting to a nil value' do
-      it 'restores the default value' do
+      it 'raises TypeMismatchError' do
         options = described_class.new(hidden_start: 0)
-        options.hidden_start = nil
 
-        expect(options.hidden_start).to eq(default_parameters[:hidden_start])
+        expect { options.hidden_start = nil }
+          .to raise_error(
+            CnpjFmt::TypeMismatchError,
+            'CNPJ formatting option "hidden_start" must be of type integer. Got nil.'
+          )
       end
     end
 
@@ -403,11 +416,14 @@ RSpec.describe CnpjFmt::CnpjFormatterOptions do
     end
 
     context 'when setting to a nil value' do
-      it 'restores the default value' do
+      it 'raises TypeMismatchError' do
         options = described_class.new(hidden_end: 0)
-        options.hidden_end = nil
 
-        expect(options.hidden_end).to eq(default_parameters[:hidden_end])
+        expect { options.hidden_end = nil }
+          .to raise_error(
+            CnpjFmt::TypeMismatchError,
+            'CNPJ formatting option "hidden_end" must be of type integer. Got nil.'
+          )
       end
     end
 
@@ -465,11 +481,14 @@ RSpec.describe CnpjFmt::CnpjFormatterOptions do
     end
 
     context 'when setting to a nil value' do
-      it 'restores the default value' do
+      it 'raises TypeMismatchError' do
         options = described_class.new(dot_key: '_')
-        options.dot_key = nil
 
-        expect(options.dot_key).to eq(default_parameters[:dot_key])
+        expect { options.dot_key = nil }
+          .to raise_error(
+            CnpjFmt::TypeMismatchError,
+            'CNPJ formatting option "dot_key" must be of type string. Got nil.'
+          )
       end
     end
 
@@ -506,7 +525,7 @@ RSpec.describe CnpjFmt::CnpjFormatterOptions do
     end
 
     context 'when setting to a forbidden key character' do
-      described_class::DISALLOWED_KEY_CHARACTERS.each do |forbidden_char|
+      DISALLOWED_KEY_CHARACTERS.each do |forbidden_char|
         it "raises ValidationError for #{forbidden_char}" do
           options = described_class.new
 
@@ -531,11 +550,14 @@ RSpec.describe CnpjFmt::CnpjFormatterOptions do
     end
 
     context 'when setting to a nil value' do
-      it 'restores the default value' do
+      it 'raises TypeMismatchError' do
         options = described_class.new(slash_key: '_')
-        options.slash_key = nil
 
-        expect(options.slash_key).to eq(default_parameters[:slash_key])
+        expect { options.slash_key = nil }
+          .to raise_error(
+            CnpjFmt::TypeMismatchError,
+            'CNPJ formatting option "slash_key" must be of type string. Got nil.'
+          )
       end
     end
 
@@ -572,7 +594,7 @@ RSpec.describe CnpjFmt::CnpjFormatterOptions do
     end
 
     context 'when setting to a forbidden key character' do
-      described_class::DISALLOWED_KEY_CHARACTERS.each do |forbidden_char|
+      DISALLOWED_KEY_CHARACTERS.each do |forbidden_char|
         it "raises ValidationError for #{forbidden_char}" do
           options = described_class.new
 
@@ -597,11 +619,14 @@ RSpec.describe CnpjFmt::CnpjFormatterOptions do
     end
 
     context 'when setting to a nil value' do
-      it 'restores the default value' do
+      it 'raises TypeMismatchError' do
         options = described_class.new(dash_key: '_')
-        options.dash_key = nil
 
-        expect(options.dash_key).to eq(default_parameters[:dash_key])
+        expect { options.dash_key = nil }
+          .to raise_error(
+            CnpjFmt::TypeMismatchError,
+            'CNPJ formatting option "dash_key" must be of type string. Got nil.'
+          )
       end
     end
 
@@ -638,7 +663,7 @@ RSpec.describe CnpjFmt::CnpjFormatterOptions do
     end
 
     context 'when setting to a forbidden key character' do
-      described_class::DISALLOWED_KEY_CHARACTERS.each do |forbidden_char|
+      DISALLOWED_KEY_CHARACTERS.each do |forbidden_char|
         it "raises ValidationError for #{forbidden_char}" do
           options = described_class.new
 
@@ -670,11 +695,14 @@ RSpec.describe CnpjFmt::CnpjFormatterOptions do
     end
 
     context 'when setting to a nil value' do
-      it 'restores the default value' do
+      it 'raises TypeMismatchError' do
         options = described_class.new(escape: !default_parameters[:escape])
-        options.escape = nil
 
-        expect(options.escape).to eq(default_parameters[:escape])
+        expect { options.escape = nil }
+          .to raise_error(
+            CnpjFmt::TypeMismatchError,
+            'CNPJ formatting option "escape" must be of type boolean. Got nil.'
+          )
       end
     end
 
@@ -734,11 +762,14 @@ RSpec.describe CnpjFmt::CnpjFormatterOptions do
     end
 
     context 'when setting to a nil value' do
-      it 'restores the default value' do
+      it 'raises TypeMismatchError' do
         options = described_class.new(encode: !default_parameters[:encode])
-        options.encode = nil
 
-        expect(options.encode).to eq(default_parameters[:encode])
+        expect { options.encode = nil }
+          .to raise_error(
+            CnpjFmt::TypeMismatchError,
+            'CNPJ formatting option "encode" must be of type boolean. Got nil.'
+          )
       end
     end
 
@@ -798,12 +829,15 @@ RSpec.describe CnpjFmt::CnpjFormatterOptions do
     end
 
     context 'when setting to a nil value' do
-      it 'restores the default callback' do
+      it 'raises TypeMismatchError' do
         callback = ->(value, _error) { "ERROR: #{value}" }
         options = described_class.new(on_fail: callback)
-        options.on_fail = nil
 
-        expect(options.on_fail).to equal(default_parameters[:on_fail])
+        expect { options.on_fail = nil }
+          .to raise_error(
+            CnpjFmt::TypeMismatchError,
+            'CNPJ formatting option "on_fail" must be of type function. Got nil.'
+          )
       end
     end
 
@@ -917,37 +951,37 @@ RSpec.describe CnpjFmt::CnpjFormatterOptions do
     end
 
     context 'when called with nil values' do
-      it 'restores default values for both fields' do
+      it 'raises TypeMismatchError for hidden_start' do
         options = described_class.new
-        options.set_hidden_range(nil, nil)
 
-        aggregate_failures do
-          expect(options.hidden_start).to eq(default_parameters[:hidden_start])
-          expect(options.hidden_end).to eq(default_parameters[:hidden_end])
-        end
+        expect { options.set_hidden_range(nil, nil) }
+          .to raise_error(
+            CnpjFmt::TypeMismatchError,
+            'CNPJ formatting option "hidden_start" must be of type integer. Got nil.'
+          )
       end
 
       context 'when hidden_start is nil' do
-        it 'restores hidden_start and keeps hidden_end' do
+        it 'raises TypeMismatchError' do
           options = described_class.new(hidden_start: 0)
-          options.set_hidden_range(nil, 13)
 
-          aggregate_failures do
-            expect(options.hidden_start).to eq(default_parameters[:hidden_start])
-            expect(options.hidden_end).to eq(13)
-          end
+          expect { options.set_hidden_range(nil, 13) }
+            .to raise_error(
+              CnpjFmt::TypeMismatchError,
+              'CNPJ formatting option "hidden_start" must be of type integer. Got nil.'
+            )
         end
       end
 
       context 'when hidden_end is nil' do
-        it 'keeps hidden_start and restores hidden_end' do
+        it 'raises TypeMismatchError' do
           options = described_class.new(hidden_end: 13)
-          options.set_hidden_range(0, nil)
 
-          aggregate_failures do
-            expect(options.hidden_start).to eq(0)
-            expect(options.hidden_end).to eq(default_parameters[:hidden_end])
-          end
+          expect { options.set_hidden_range(0, nil) }
+            .to raise_error(
+              CnpjFmt::TypeMismatchError,
+              'CNPJ formatting option "hidden_end" must be of type integer. Got nil.'
+            )
         end
       end
     end

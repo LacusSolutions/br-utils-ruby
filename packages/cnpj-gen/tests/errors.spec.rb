@@ -1,0 +1,180 @@
+# frozen_string_literal: true
+
+require 'spec_helper'
+
+# Deliberately independent of CnpjGen::CNPJ_TYPE_VALUES so production changes fail loudly.
+TYPE_INVALID_EXPECTED_VALUES = %w[alphabetic alphanumeric numeric].freeze
+
+RSpec.describe CnpjGen::Error do
+  it 'is a module' do
+    expect(described_class).to be_a(Module)
+    expect(described_class).not_to be_a(Class)
+  end
+end
+
+RSpec.describe CnpjGen::TypeMismatchError do
+  subject(:error) { described_class.new(123, 'string', option_name: 'format') }
+
+  context 'when instantiated' do
+    it 'is a TypeError' do
+      expect(error).to be_a(TypeError)
+    end
+
+    it 'includes CnpjGen::Error' do
+      expect(error).to be_a(CnpjGen::Error)
+    end
+
+    it 'exposes the class name' do
+      expect(error.class.name).to eq('CnpjGen::TypeMismatchError')
+    end
+
+    it 'sets option_name' do
+      expect(described_class.new(123, 'string', option_name: 'prefix').option_name).to eq('prefix')
+    end
+
+    it 'sets actual_input' do
+      expect(error.actual_input).to eq(123)
+    end
+
+    it 'sets actual_type' do
+      expect(error.actual_type).to eq('integer number')
+    end
+
+    it 'sets expected_type' do
+      expect(error.expected_type).to eq('string')
+    end
+
+    it 'builds a descriptive message' do
+      expect(error.message).to eq(
+        'CNPJ generator option "format" must be of type string. Got integer number.'
+      )
+    end
+  end
+end
+
+RSpec.describe CnpjGen::InvalidArgumentCombinationError do
+  subject(:error) { described_class.new('invalid combination') }
+
+  it 'is an ArgumentError' do
+    expect(error).to be_a(ArgumentError)
+  end
+
+  it 'includes CnpjGen::Error' do
+    expect(error).to be_a(CnpjGen::Error)
+  end
+
+  it 'is not a DomainError' do
+    expect(error).not_to be_a(CnpjGen::DomainError)
+  end
+end
+
+RSpec.describe CnpjGen::DomainError do
+  before do
+    stub_const('CnpjGen::TestDomainError', Class.new(described_class))
+  end
+
+  subject(:error) { CnpjGen::TestDomainError.new('some error') }
+
+  context 'when instantiated through a subclass' do
+    it 'is a RangeError' do
+      expect(error).to be_a(RangeError)
+    end
+
+    it 'is a DomainError' do
+      expect(error).to be_a(described_class)
+    end
+
+    it 'includes CnpjGen::Error' do
+      expect(error).to be_a(CnpjGen::Error)
+    end
+
+    it 'exposes the subclass name' do
+      expect(error.class.name).to eq('CnpjGen::TestDomainError')
+    end
+
+    it 'exposes the message' do
+      expect(error.message).to eq('some error')
+    end
+  end
+end
+
+RSpec.describe CnpjGen::ValidationError do
+  context 'when instantiated for an invalid prefix' do
+    subject(:error) { described_class.new('prefix', '1.2.3.4.5', reason: 'repeated digits') }
+
+    it 'is a RangeError' do
+      expect(error).to be_a(RangeError)
+    end
+
+    it 'is a DomainError' do
+      expect(error).to be_a(CnpjGen::DomainError)
+    end
+
+    it 'includes CnpjGen::Error' do
+      expect(error).to be_a(CnpjGen::Error)
+    end
+
+    it 'exposes the class name' do
+      expect(error.class.name).to eq('CnpjGen::ValidationError')
+    end
+
+    it 'sets option_name' do
+      expect(error.option_name).to eq('prefix')
+    end
+
+    it 'sets actual_input' do
+      expect(described_class.new('prefix', '77777777', reason: 'repeated digits').actual_input)
+        .to eq('77777777')
+    end
+
+    it 'sets reason' do
+      expect(error.reason).to eq('repeated digits')
+    end
+
+    it 'leaves expected_values nil' do
+      expect(error.expected_values).to be_nil
+    end
+
+    it 'builds a descriptive message' do
+      expect(error.message).to eq(
+        'CNPJ generator option "prefix" with value "1.2.3.4.5" is invalid. repeated digits'
+      )
+    end
+  end
+
+  context 'when instantiated for an invalid type' do
+    subject(:error) { described_class.new('type', 'boolean', expected_values: TYPE_INVALID_EXPECTED_VALUES) }
+
+    it 'is a DomainError' do
+      expect(error).to be_a(CnpjGen::DomainError)
+    end
+
+    it 'includes CnpjGen::Error' do
+      expect(error).to be_a(CnpjGen::Error)
+    end
+
+    it 'sets option_name' do
+      expect(error.option_name).to eq('type')
+    end
+
+    it 'sets actual_input' do
+      expect(error.actual_input).to eq('boolean')
+    end
+
+    it 'sets expected_values' do
+      expect(error.expected_values).to eq(TYPE_INVALID_EXPECTED_VALUES)
+    end
+
+    it 'leaves reason nil' do
+      expect(error.reason).to be_nil
+    end
+
+    it 'builds a descriptive message' do
+      expected_values_string = TYPE_INVALID_EXPECTED_VALUES.map { |value| %("#{value}") }.join(', ')
+
+      expect(error.message).to eq(
+        %(CNPJ generator option "type" accepts only the following values: #{expected_values_string}. Got "boolean".)
+      )
+    end
+  end
+end

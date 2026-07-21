@@ -52,11 +52,9 @@ RSpec.describe CnpjFmt do
         expect(described_class.cnpj_fmt('short', on_fail: on_fail)).to eq(formatter.format('short'))
       end
 
-      it 'combines options mapping with keyword overrides' do
-        formatter = described_class::CnpjFormatter.new({ slash_key: '|' }, hidden: true)
-
-        expect(described_class.cnpj_fmt(input, { slash_key: '|' }, hidden: true))
-          .to eq(formatter.format(input))
+      it 'raises InvalidArgumentCombinationError when options and keywords are both given' do
+        expect { described_class.cnpj_fmt(input, { slash_key: '|' }, hidden: true) }
+          .to raise_error(CnpjFmt::InvalidArgumentCombinationError, /options.*keyword arguments.*not both/)
       end
     end
   end
