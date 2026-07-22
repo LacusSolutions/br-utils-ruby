@@ -4,6 +4,7 @@ require 'cnpj-dv'
 
 require_relative 'cnpj_validator_options'
 require_relative 'errors'
+require_relative 'types'
 
 module CnpjVal
   # Validator for CNPJ (Cadastro Nacional da Pessoa Jurídica) identifiers.
@@ -133,17 +134,11 @@ module CnpjVal
     end
 
     def to_string_input(cnpj_input)
+      raise TypeMismatchError.new(cnpj_input, 'string or string[]') unless CnpjInput.accept?(cnpj_input)
+
       return cnpj_input if cnpj_input.is_a?(String)
 
-      if cnpj_input.is_a?(Array)
-        cnpj_input.each do |item|
-          raise TypeMismatchError.new(cnpj_input, 'string or string[]') unless item.is_a?(String)
-        end
-
-        return cnpj_input.join
-      end
-
-      raise TypeMismatchError.new(cnpj_input, 'string or string[]')
+      cnpj_input.join
     end
 
     def sanitize(value, cnpj_type)
