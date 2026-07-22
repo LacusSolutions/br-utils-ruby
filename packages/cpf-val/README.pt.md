@@ -117,7 +117,7 @@ Todo erro customizado inclui o módulo marcador `CpfVal::Error`. Este pacote **n
 
 | Classe | Herda de | Categoria | Condição de disparo |
 |---|---|---|---|
-| `CpfVal::TypeMismatchError` | `TypeError` (+ `include CpfVal::Error`) | Uso incorreto da API | Entrada CPF não é `String` nem `Array` de strings |
+| `CpfVal::TypeMismatchError` | `CpfVal::TypeMismatchError < TypeError < StandardError` (+ `include CpfVal::Error`) | Uso incorreto da API | Entrada CPF não é `String` nem `Array` de strings |
 
 #### `CpfVal::Error` (módulo marcador)
 
@@ -134,7 +134,7 @@ rescue CpfVal::Error
 
 #### `CpfVal::TypeMismatchError`
 
-- **Herança:** `CpfVal::TypeMismatchError < TypeError` (inclui `CpfVal::Error`)
+- **Herança:** `CpfVal::TypeMismatchError < TypeError < StandardError` (inclui `CpfVal::Error`)
 - **Categoria:** Uso incorreto da API — o chamador passou um valor do tipo errado.
 - **Quando é levantado:** Levantado quando a entrada CPF não é `String` nem `Array` de strings (incluindo quando um array contém um elemento que não é string).
 - **Exemplo:**
