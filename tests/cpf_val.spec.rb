@@ -53,6 +53,20 @@ RSpec.describe CpfVal do
   end
 
   context 'when inspecting public types' do
+    it 'exposes CpfInput as a String or Array<String> predicate' do
+      aggregate_failures do
+        expect(described_class::CpfInput.accept?('82911017366')).to be(true)
+        expect(described_class::CpfInput.accept?(%w[8 2 9])).to be(true)
+        expect(described_class::CpfInput.accept?(123)).to be(false)
+        expect(described_class::CpfInput.accept?([1, 2, 3])).to be(false)
+        expect(described_class::CpfInput.accept?(['8', 2])).to be(false)
+        # rubocop:disable Style/CaseEquality -- public case-equality protocol
+        expect(described_class::CpfInput === 123).to be(false)
+        expect(described_class::CpfInput === '82911017366').to be(true)
+        # rubocop:enable Style/CaseEquality
+      end
+    end
+
     it 'exposes cpf_val as a callable helper' do
       aggregate_failures do
         expect(described_class).to respond_to(:cpf_val)

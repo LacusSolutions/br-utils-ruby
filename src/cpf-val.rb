@@ -24,7 +24,7 @@ require_relative 'cpf-val/cpf_val'
 # - {CpfVal.cpf_val}
 # - {CpfVal::CpfValidator}
 # - {CpfVal::CPF_LENGTH}, {CpfVal::VERSION}
-# - Type marker: {CpfVal::CpfInput}
+# - Type predicate: {CpfVal::CpfInput} (+String+ or +Array<String>+)
 # - Error marker {CpfVal::Error}; misuse error {CpfVal::TypeMismatchError}
 #
 # @example

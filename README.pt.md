@@ -195,7 +195,7 @@ Após `require 'cpf-val'`:
 - **`CpfVal::CpfValidator`**: Classe para validar CPF (sem opções); aceita `String` ou `Array<String>` em `is_valid`.
 - **`CpfVal::CPF_LENGTH`**: `11` (constante).
 - **`CpfVal::VERSION`**: string de versão da gem.
-- **Marcador de tipo**: `CpfVal::CpfInput`.
+- **Predicado de tipo**: `CpfVal::CpfInput` — `CpfInput.accept?(value)` / `CpfInput === value` é verdadeiro apenas para `String` ou `Array<String>`.
 - **Erros**: `CpfVal::Error`, `CpfVal::TypeMismatchError`.
 
 ## Contribuição e suporte

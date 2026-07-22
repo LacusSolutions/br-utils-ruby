@@ -3,6 +3,7 @@
 require 'cpf-dv'
 
 require_relative 'errors'
+require_relative 'types'
 
 module CpfVal
   # The standard length of a CPF (Cadastro de Pessoa Física) identifier (11
@@ -46,17 +47,11 @@ module CpfVal
     private
 
     def to_string_input(cpf_input)
+      raise TypeMismatchError.new(cpf_input, 'string or string[]') unless CpfInput.accept?(cpf_input)
+
       return cpf_input if cpf_input.is_a?(String)
 
-      if cpf_input.is_a?(Array)
-        cpf_input.each do |item|
-          raise TypeMismatchError.new(cpf_input, 'string or string[]') unless item.is_a?(String)
-        end
-
-        return cpf_input.join
-      end
-
-      raise TypeMismatchError.new(cpf_input, 'string or string[]')
+      cpf_input.join
     end
 
     def validate_with_check_digits(sanitized_cpf)
