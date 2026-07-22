@@ -107,17 +107,11 @@ module CpfFmt
     # @return [String] joined string input
     # @raise [TypeMismatchError] if the input is not a +String+ or +Array<String>+
     def to_string_input(cpf_input)
+      raise TypeMismatchError.new(cpf_input, 'string or string[]') unless CpfInput.accept?(cpf_input)
+
       return cpf_input if cpf_input.is_a?(String)
 
-      if cpf_input.is_a?(Array)
-        cpf_input.each do |item|
-          raise TypeMismatchError.new(cpf_input, 'string or string[]') unless item.is_a?(String)
-        end
-
-        return cpf_input.join
-      end
-
-      raise TypeMismatchError.new(cpf_input, 'string or string[]')
+      cpf_input.join
     end
 
     # Invokes the +on_fail+ callback and validates its return type.
