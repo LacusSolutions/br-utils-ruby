@@ -422,6 +422,7 @@ After `require 'cpf-fmt'`:
 - **`CpfFmt::CpfFormatterOptions`**: Class holding options; supports merge via constructor, `set`, and keyword arguments.
 - **`CpfFmt::CPF_LENGTH`**: `11` (constant).
 - **`CpfFmt::VERSION`**: gem version string.
+- **Type predicate**: `CpfFmt::CpfInput` — `CpfFmt::CpfInput.accept?(value)` / `CpfFmt::CpfInput === value` is true only for `String` or `Array<String>`.
 - **Errors**: `CpfFmt::Error`, `CpfFmt::DomainError`, `CpfFmt::InvalidArgumentCombinationError`, `CpfFmt::TypeMismatchError`, `CpfFmt::InvalidLengthError`, `CpfFmt::OutOfRangeError`, `CpfFmt::ValidationError`.
 
 ### Other available resources

@@ -31,6 +31,7 @@ require_relative 'cnpj-fmt/cnpj_fmt'
 # - {CnpjFmt.cnpj_fmt}
 # - {CnpjFormatter}, {CnpjFormatterOptions}
 # - {CNPJ_LENGTH}, {VERSION}
+# - Type predicate: {CnpjFmt::CnpjInput} (+String+ or +Array<String>+)
 # - Error marker {CnpjFmt::Error}; domain ancestor {CnpjFmt::DomainError};
 #   misuse errors {CnpjFmt::TypeMismatchError} and
 #   {CnpjFmt::InvalidArgumentCombinationError}; domain leaves

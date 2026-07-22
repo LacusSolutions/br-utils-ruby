@@ -111,17 +111,11 @@ module CnpjFmt
     # @return [String] joined string input
     # @raise [TypeMismatchError] if the input is not a +String+ or +Array<String>+
     def to_string_input(cnpj_input)
+      raise TypeMismatchError.new(cnpj_input, 'string or string[]') unless CnpjInput.accept?(cnpj_input)
+
       return cnpj_input if cnpj_input.is_a?(String)
 
-      if cnpj_input.is_a?(Array)
-        cnpj_input.each do |item|
-          raise TypeMismatchError.new(cnpj_input, 'string or string[]') unless item.is_a?(String)
-        end
-
-        return cnpj_input.join
-      end
-
-      raise TypeMismatchError.new(cnpj_input, 'string or string[]')
+      cnpj_input.join
     end
 
     # Invokes the +on_fail+ callback and validates its return type.
