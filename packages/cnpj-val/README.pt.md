@@ -323,7 +323,8 @@ Após `require 'cnpj-val'`:
 - **`CnpjVal::CnpjValidatorOptions`**: Classe que armazena opções; suporta mesclagem via construtor, `set` e argumentos nomeados.
 - **`CnpjVal::CNPJ_LENGTH`**: `14` (constante).
 - **`CnpjVal::VERSION`**: string de versão da gem.
-- **Marcadores de tipo**: `CnpjVal::CnpjInput`, `CnpjVal::CnpjType`, `CnpjVal::CnpjValidatorOptionsInput`.
+- **Predicado de tipo**: `CnpjVal::CnpjInput` — `CnpjInput.accept?(value)` / `CnpjInput === value` é verdadeiro apenas para `String` ou `Array<String>`.
+- **Marcadores de tipo**: `CnpjVal::CnpjType`, `CnpjVal::CnpjValidatorOptionsInput`.
 - **Erros**: `CnpjVal::Error`, `CnpjVal::DomainError`, `CnpjVal::InvalidArgumentCombinationError`, `CnpjVal::TypeMismatchError`, `CnpjVal::ValidationError`.
 
 ### Outros recursos disponíveis

@@ -59,4 +59,20 @@ RSpec.describe CnpjVal do
       end
     end
   end
+
+  context 'when inspecting public types' do
+    it 'exposes CnpjInput as a String or Array<String> predicate' do
+      aggregate_failures do
+        expect(described_class::CnpjInput.accept?('91415732000793')).to be(true)
+        expect(described_class::CnpjInput.accept?(%w[9 1 4])).to be(true)
+        expect(described_class::CnpjInput.accept?(123)).to be(false)
+        expect(described_class::CnpjInput.accept?([1, 2, 3])).to be(false)
+        expect(described_class::CnpjInput.accept?(['9', 1])).to be(false)
+        # rubocop:disable Style/CaseEquality -- public case-equality protocol
+        expect(described_class::CnpjInput === 123).to be(false)
+        expect(described_class::CnpjInput === '91415732000793').to be(true)
+        # rubocop:enable Style/CaseEquality
+      end
+    end
+  end
 end

@@ -11,16 +11,40 @@ module CnpjVal
   # Allowed values for the +type+ option.
   CNPJ_TYPE_OPTIONS = %w[alphanumeric numeric].freeze
 
-  # Represents valid input types for CNPJ validation.
+  # Case-equality predicate for CNPJ input: +String+ or +Array<String>+.
   #
-  # A CNPJ may be given as:
+  # Matches the runtime contract of {CnpjValidator#is_valid} and {CnpjVal.cnpj_val}.
+  # Use {CnpjInput.accept?} or +CnpjInput === value+ (in +case+/+when+) to test
+  # candidacy without raising.
   #
-  # - A string of alphanumeric characters (with or without formatting).
-  # - An array of strings, each representing one or more alphanumeric characters.
+  # @example
+  #   CnpjVal::CnpjInput.accept?('91415732000793') # => true
+  #   CnpjVal::CnpjInput.accept?(%w[9 1 4 1])      # => true
+  #   CnpjVal::CnpjInput.accept?(123)              # => false
+  #   CnpjVal::CnpjInput.accept?([1, 2, 3])        # => false
   #
   # @see CnpjValidator#is_valid
   # @see CnpjVal.cnpj_val
-  CnpjInput = Object
+  module CnpjInput
+    class << self
+      # @param value [Object] candidate input
+      # @return [Boolean] whether +value+ is a +String+ or an +Array+ of +String+
+      def accept?(value)
+        return true if value.is_a?(String)
+        return false unless value.is_a?(Array)
+
+        value.all?(String)
+      end
+
+      # Case-equality entry point for +case+/+when+ and +===+ checks.
+      #
+      # @param value [Object] candidate input
+      # @return [Boolean]
+      def ===(value)
+        accept?(value)
+      end
+    end
+  end
 
   # Character set for CNPJ values (generation or validation).
   #
