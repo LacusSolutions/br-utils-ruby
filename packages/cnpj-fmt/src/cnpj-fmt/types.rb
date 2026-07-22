@@ -10,17 +10,40 @@ module CnpjFmt
     hidden hidden_key hidden_start hidden_end dot_key slash_key dash_key escape encode on_fail
   ].freeze
 
-  # Represents valid input types for CNPJ formatting.
+  # Case-equality predicate for CNPJ input: +String+ or +Array<String>+.
   #
-  # A CNPJ can be provided as:
+  # Matches the runtime contract of {CnpjFormatter#format} and {CnpjFmt.cnpj_fmt}.
+  # Use {CnpjInput.accept?} or +CnpjInput === value+ (in +case+/+when+) to test
+  # candidacy without raising.
   #
-  # - A string containing alphanumeric characters (with or without formatting)
-  # - An array of strings, where each string represents an alphanumeric
-  #   character or group of alphanumeric characters
+  # @example
+  #   CnpjFmt::CnpjInput.accept?('91415732000793') # => true
+  #   CnpjFmt::CnpjInput.accept?(%w[9 1 4 1])      # => true
+  #   CnpjFmt::CnpjInput.accept?(123)              # => false
+  #   CnpjFmt::CnpjInput.accept?([1, 2, 3])        # => false
   #
   # @see CnpjFormatter#format
   # @see CnpjFmt.cnpj_fmt
-  CnpjInput = Object
+  module CnpjInput
+    class << self
+      # @param value [Object] candidate input
+      # @return [Boolean] whether +value+ is a +String+ or an +Array+ of +String+
+      def accept?(value)
+        return true if value.is_a?(String)
+        return false unless value.is_a?(Array)
+
+        value.all?(String)
+      end
+
+      # Case-equality entry point for +case+/+when+ and +===+ checks.
+      #
+      # @param value [Object] candidate input
+      # @return [Boolean]
+      def ===(value)
+        accept?(value)
+      end
+    end
+  end
 
   # Callback function type for handling formatting failures.
   #

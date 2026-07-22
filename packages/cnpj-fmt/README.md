@@ -431,6 +431,7 @@ After `require 'cnpj-fmt'`:
 - **`CnpjFmt::CnpjFormatterOptions`**: Class holding options; supports merge via constructor, `set`, and keyword arguments.
 - **`CnpjFmt::CNPJ_LENGTH`**: `14` (constant).
 - **`CnpjFmt::VERSION`**: gem version string.
+- **Type predicate**: `CnpjFmt::CnpjInput` — `CnpjInput.accept?(value)` / `CnpjInput === value` is true only for `String` or `Array<String>`.
 - **Errors**: `CnpjFmt::Error`, `CnpjFmt::DomainError`, `CnpjFmt::InvalidArgumentCombinationError`, `CnpjFmt::TypeMismatchError`, `CnpjFmt::InvalidLengthError`, `CnpjFmt::OutOfRangeError`, `CnpjFmt::ValidationError`.
 
 ### Other available resources

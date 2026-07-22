@@ -416,6 +416,7 @@ Após `require 'cnpj-fmt'`:
 - **`CnpjFmt::CnpjFormatterOptions`**: Classe que armazena opções; suporta mesclagem via construtor, `set` e argumentos nomeados.
 - **`CnpjFmt::CNPJ_LENGTH`**: `14` (constante).
 - **`CnpjFmt::VERSION`**: string de versão da gem.
+- **Predicado de tipo**: `CnpjFmt::CnpjInput` — `CnpjInput.accept?(value)` / `CnpjInput === value` é verdadeiro apenas para `String` ou `Array<String>`.
 - **Erros**: `CnpjFmt::Error`, `CnpjFmt::DomainError`, `CnpjFmt::InvalidArgumentCombinationError`, `CnpjFmt::TypeMismatchError`, `CnpjFmt::InvalidLengthError`, `CnpjFmt::OutOfRangeError`, `CnpjFmt::ValidationError`.
 
 ### Outros recursos disponíveis
