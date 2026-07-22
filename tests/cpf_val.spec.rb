@@ -76,14 +76,16 @@ RSpec.describe CpfVal do
     end
 
     it 'exposes instantiable TypeMismatchError' do
-      error = described_class::TypeMismatchError.new(123, 'string')
+      error = described_class::TypeMismatchError.new(123, 'string or string[]')
 
       aggregate_failures do
         expect(error.actual_input).to eq(123)
         expect(error.actual_type).to eq('integer number')
-        expect(error.expected_type).to eq('string')
+        expect(error.expected_type).to eq('string or string[]')
         expect(error).to be_a(described_class::Error)
-        expect(error.message).to eq('CPF input must be of type string. Got integer number.')
+        expect(error.message).to eq(
+          'CPF input must be of type string or string[]. Got integer number.'
+        )
       end
     end
   end
