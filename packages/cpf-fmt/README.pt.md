@@ -408,7 +408,7 @@ Após `require 'cpf-fmt'`:
 - **`CpfFmt::CpfFormatterOptions`**: Classe que armazena opções; suporta mesclagem via construtor, `set` e argumentos nomeados.
 - **`CpfFmt::CPF_LENGTH`**: `11` (constante).
 - **`CpfFmt::VERSION`**: string de versão da gem.
-- **Predicado de tipo**: `CpfFmt::CpfInput` — `CpfInput.accept?(value)` / `CpfInput === value` é verdadeiro apenas para `String` ou `Array<String>`.
+- **Predicado de tipo**: `CpfFmt::CpfInput` — `CpfFmt::CpfInput.accept?(value)` / `CpfFmt::CpfInput === value` é verdadeiro apenas para `String` ou `Array<String>`.
 - **Erros**: `CpfFmt::Error`, `CpfFmt::DomainError`, `CpfFmt::InvalidArgumentCombinationError`, `CpfFmt::TypeMismatchError`, `CpfFmt::InvalidLengthError`, `CpfFmt::OutOfRangeError`, `CpfFmt::ValidationError`.
 
 ### Outros recursos disponíveis
