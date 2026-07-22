@@ -130,7 +130,7 @@ Every custom error includes the `CpfVal::Error` marker module. This package defi
 
 | Class | Inherits from | Category | Trigger condition |
 |---|---|---|---|
-| `CpfVal::TypeMismatchError` | `TypeError` (+ `include CpfVal::Error`) | API misuse | CPF input is not a `String` or `Array` of strings |
+| `CpfVal::TypeMismatchError` | `CpfVal::TypeMismatchError < TypeError < StandardError` (+ `include CpfVal::Error`) | API misuse | CPF input is not a `String` or `Array` of strings |
 
 #### `CpfVal::Error` (marker module)
 
@@ -147,7 +147,7 @@ rescue CpfVal::Error
 
 #### `CpfVal::TypeMismatchError`
 
-- **Inheritance:** `CpfVal::TypeMismatchError < TypeError` (includes `CpfVal::Error`)
+- **Inheritance:** `CpfVal::TypeMismatchError < TypeError < StandardError` (includes `CpfVal::Error`)
 - **Category:** API misuse — the caller passed a value of the wrong type.
 - **When it is raised:** Raised when the CPF input is not a `String` or an `Array` of strings (including when an array contains a non-string element).
 - **Example:**
