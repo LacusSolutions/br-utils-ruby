@@ -30,8 +30,8 @@ require_relative 'cnpj-val/cnpj_val'
 # - {CnpjVal.cnpj_val}
 # - {CnpjVal::CnpjValidator}, {CnpjVal::CnpjValidatorOptions}
 # - {CnpjVal::CNPJ_LENGTH}, {CnpjVal::VERSION}
-# - Type markers: {CnpjVal::CnpjInput}, {CnpjVal::CnpjType},
-#   {CnpjVal::CnpjValidatorOptionsInput}
+# - Type predicate: {CnpjVal::CnpjInput} (+String+ or +Array<String>+);
+#   type markers: {CnpjVal::CnpjType}, {CnpjVal::CnpjValidatorOptionsInput}
 # - Error marker {CnpjVal::Error}; domain ancestor {CnpjVal::DomainError};
 #   misuse errors {CnpjVal::TypeMismatchError} and
 #   {CnpjVal::InvalidArgumentCombinationError}; domain leaf
