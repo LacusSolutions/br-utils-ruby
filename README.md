@@ -16,9 +16,9 @@ A Ruby utility to calculate check digits on CNPJ (Brazilian Business Tax ID).
 ## Ruby Support
 
 
-| Ruby 3.2  | Ruby 3.3  | Ruby 3.4  |
-| --------- | --------- | --------- |
-| Passing ✔ | Passing ✔ | Passing ✔ |
+| Ruby 3.1  | Ruby 3.2  | Ruby 3.3  | Ruby 3.4  | Ruby 4.0  |
+| --------- | --------- | --------- | --------- | --------- |
+| Passing ✔ | Passing ✔ | Passing ✔ | Passing ✔ | Passing ✔ |
 
 
 
