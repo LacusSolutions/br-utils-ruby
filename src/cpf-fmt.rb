@@ -30,6 +30,7 @@ require_relative 'cpf-fmt/cpf_fmt'
 # - {CpfFmt.cpf_fmt}
 # - {CpfFormatter}, {CpfFormatterOptions}
 # - {CPF_LENGTH}, {VERSION}
+# - Type predicate: {CpfFmt::CpfInput} (+String+ or +Array<String>+)
 # - Error marker {CpfFmt::Error}; domain ancestor {CpfFmt::DomainError};
 #   misuse errors {CpfFmt::TypeMismatchError} and
 #   {CpfFmt::InvalidArgumentCombinationError}; domain leaves
