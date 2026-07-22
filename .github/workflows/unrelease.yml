@@ -1,0 +1,147 @@
+name: Unrelease Package from RubyGems
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: 'Monorepo package directory name (e.g. cpf-val, lacus-utils). Gem name is read from the gemspec.'
+        required: true
+        type: string
+      version:
+        description: 'Published version to yank from RubyGems (e.g. 1.2.3 or 1.2.3.rc1)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate Package & Version
+    runs-on: ubuntu-latest
+    outputs:
+      package: ${{ steps.validate.outputs.package }}
+      gem_name: ${{ steps.validate.outputs.gem_name }}
+      version: ${{ steps.validate.outputs.version }}
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - id: validate
+        env:
+          PACKAGE_NAME: ${{ inputs.package }}
+          PACKAGE_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+
+          [[ "$PACKAGE_NAME" =~ ^[a-z0-9][a-z0-9._-]*$ ]] || {
+            echo "❌ Invalid package directory name: '$PACKAGE_NAME'"
+            exit 1
+          }
+
+          [[ "$PACKAGE_VERSION" =~ ^[0-9]+(\.[0-9A-Za-z]+)+$ ]] || {
+            echo "❌ Invalid version: '$PACKAGE_VERSION'"
+            echo "ℹ️  Expected a gem version like 1.2.3 or 1.2.3.rc1"
+            exit 1
+          }
+
+          GEMSPEC="packages/$PACKAGE_NAME/$PACKAGE_NAME.gemspec"
+
+          [ -f "$GEMSPEC" ] || {
+            echo "❌ Gemspec not found: $GEMSPEC"
+            echo "ℹ️  Available packages:"
+            ls -1 packages/ || true
+            exit 1
+          }
+
+          GEM_NAME=$(grep -E '^\s*spec\.name\s*=' "$GEMSPEC" | head -1 | sed -E "s/.*=\s*['\"]([^'\"]+)['\"].*/\1/")
+
+          if [ -z "$GEM_NAME" ]; then
+            echo "❌ Could not read gem name from $GEMSPEC"
+            exit 1
+          fi
+
+          echo "📦 Package directory: $PACKAGE_NAME"
+          echo "💎 Gem name: $GEM_NAME"
+          echo "📌 Version: $PACKAGE_VERSION"
+          echo ""
+
+          ENCODED_GEM=$(jq -rn --arg g "$GEM_NAME" '$g|@uri')
+          ENCODED_VERSION=$(jq -rn --arg v "$PACKAGE_VERSION" '$v|@uri')
+          VERSION_URL="https://rubygems.org/api/v2/rubygems/${ENCODED_GEM}/versions/${ENCODED_VERSION}.json"
+
+          echo "🔍 Checking if '$GEM_NAME@$PACKAGE_VERSION' is published on RubyGems..."
+
+          VERSION_RESPONSE=$(curl -s -w "\n%{http_code}" "$VERSION_URL")
+          HTTP_CODE=$(echo "$VERSION_RESPONSE" | tail -n1)
+          RESPONSE_BODY=$(echo "$VERSION_RESPONSE" | sed '$d')
+
+          if [ "$HTTP_CODE" -eq 404 ]; then
+            echo "❌ Version '$PACKAGE_VERSION' of gem '$GEM_NAME' is not published on RubyGems"
+            echo "ℹ️  Published versions:"
+            curl -s "https://rubygems.org/api/v1/versions/${ENCODED_GEM}.json" \
+              | jq -r '.[].number' 2>/dev/null \
+              | head -20 \
+              || echo "   (unable to list versions — gem may not exist)"
+            exit 1
+          fi
+
+          if [ "$HTTP_CODE" -ne 200 ]; then
+            echo "❌ Failed to query RubyGems. HTTP status: $HTTP_CODE"
+            echo "Response: $RESPONSE_BODY"
+            exit 1
+          fi
+
+          YANKED=$(echo "$RESPONSE_BODY" | jq -r '.yanked')
+
+          if [ "$YANKED" = "true" ]; then
+            echo "❌ Version '$PACKAGE_VERSION' of gem '$GEM_NAME' is already yanked"
+            exit 1
+          fi
+
+          echo "✅ Package '$PACKAGE_NAME' is valid"
+          echo "✅ Gem '$GEM_NAME@$PACKAGE_VERSION' is published on RubyGems"
+
+          echo "package=$PACKAGE_NAME" >> "$GITHUB_OUTPUT"
+          echo "gem_name=$GEM_NAME" >> "$GITHUB_OUTPUT"
+          echo "version=$PACKAGE_VERSION" >> "$GITHUB_OUTPUT"
+
+  unpublish:
+    name: Yank Gem Version
+    needs: validate
+    runs-on: ubuntu-latest
+    environment: release
+    steps:
+      - name: Yank gem from RubyGems
+        env:
+          GEM_NAME: ${{ needs.validate.outputs.gem_name }}
+          VERSION: ${{ needs.validate.outputs.version }}
+          RUBYGEMS_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${RUBYGEMS_API_KEY:-}" ]; then
+            echo "❌ Secret RUBYGEMS_API_KEY is not set"
+            echo "ℹ️  Create a RubyGems API key with the yank_rubygem scope and store it as RUBYGEMS_API_KEY (repo or 'release' environment secret)"
+            exit 1
+          fi
+
+          echo "🗑️  Yanking '$GEM_NAME@$VERSION' from RubyGems..."
+
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -X DELETE \
+            -H "Authorization: $RUBYGEMS_API_KEY" \
+            -d "gem_name=${GEM_NAME}" \
+            -d "version=${VERSION}" \
+            https://rubygems.org/api/v1/gems/yank)
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          RESPONSE_BODY=$(echo "$RESPONSE" | sed '$d')
+
+          if [ "$HTTP_CODE" -ne 200 ]; then
+            echo "❌ Failed to yank gem. HTTP status: $HTTP_CODE"
+            echo "Response: $RESPONSE_BODY"
+            exit 1
+          fi
+
+          echo "✅ $RESPONSE_BODY"
+          echo "✅ Successfully yanked '$GEM_NAME@$VERSION' from RubyGems"
