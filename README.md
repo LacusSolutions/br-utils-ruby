@@ -13,9 +13,9 @@ A Ruby utility to generate valid CPF (Brazilian Individual's Taxpayer ID) values
 
 ## Ruby Support
 
-| ![Ruby 3.2](https://img.shields.io/badge/Ruby-3.2-CC342D?logo=ruby&logoColor=white) | ![Ruby 3.3](https://img.shields.io/badge/Ruby-3.3-CC342D?logo=ruby&logoColor=white) | ![Ruby 3.4](https://img.shields.io/badge/Ruby-3.4-CC342D?logo=ruby&logoColor=white) |
-| --- | --- | --- |
-| Passing ✔ | Passing ✔ | Passing ✔ |
+| ![Ruby 3.1](https://img.shields.io/badge/Ruby-3.1-CC342D?logo=ruby&logoColor=white) | ![Ruby 3.2](https://img.shields.io/badge/Ruby-3.2-CC342D?logo=ruby&logoColor=white) | ![Ruby 3.3](https://img.shields.io/badge/Ruby-3.3-CC342D?logo=ruby&logoColor=white) | ![Ruby 3.4](https://img.shields.io/badge/Ruby-3.4-CC342D?logo=ruby&logoColor=white) | ![Ruby 4.0](https://img.shields.io/badge/Ruby-4.0-CC342D?logo=ruby&logoColor=white) |
+| --- | --- | --- | --- | --- |
+| Passing ✔ | Passing ✔ | Passing ✔ | Passing ✔ | Passing ✔ |
 
 Requires Ruby **≥ 3.1** (see `required_ruby_version` in the gemspec).
 
