@@ -162,23 +162,51 @@ rescue TypeError
 
 #### Granularidade de rescue
 
+Cada nível é um exemplo independente (não mescle em uma única escada de `rescue` — um handler amplo de `TypeError` tornaria as cláusulas mais específicas inalcançáveis).
+
 ```ruby
+require 'cpf-val'
+
 # 1) Classe nativa única — captura erros de uso incorreto desse tipo,
 #    inclusive TypeError de fora da biblioteca já tratados no código do consumidor.
+begin
+  CpfVal.cpf_val(123)
 rescue TypeError
   # CpfVal::TypeMismatchError e qualquer outro TypeError (da biblioteca ou não)
+end
+```
+
+```ruby
+require 'cpf-val'
 
 # 2) CpfVal::DomainError — não se aplica: este pacote não define DomainError
 #    (nem folhas de domínio). CPF inválido retorna false em vez de levantar.
+# begin
+#   CpfVal.cpf_val(123)
 # rescue CpfVal::DomainError  # NameError — a constante não está definida
+# end
+```
+
+```ruby
+require 'cpf-val'
 
 # 3) CpfVal::Error — captura tudo o que a biblioteca levanta, independente da ancestralidade nativa.
+begin
+  CpfVal.cpf_val(123)
 rescue CpfVal::Error
   # todo erro customizado que inclui CpfVal::Error
+end
+```
+
+```ruby
+require 'cpf-val'
 
 # 4) Classe folha específica — captura apenas aquele modo de falha.
+begin
+  CpfVal.cpf_val(123)
 rescue CpfVal::TypeMismatchError
   # apenas CpfVal::TypeMismatchError
+end
 ```
 
 Atributos notáveis nos erros levantados:

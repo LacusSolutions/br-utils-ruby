@@ -175,23 +175,51 @@ rescue TypeError
 
 #### Rescue granularity
 
+Each level is shown as its own standalone example (do not merge them into one `rescue` ladder — a broad `TypeError` handler would make narrower clauses unreachable).
+
 ```ruby
+require 'cpf-val'
+
 # 1) Single native class — catches misuse errors of that kind,
 #    including non-library ones already handled elsewhere in the consumer's code.
+begin
+  CpfVal.cpf_val(123)
 rescue TypeError
   # CpfVal::TypeMismatchError and any other TypeError (library or not)
+end
+```
+
+```ruby
+require 'cpf-val'
 
 # 2) CpfVal::DomainError — not applicable: this package defines no DomainError
 #    (and no domain leaves). Invalid CPF data returns false instead of raising.
+# begin
+#   CpfVal.cpf_val(123)
 # rescue CpfVal::DomainError  # NameError — constant is not defined
+# end
+```
+
+```ruby
+require 'cpf-val'
 
 # 3) CpfVal::Error — catches everything the library raises, regardless of native ancestry.
+begin
+  CpfVal.cpf_val(123)
 rescue CpfVal::Error
   # every custom error that includes CpfVal::Error
+end
+```
+
+```ruby
+require 'cpf-val'
 
 # 4) Specific leaf class — catches only that exact failure mode.
+begin
+  CpfVal.cpf_val(123)
 rescue CpfVal::TypeMismatchError
   # only CpfVal::TypeMismatchError
+end
 ```
 
 Notable attributes on raised errors:
