@@ -115,7 +115,7 @@ jobs:
         env:
           GEM_NAME: ${{ needs.validate.outputs.gem_name }}
           VERSION: ${{ needs.validate.outputs.version }}
-          RUBYGEMS_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
+          RUBYGEMS_API_KEY: ${{ secrets.RUBYGEMS_TOKEN }}
         run: |
           set -euo pipefail
 
