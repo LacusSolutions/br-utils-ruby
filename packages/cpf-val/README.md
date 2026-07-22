@@ -124,13 +124,13 @@ CpfVal.cpf_val(['123.456', '789-09'])  # => true
 
 This package raises only for **API misuse** (wrong input type). Validation failures (wrong length, ineligible base such as repeated digits, invalid check digits) return `false` and do not raise.
 
-Every custom error includes the `CpfVal::Error` marker module.
+Every custom error includes the `CpfVal::Error` marker module. This package defines **no** `CpfVal::DomainError` and no domain leaves — invalid CPF data never raises a domain error.
 
 #### Summary
 
 | Class | Inherits from | Category | Trigger condition |
 |---|---|---|---|
-| `CpfVal::TypeMismatchError` | `TypeError` (+ `include Error`) | API misuse | CPF input is not a `String` or `Array` of strings |
+| `CpfVal::TypeMismatchError` | `TypeError` (+ `include CpfVal::Error`) | API misuse | CPF input is not a `String` or `Array` of strings |
 
 #### `CpfVal::Error` (marker module)
 
@@ -176,15 +176,20 @@ rescue TypeError
 #### Rescue granularity
 
 ```ruby
-# 1) Single native class — catches misuse errors of that kind.
+# 1) Single native class — catches misuse errors of that kind,
+#    including non-library ones already handled elsewhere in the consumer's code.
 rescue TypeError
   # CpfVal::TypeMismatchError and any other TypeError (library or not)
 
-# 2) CpfVal::Error — catches everything the library raises.
+# 2) CpfVal::DomainError — not applicable: this package defines no DomainError
+#    (and no domain leaves). Invalid CPF data returns false instead of raising.
+# rescue CpfVal::DomainError  # NameError — constant is not defined
+
+# 3) CpfVal::Error — catches everything the library raises, regardless of native ancestry.
 rescue CpfVal::Error
   # every custom error that includes CpfVal::Error
 
-# 3) Specific leaf class — catches only that exact failure mode.
+# 4) Specific leaf class — catches only that exact failure mode.
 rescue CpfVal::TypeMismatchError
   # only CpfVal::TypeMismatchError
 ```
