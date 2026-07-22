@@ -111,13 +111,13 @@ CpfVal.cpf_val(['123.456', '789-09'])  # => true
 
 Este pacote levanta erro apenas por **uso incorreto da API** (tipo de entrada incorreto). Falhas de validação (comprimento incorreto, base inelegível como dígitos repetidos, dígitos verificadores inválidos) retornam `false` e não levantam exceção.
 
-Todo erro customizado inclui o módulo marcador `CpfVal::Error`.
+Todo erro customizado inclui o módulo marcador `CpfVal::Error`. Este pacote **não** define `CpfVal::DomainError` nem folhas de domínio — CPF inválido nunca levanta erro de domínio.
 
 #### Resumo
 
 | Classe | Herda de | Categoria | Condição de disparo |
 |---|---|---|---|
-| `CpfVal::TypeMismatchError` | `TypeError` (+ `include Error`) | Uso incorreto da API | Entrada CPF não é `String` nem `Array` de strings |
+| `CpfVal::TypeMismatchError` | `TypeError` (+ `include CpfVal::Error`) | Uso incorreto da API | Entrada CPF não é `String` nem `Array` de strings |
 
 #### `CpfVal::Error` (módulo marcador)
 
@@ -163,15 +163,20 @@ rescue TypeError
 #### Granularidade de rescue
 
 ```ruby
-# 1) Classe nativa única — captura erros de uso incorreto desse tipo.
+# 1) Classe nativa única — captura erros de uso incorreto desse tipo,
+#    inclusive TypeError de fora da biblioteca já tratados no código do consumidor.
 rescue TypeError
   # CpfVal::TypeMismatchError e qualquer outro TypeError (da biblioteca ou não)
 
-# 2) CpfVal::Error — captura tudo o que a biblioteca levanta.
+# 2) CpfVal::DomainError — não se aplica: este pacote não define DomainError
+#    (nem folhas de domínio). CPF inválido retorna false em vez de levantar.
+# rescue CpfVal::DomainError  # NameError — a constante não está definida
+
+# 3) CpfVal::Error — captura tudo o que a biblioteca levanta, independente da ancestralidade nativa.
 rescue CpfVal::Error
   # todo erro customizado que inclui CpfVal::Error
 
-# 3) Classe folha específica — captura apenas aquele modo de falha.
+# 4) Classe folha específica — captura apenas aquele modo de falha.
 rescue CpfVal::TypeMismatchError
   # apenas CpfVal::TypeMismatchError
 ```
