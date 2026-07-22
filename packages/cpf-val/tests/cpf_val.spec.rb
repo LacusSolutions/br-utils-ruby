@@ -21,6 +21,13 @@ RSpec.describe CpfVal do
       end
     end
 
+    context 'when called with invalid arguments' do
+      it 'raises TypeMismatchError for a non-String, non-Array input' do
+        expect { described_class.cpf_val(123) }
+          .to raise_error(described_class::TypeMismatchError)
+      end
+    end
+
     context 'when validating smoke-test vectors' do
       it 'returns true for a valid unformatted CPF' do
         expect(described_class.cpf_val('33528612690')).to be(true)
