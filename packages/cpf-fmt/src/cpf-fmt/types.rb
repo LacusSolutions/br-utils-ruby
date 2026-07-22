@@ -10,16 +10,40 @@ module CpfFmt
     hidden hidden_key hidden_start hidden_end dot_key dash_key escape encode on_fail
   ].freeze
 
-  # Represents valid input types for CPF formatting.
+  # Case-equality predicate for CPF input: +String+ or +Array<String>+.
   #
-  # A CPF can be provided as:
+  # Matches the runtime contract of {CpfFormatter#format} and {CpfFmt.cpf_fmt}.
+  # Use {CpfInput.accept?} or +CpfInput === value+ (in +case+/+when+) to test
+  # candidacy without raising.
   #
-  # - A string containing digits (with or without formatting)
-  # - An array of strings, where each string represents a digit or group of digits
+  # @example
+  #   CpfFmt::CpfInput.accept?('82911017366') # => true
+  #   CpfFmt::CpfInput.accept?(%w[8 2 9 1 1]) # => true
+  #   CpfFmt::CpfInput.accept?(123)           # => false
+  #   CpfFmt::CpfInput.accept?([1, 2, 3])     # => false
   #
   # @see CpfFormatter#format
   # @see CpfFmt.cpf_fmt
-  CpfInput = Object
+  module CpfInput
+    class << self
+      # @param value [Object] candidate input
+      # @return [Boolean] whether +value+ is a +String+ or an +Array+ of +String+
+      def accept?(value)
+        return true if value.is_a?(String)
+        return false unless value.is_a?(Array)
+
+        value.all?(String)
+      end
+
+      # Case-equality entry point for +case+/+when+ and +===+ checks.
+      #
+      # @param value [Object] candidate input
+      # @return [Boolean]
+      def ===(value)
+        accept?(value)
+      end
+    end
+  end
 
   # Callback function type for handling formatting failures.
   #
