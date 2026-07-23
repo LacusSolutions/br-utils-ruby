@@ -78,7 +78,7 @@ Você pode trabalhar destas formas equivalentes:
 5. **Módulos aninhados do pacote** — Options, helpers, erros e tipos via `CnpjUtils::CnpjFmt` / `CnpjGen` / `CnpjVal` (ex.: `CnpjUtils::CnpjFmt::CnpjFormatterOptions`, `CnpjUtils::CnpjFmt.cnpj_fmt`).
 6. **Módulos irmãos na raiz** (ainda suportados) — `CnpjFmt`, `CnpjGen`, `CnpjVal` inalterados.
 
-Todas as abordagens expõem as mesmas opções e comportamento. Para tabelas de opções exaustivas e detalhes específicos de cada componente, consulte o README de cada [pacote incluído](#pacotes-incluidos).
+Todas as abordagens expõem as mesmas opções e comportamento. Para tabelas de opções exaustivas e detalhes específicos de cada componente, consulte o README de cada [pacote incluído](#pacotes-incluídos).
 
 ### Opções do formatador
 
