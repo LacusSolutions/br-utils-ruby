@@ -29,7 +29,7 @@ Requires Ruby **≥ 3.1** (see `required_ruby_version` in the gemspec).
 - ✅ **Reusable instance**: `CnpjUtils` class with optional default settings (formatter, generator, validator options or instances)
 - ✅ **Flexible input**: `#format` and `#is_valid` accept a `String` or an `Array` of strings (elements concatenated in order)
 - ✅ **Per-call overrides**: Instance defaults plus a per-call options `Hash`/`*Options` instance **or** keyword overrides (not both)
-- ✅ **Error handling**: Component errors propagate unchanged; this gem also defines `CnpjUtils::InvalidArgumentCombinationError` for settings/options vs keyword misuse
+- ✅ **Error handling**: Component errors propagate unchanged; this gem defines `CnpjUtils::TypeMismatchError` and `CnpjUtils::InvalidArgumentCombinationError` for API misuse
 
 ## Installation
 
@@ -280,6 +280,7 @@ After `require 'cnpj-utilities'`:
 | Error | Parent | Category | When |
 |-------|--------|----------|------|
 | `CnpjUtils::Error` | marker module | N/A | Included by every custom error this gem raises |
+| `CnpjUtils::TypeMismatchError` | `TypeError` | API misuse | `settings` argument to `CnpjUtils.new` is not a `Hash` |
 | `CnpjUtils::InvalidArgumentCombinationError` | `ArgumentError` | API misuse | Settings/options `Hash` (or options instance) passed together with any non-`nil` keyword argument |
 
 ```ruby
@@ -304,7 +305,7 @@ Rescue everything this gem raises with:
 
 ```ruby
 rescue CnpjUtils::Error
-  # InvalidArgumentCombinationError and any future custom errors from this gem
+  # TypeMismatchError, InvalidArgumentCombinationError, and any future custom errors
 ```
 
 #### Propagated from bundled packages

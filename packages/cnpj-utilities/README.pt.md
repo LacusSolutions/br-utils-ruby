@@ -14,7 +14,7 @@ Kit em Ruby para formatar, gerar e validar CNPJ (Cadastro Nacional da Pessoa Jur
 - ✅ **Instância reutilizável**: Classe `CnpjUtils` com configurações padrão opcionais (opções ou instâncias do formatador, gerador e validador)
 - ✅ **Entrada flexível**: `#format` e `#is_valid` aceitam `String` ou `Array` de strings (elementos concatenados na ordem)
 - ✅ **Sobrescritas por chamada**: Padrões da instância mais um `Hash`/instância `*Options` por chamada **ou** sobrescritas por palavra-chave (não ambos)
-- ✅ **Tratamento de erros**: Erros dos componentes propagam inalterados; esta gem também define `CnpjUtils::InvalidArgumentCombinationError` para uso indevido de settings/options vs palavras-chave
+- ✅ **Tratamento de erros**: Erros dos componentes propagam inalterados; esta gem define `CnpjUtils::TypeMismatchError` e `CnpjUtils::InvalidArgumentCombinationError` para uso indevido da API
 
 ## Instalação
 
@@ -265,6 +265,7 @@ Após `require 'cnpj-utilities'`:
 | Erro | Pai | Categoria | Quando |
 |------|-----|-----------|--------|
 | `CnpjUtils::Error` | módulo marcador | N/A | Incluído em todo erro customizado que esta gem lança |
+| `CnpjUtils::TypeMismatchError` | `TypeError` | Uso indevido da API | Argumento `settings` de `CnpjUtils.new` não é um `Hash` |
 | `CnpjUtils::InvalidArgumentCombinationError` | `ArgumentError` | Uso indevido da API | `Hash` de settings/options (ou instância de opções) passado junto com qualquer argumento nomeado não-`nil` |
 
 ```ruby
@@ -289,7 +290,7 @@ Resgate tudo o que esta gem lança com:
 
 ```ruby
 rescue CnpjUtils::Error
-  # InvalidArgumentCombinationError e quaisquer erros customizados futuros desta gem
+  # TypeMismatchError, InvalidArgumentCombinationError e quaisquer erros customizados futuros
 ```
 
 #### Propagados dos pacotes incluídos

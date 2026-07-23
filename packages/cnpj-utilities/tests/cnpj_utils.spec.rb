@@ -501,6 +501,18 @@ RSpec.describe CnpjUtils do
       end
     end
 
+    context 'when called with a non-Hash settings value' do
+      it 'raises TypeMismatchError' do
+        expect { described_class.new('not-a-hash') }
+          .to raise_error(CnpjUtils::TypeMismatchError, /settings must be a Hash/)
+      end
+
+      it 'is rescuable via CnpjUtils::Error' do
+        expect { described_class.new([]) }
+          .to raise_error(CnpjUtils::Error)
+      end
+    end
+
     context 'when called with invalid formatter options' do
       it 'raises OutOfRangeError for a bad hidden_start' do
         expect { described_class.new(formatter: { hidden_start: -1 }) }

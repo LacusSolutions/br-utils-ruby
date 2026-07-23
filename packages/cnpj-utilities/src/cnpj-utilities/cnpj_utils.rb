@@ -56,7 +56,7 @@ class CnpjUtils
     end
 
     def normalize_settings(settings)
-      raise TypeError, "CnpjUtils settings must be a Hash. Got #{settings.class}." unless settings.is_a?(Hash)
+      raise TypeMismatchError, "CnpjUtils settings must be a Hash. Got #{settings.class}." unless settings.is_a?(Hash)
 
       SETTINGS_KEYS.each_with_object({}) do |key, resolved|
         if settings.key?(key)
@@ -155,6 +155,7 @@ class CnpjUtils
   #   exclusive with +settings+)
   # @raise [InvalidArgumentCombinationError] if +settings+ and a keyword argument
   #   are both given
+  # @raise [TypeMismatchError] if +settings+ is given and is not a +Hash+
   # @raise [CnpjFmt::TypeMismatchError] if formatter options have an invalid type
   # @raise [CnpjFmt::OutOfRangeError] if formatter +hidden_start+ or +hidden_end+
   #   are out of valid range
