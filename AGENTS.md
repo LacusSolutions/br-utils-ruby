@@ -378,3 +378,31 @@ Before finishing any task that adds, changes, or documents errors:
 10. A summary table exists with the required columns and ordering, listing only defined failure modes.
 11. A rescue-granularity section exists with the four levels above, using real library classes.
 12. No docs mention `rescue Exception` or inheriting from `Exception` directly.
+
+---
+
+## Aggregator package re-exports
+
+Applies to aggregator gems such as `*-utilities` and `br-utilities` that load component packages and expose a unified façade.
+
+### Shape
+
+- One re-export file per component under `src/<agg-pkg>/<component_snake>.rb` (e.g. `src/cnpj-utilities/cnpj_fmt.rb`).
+- Nest the full sibling module on the façade: `<Utils>::CnpjFmt = ::CnpjFmt` (same-object assignment only — no wrappers).
+- Root shortcuts only for the three (or package-appropriate) **main classes** (e.g. `<Utils>::CnpjFormatter = CnpjFmt::CnpjFormatter`).
+- Options, helpers, errors, and types stay under the nested module — **not** aliased at the `<Utils>` root.
+- Root sibling modules (`CnpjFmt`, `CnpjGen`, `CnpjVal`, …) remain supported unchanged.
+- Require the re-export files from the aggregator entrypoint **after** class/module promotion and **after** the façade implementation file.
+
+### Default singleton + class helpers
+
+When the façade mirrors a JS default export / Python module-level singleton:
+
+- Expose a mutable constant `<Utils>::DEFAULT = new` (UPPERCASE names a constant binding, not an immutable value — do not freeze the instance).
+- Add class-method aliases for each façade operation that forward to `DEFAULT` (e.g. `CnpjUtils.format` / `.generate` / `.is_valid`). Prefer these in end-user docs as the quick path.
+- Mutating `DEFAULT` affects subsequent class-helper calls; `CnpjUtils.new` (custom) instances stay independent.
+- Specs: helper existence, parity with `DEFAULT`, mutability coupling with restore, custom-instance independence.
+
+### Reference
+
+Shipped reference: `ruby/packages/cnpj-utilities` (`CnpjUtils::CnpjFmt` nest + `CnpjUtils::CnpjFormatter` shortcut; `DEFAULT` + class helpers).
