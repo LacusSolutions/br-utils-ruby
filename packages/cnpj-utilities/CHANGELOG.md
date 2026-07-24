@@ -13,6 +13,6 @@ Unified toolkit to deal with CNPJ (Brazilian legal entity ID): formatting, gener
 - **Configurable components**: constructor and setters accept component instances, `*Options`, `Hash`, or `nil`; accessors expose `formatter`, `generator`, and `validator`.
 - **Per-call overrides**: `#format`, `#generate`, and `#is_valid` accept an options `Hash`/instance or keyword overrides (not both).
 - **Root siblings**: after `require 'cnpj-utilities'`, `CnpjFmt`, `CnpjGen`, and `CnpjVal` remain loadable (same objects as the nests).
-- **Structured errors**: `CnpjUtils::TypeMismatchError` / `InvalidArgumentCombinationError` (+ `CnpjUtils::Error`); component errors propagate.
+- **Structured errors**: `CnpjUtils::TypeMismatchError` / `InvalidArgumentCombinationError` (+ `CnpjUtils::Error` marker).
 
 For detailed usage and API reference, see the [README](./README.md).

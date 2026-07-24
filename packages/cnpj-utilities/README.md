@@ -277,35 +277,97 @@ After `require 'cnpj-utilities'`:
 
 #### Defined by `cnpj-utilities`
 
-| Error | Parent | Category | When |
-|-------|--------|----------|------|
-| `CnpjUtils::Error` | marker module | N/A | Included by every custom error this gem raises |
-| `CnpjUtils::TypeMismatchError` | `TypeError` | API misuse | `settings` argument to `CnpjUtils.new` is not a `Hash` |
-| `CnpjUtils::InvalidArgumentCombinationError` | `ArgumentError` | API misuse | Settings/options `Hash` (or options instance) passed together with any non-`nil` keyword argument |
+Errors defined by this gem are **API misuse** only (wrong type or invalid argument combination). Every custom error includes the `CnpjUtils::Error` marker module.
 
-```ruby
-require 'cnpj-utilities'
+##### Summary
 
-begin
-  CnpjUtils.new({ formatter: { hidden: true } }, generator: { format: true })
-rescue CnpjUtils::InvalidArgumentCombinationError => e
-  puts e.message
-  # Pass either a settings Hash to `settings`, or keyword arguments
-  # (formatter:, generator:, validator:), not both.
-end
+| Class | Inherits from | Category | Trigger condition |
+|-------|---------------|----------|-------------------|
+| `CnpjUtils::TypeMismatchError` | `TypeError` (+ `include Error`) | API misuse | `settings` argument to `CnpjUtils.new` is not a `Hash` |
+| `CnpjUtils::InvalidArgumentCombinationError` | `ArgumentError` (+ `include Error`) | API misuse | Settings/options `Hash` (or options instance) passed together with any non-`nil` keyword argument |
 
-begin
-  CnpjUtils.format('03603568000195', { hidden: true }, slash_key: '|')
-rescue CnpjUtils::InvalidArgumentCombinationError
-  # options Hash/instance and keyword overrides are mutually exclusive
-end
-```
+##### `CnpjUtils::Error` (marker module)
 
-Rescue everything this gem raises with:
+- **Inheritance:** module marker mixed into every library error via `include` (not a class).
+- **Category:** N/A (rescue target only) — not a failure mode by itself.
+- **When it is raised:** Never raised directly; included by every custom error this gem raises.
+- **Example:** N/A
+- **How to rescue it:**
 
 ```ruby
 rescue CnpjUtils::Error
-  # TypeMismatchError, InvalidArgumentCombinationError, and any future custom errors
+  # TypeMismatchError, InvalidArgumentCombinationError, and any future custom errors from this gem
+```
+
+##### `CnpjUtils::TypeMismatchError`
+
+- **Inheritance:** `CnpjUtils::TypeMismatchError < TypeError` (includes `CnpjUtils::Error`)
+- **Category:** API misuse — the caller passed a value of the wrong type.
+- **When it is raised:** Raised when `CnpjUtils.new` receives a non-`nil` `settings` argument that is not a `Hash`.
+- **Example:**
+
+```ruby
+CnpjUtils.new('not-a-hash') # raises CnpjUtils::TypeMismatchError
+```
+
+- **How to rescue it:**
+
+```ruby
+rescue CnpjUtils::TypeMismatchError
+  # this gem's type-contract violation
+
+rescue TypeError
+  # native type errors, including this gem's TypeMismatchError
+
+rescue CnpjUtils::Error
+  # any error raised by this gem
+```
+
+##### `CnpjUtils::InvalidArgumentCombinationError`
+
+- **Inheritance:** `CnpjUtils::InvalidArgumentCombinationError < ArgumentError` (includes `CnpjUtils::Error`)
+- **Category:** API misuse — the caller mixed mutually exclusive argument patterns.
+- **When it is raised:** Raised when `CnpjUtils.new`, `#format`, `#generate`, `#is_valid`, or the class helpers receive both a settings/options `Hash` (or options instance) and any non-`nil` keyword argument at the same time.
+- **Example:**
+
+```ruby
+CnpjUtils.new({ formatter: { hidden: true } }, generator: { format: true })
+# raises CnpjUtils::InvalidArgumentCombinationError
+
+CnpjUtils.format('03603568000195', { hidden: true }, slash_key: '|')
+# raises CnpjUtils::InvalidArgumentCombinationError
+```
+
+- **How to rescue it:**
+
+```ruby
+rescue CnpjUtils::InvalidArgumentCombinationError
+  # this gem's invalid signature combination
+
+rescue ArgumentError
+  # native argument errors, including this gem's InvalidArgumentCombinationError
+
+rescue CnpjUtils::Error
+  # any error raised by this gem
+```
+
+##### Rescue granularity
+
+```ruby
+# 1) Native superclass — also catches this gem's matching misuse errors.
+rescue TypeError
+  # CnpjUtils::TypeMismatchError and any other TypeError
+
+rescue ArgumentError
+  # CnpjUtils::InvalidArgumentCombinationError and any other ArgumentError
+
+# 2) CnpjUtils::Error — catches everything this gem raises.
+rescue CnpjUtils::Error
+  # TypeMismatchError, InvalidArgumentCombinationError, …
+
+# 3) Specific leaf — catches only that failure mode.
+rescue CnpjUtils::TypeMismatchError
+  # only TypeMismatchError
 ```
 
 #### Propagated from bundled packages
