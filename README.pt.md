@@ -41,10 +41,10 @@ require 'cpf-val'
 
 validator = CpfVal::CpfValidator.new
 
-validator.is_valid('12345678909')       # => true
-validator.is_valid('123.456.789-09')    # => true
-validator.is_valid('12345678910')       # => false (dígitos verificadores inválidos)
-validator.is_valid('00000000000')       # => false (dígitos repetidos)
+validator.is_valid('12345678909')      # => true
+validator.is_valid('123.456.789-09')   # => true
+validator.is_valid('12345678910')      # => false (dígitos verificadores inválidos)
+validator.is_valid('00000000000')      # => false (dígitos repetidos)
 ```
 
 Helper funcional:
@@ -75,11 +75,11 @@ require 'cpf-val'
 
 validator = CpfVal::CpfValidator.new
 
-validator.is_valid('123.456.789-09')             # => true
-validator.is_valid('12345678909')                # => true
-validator.is_valid(['123', '456', '789', '09'])  # => true
-validator.is_valid('12345678910')                # => false (dígitos verificadores inválidos)
-validator.is_valid('11111111111')                # => false (dígitos repetidos)
+validator.is_valid('123.456.789-09')              # => true
+validator.is_valid('12345678909')                 # => true
+validator.is_valid(['123', '456', '789', '09'])   # => true
+validator.is_valid('12345678910')                 # => false (dígitos verificadores inválidos)
+validator.is_valid('11111111111')                 # => false (dígitos repetidos)
 ```
 
 ### Helper funcional
@@ -103,8 +103,8 @@ CpfVal.cpf_val('11144477736')      # => false
 ```ruby
 require 'cpf-val'
 
-CpfVal.cpf_val(['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '9'])  # => true
-CpfVal.cpf_val(['123.456', '789-09'])  # => true
+CpfVal.cpf_val(['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '9'])   # => true
+CpfVal.cpf_val(['123.456', '789-09'])   # => true
 ```
 
 ### Tratamento de erros
