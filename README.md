@@ -62,9 +62,9 @@ require 'cnpj-utilities'
 
 cnpj = '03603568000195'
 
-CnpjUtils.format(cnpj)                # => "03.603.568/0001-95"
-CnpjUtils.format(cnpj, hidden: true)  # => "03.603.***/****-**"
-CnpjUtils.format(                     # => "03603568|0001_95"
+CnpjUtils.format(cnpj)                 # => "03.603.568/0001-95"
+CnpjUtils.format(cnpj, hidden: true)   # => "03.603.***/****-**"
+CnpjUtils.format(                      # => "03603568|0001_95"
   cnpj,
   dot_key: '',
   slash_key: '|',
@@ -174,14 +174,14 @@ utils = CnpjUtils.new(
   validator: { type: 'numeric', case_sensitive: false }
 )
 
-utils.format('RK0CMT3W000100')        # => "RK.0CM.###/####-##"
-utils.generate                        # => e.g. "73.008.535/0005-06"
-utils.is_valid('98.765.432/0001-98')  # => true
+utils.format('RK0CMT3W000100')         # => "RK.0CM.###/####-##"
+utils.generate                         # => e.g. "73.008.535/0005-06"
+utils.is_valid('98.765.432/0001-98')   # => true
 
 # Access or replace internal instances
-utils.formatter  # => CnpjFmt::CnpjFormatter
-utils.generator  # => CnpjGen::CnpjGenerator
-utils.validator  # => CnpjVal::CnpjValidator
+utils.formatter   # => CnpjFmt::CnpjFormatter
+utils.generator   # => CnpjGen::CnpjGenerator
+utils.validator   # => CnpjVal::CnpjValidator
 ```
 
 - **`CnpjUtils.new(settings = nil, **keywords)`**: Optional settings. Pass either a settings `Hash` with `:formatter`, `:generator`, and/or `:validator` keys, **or** the same keys as keyword arguments — not both (passing both raises `CnpjUtils::InvalidArgumentCombinationError`). Each value may be a component instance, a `*Options` instance (stored by reference — mutating it later affects subsequent calls with no per-call override), a plain options `Hash`, or omitted/`nil` for defaults.
@@ -203,11 +203,11 @@ utils = CnpjUtils.new(
 
 cnpj = '03603568000195'
 
-utils.format(cnpj)                 # masked (instance formatter defaults)
-utils.format(cnpj, hidden: false)  # this call only: unmasked
-utils.generate(format: false)      # this call only: compact output
-utils.is_valid('1QB5UKALPYFP59')   # => false (instance validator is numeric-only)
-utils.is_valid(                    # => true for this call
+utils.format(cnpj)                  # masked (instance formatter defaults)
+utils.format(cnpj, hidden: false)   # this call only: unmasked
+utils.generate(format: false)       # this call only: compact output
+utils.is_valid('1QB5UKALPYFP59')    # => false (instance validator is numeric-only)
+utils.is_valid(                     # => true for this call
   '1QB5UKALPYFP59',
   type: 'alphanumeric'
 )
@@ -233,11 +233,11 @@ formatter = CnpjUtils::CnpjFormatter.new(hidden: true)
 generator = CnpjUtils::CnpjGenerator.new(type: 'numeric')
 validator = CnpjUtils::CnpjValidator.new
 
-formatter.format('AB123XYZ000123')  # => "AB.123.***/****-**"
+formatter.format('AB123XYZ000123')   # => "AB.123.***/****-**"
 
 # Options, helpers, and errors under nested package modules
 options = CnpjUtils::CnpjFmt::CnpjFormatterOptions.new(slash_key: '|')
-CnpjUtils::CnpjFmt.cnpj_fmt('03603568000195')  # => "03.603.568/0001-95"
+CnpjUtils::CnpjFmt.cnpj_fmt('03603568000195')   # => "03.603.568/0001-95"
 
 begin
   CnpjUtils::CnpjFmt.cnpj_fmt(12_345)
@@ -249,9 +249,9 @@ end
 Root siblings remain supported (same objects as the nests):
 
 ```ruby
-CnpjFmt.cnpj_fmt('01ABC234000X56', slash_key: '|')  # => "01.ABC.234|000X-56"
-CnpjGen.cnpj_gen(type: 'numeric')                   # => e.g. "65453043000178"
-CnpjVal.cnpj_val('9JN7MGLJZXIO50')                  # => true
+CnpjFmt.cnpj_fmt('01ABC234000X56', slash_key: '|')   # => "01.ABC.234|000X-56"
+CnpjGen.cnpj_gen(type: 'numeric')                    # => e.g. "65453043000178"
+CnpjVal.cnpj_val('9JN7MGLJZXIO50')                   # => true
 CnpjFmt::CnpjFormatter.new(hidden: true)
 ```
 
@@ -310,7 +310,8 @@ rescue CnpjUtils::Error
 - **Example:**
 
 ```ruby
-CnpjUtils.new('not-a-hash') # raises CnpjUtils::TypeMismatchError
+CnpjUtils.new('not-a-hash')   # raises CnpjUtils::TypeMismatchError
+CnpjUtils.new(false)          # raises CnpjUtils::TypeMismatchError (false is non-nil)
 ```
 
 - **How to rescue it:**
@@ -430,8 +431,8 @@ end
 # Custom on_fail for invalid length
 custom_fail = ->(value, _exception) { "Invalid CNPJ: #{value}" }
 
-CnpjFmt.cnpj_fmt('123', on_fail: custom_fail)  # => "Invalid CNPJ: 123"
-CnpjFmt.cnpj_fmt('123')                        # => "" (default on_fail)
+CnpjFmt.cnpj_fmt('123', on_fail: custom_fail)   # => "Invalid CNPJ: 123"
+CnpjFmt.cnpj_fmt('123')                         # => "" (default on_fail)
 ```
 
 ### Bundled packages

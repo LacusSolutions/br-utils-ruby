@@ -507,6 +507,11 @@ RSpec.describe CnpjUtils do
           .to raise_error(CnpjUtils::TypeMismatchError, /settings must be a Hash/)
       end
 
+      it 'raises TypeMismatchError for false (non-nil falsy settings)' do
+        expect { described_class.new(false) }
+          .to raise_error(CnpjUtils::TypeMismatchError, /settings must be a Hash/)
+      end
+
       it 'is rescuable via CnpjUtils::Error' do
         expect { described_class.new([]) }
           .to raise_error(CnpjUtils::Error)
@@ -553,6 +558,12 @@ RSpec.describe CnpjUtils do
       it 'raises InvalidArgumentCombinationError' do
         expect do
           described_class.new({ formatter: {} }, generator: CnpjGen::CnpjGenerator.new)
+        end.to raise_error(CnpjUtils::InvalidArgumentCombinationError)
+      end
+
+      it 'raises InvalidArgumentCombinationError for false settings with keywords' do
+        expect do
+          described_class.new(false, formatter: {})
         end.to raise_error(CnpjUtils::InvalidArgumentCombinationError)
       end
     end

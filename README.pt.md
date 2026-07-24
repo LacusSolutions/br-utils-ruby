@@ -47,9 +47,9 @@ require 'cnpj-utilities'
 
 cnpj = '03603568000195'
 
-CnpjUtils.format(cnpj)                # => "03.603.568/0001-95"
-CnpjUtils.format(cnpj, hidden: true)  # => "03.603.***/****-**"
-CnpjUtils.format(                     # => "03603568|0001_95"
+CnpjUtils.format(cnpj)                 # => "03.603.568/0001-95"
+CnpjUtils.format(cnpj, hidden: true)   # => "03.603.***/****-**"
+CnpjUtils.format(                      # => "03603568|0001_95"
   cnpj,
   dot_key: '',
   slash_key: '|',
@@ -57,9 +57,9 @@ CnpjUtils.format(                     # => "03603568|0001_95"
 )
 
 CnpjUtils.generate                    # => ex.: "AB123CDE000155" (14 caracteres alfanuméricos)
-CnpjUtils.generate(format: true)      # => ex.: "AB.123.CDE/0001-55"
-CnpjUtils.generate(prefix: '45623767') # => ex.: "45623767000296"
-CnpjUtils.generate(type: 'numeric')   # => ex.: "65453043000178" (apenas dígitos)
+CnpjUtils.generate(format: true)         # => ex.: "AB.123.CDE/0001-55"
+CnpjUtils.generate(prefix: '45623767')   # => ex.: "45623767000296"
+CnpjUtils.generate(type: 'numeric')      # => ex.: "65453043000178" (apenas dígitos)
 
 CnpjUtils.is_valid('98765432000198')       # => true
 CnpjUtils.is_valid('98.765.432/0001-98')   # => true
@@ -134,10 +134,10 @@ CnpjUtils.is_valid('98765432000198')
 
 ```ruby
 CnpjUtils::DEFAULT.formatter = { slash_key: '|' }
-CnpjUtils.format('01ABC234000X56')  # => "01.ABC.234|000X-56"
+CnpjUtils.format('01ABC234000X56')   # => "01.ABC.234|000X-56"
 
 custom = CnpjUtils.new
-custom.format('01ABC234000X56')     # => "01.ABC.234/000X-56" (não afetado)
+custom.format('01ABC234000X56')      # => "01.ABC.234/000X-56" (não afetado)
 ```
 
 Métodos de instância em `DEFAULT` (e em qualquer instância de `CnpjUtils`):
@@ -159,14 +159,14 @@ utils = CnpjUtils.new(
   validator: { type: 'numeric', case_sensitive: false }
 )
 
-utils.format('RK0CMT3W000100')        # => "RK.0CM.###/####-##"
-utils.generate                        # => ex.: "73.008.535/0005-06"
-utils.is_valid('98.765.432/0001-98')  # => true
+utils.format('RK0CMT3W000100')         # => "RK.0CM.###/####-##"
+utils.generate                         # => ex.: "73.008.535/0005-06"
+utils.is_valid('98.765.432/0001-98')   # => true
 
 # Acessar ou substituir instâncias internas
-utils.formatter  # => CnpjFmt::CnpjFormatter
-utils.generator  # => CnpjGen::CnpjGenerator
-utils.validator  # => CnpjVal::CnpjValidator
+utils.formatter   # => CnpjFmt::CnpjFormatter
+utils.generator   # => CnpjGen::CnpjGenerator
+utils.validator   # => CnpjVal::CnpjValidator
 ```
 
 - **`CnpjUtils.new(settings = nil, **keywords)`**: Configurações opcionais. Passe um `Hash` de settings com as chaves `:formatter`, `:generator` e/ou `:validator`, **ou** as mesmas chaves como argumentos nomeados — não ambos (passar ambos lança `CnpjUtils::InvalidArgumentCombinationError`). Cada valor pode ser uma instância de componente, uma instância `*Options` (armazenada por referência — mutá-la depois afeta chamadas subsequentes sem sobrescrita por chamada), um `Hash` de opções, ou omitido/`nil` para os padrões.
@@ -218,11 +218,11 @@ formatter = CnpjUtils::CnpjFormatter.new(hidden: true)
 generator = CnpjUtils::CnpjGenerator.new(type: 'numeric')
 validator = CnpjUtils::CnpjValidator.new
 
-formatter.format('AB123XYZ000123')  # => "AB.123.***/****-**"
+formatter.format('AB123XYZ000123')   # => "AB.123.***/****-**"
 
 # Options, helpers e erros sob os módulos aninhados do pacote
 options = CnpjUtils::CnpjFmt::CnpjFormatterOptions.new(slash_key: '|')
-CnpjUtils::CnpjFmt.cnpj_fmt('03603568000195')  # => "03.603.568/0001-95"
+CnpjUtils::CnpjFmt.cnpj_fmt('03603568000195')   # => "03.603.568/0001-95"
 
 begin
   CnpjUtils::CnpjFmt.cnpj_fmt(12_345)
@@ -234,9 +234,9 @@ end
 Os irmãos na raiz continuam suportados (os mesmos objetos que os aninhados):
 
 ```ruby
-CnpjFmt.cnpj_fmt('01ABC234000X56', slash_key: '|')  # => "01.ABC.234|000X-56"
-CnpjGen.cnpj_gen(type: 'numeric')                   # => ex.: "65453043000178"
-CnpjVal.cnpj_val('9JN7MGLJZXIO50')                  # => true
+CnpjFmt.cnpj_fmt('01ABC234000X56', slash_key: '|')   # => "01.ABC.234|000X-56"
+CnpjGen.cnpj_gen(type: 'numeric')                    # => ex.: "65453043000178"
+CnpjVal.cnpj_val('9JN7MGLJZXIO50')                   # => true
 CnpjFmt::CnpjFormatter.new(hidden: true)
 ```
 
@@ -295,7 +295,8 @@ rescue CnpjUtils::Error
 - **Exemplo:**
 
 ```ruby
-CnpjUtils.new('not-a-hash') # lança CnpjUtils::TypeMismatchError
+CnpjUtils.new('not-a-hash')   # lança CnpjUtils::TypeMismatchError
+CnpjUtils.new(false)          # lança CnpjUtils::TypeMismatchError (false é não-nil)
 ```
 
 - **Como resgatá-lo:**
@@ -415,8 +416,8 @@ end
 # on_fail personalizado para comprimento inválido
 custom_fail = ->(value, _exception) { "CNPJ inválido: #{value}" }
 
-CnpjFmt.cnpj_fmt('123', on_fail: custom_fail)  # => "CNPJ inválido: 123"
-CnpjFmt.cnpj_fmt('123')                        # => "" (on_fail padrão)
+CnpjFmt.cnpj_fmt('123', on_fail: custom_fail)   # => "CNPJ inválido: 123"
+CnpjFmt.cnpj_fmt('123')                         # => "" (on_fail padrão)
 ```
 
 ### Pacotes incluídos
