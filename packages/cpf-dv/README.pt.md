@@ -42,10 +42,10 @@ require 'cpf-dv'
 
 check_digits = CpfDV::CpfCheckDigits.new('054496519')
 
-check_digits.first   # => '1'
-check_digits.second  # => '0'
-check_digits.both    # => '10'
-check_digits.cpf     # => '05449651910'
+check_digits.first    # => '1'
+check_digits.second   # => '0'
+check_digits.both     # => '10'
+check_digits.cpf      # => '05449651910'
 ```
 
 ## Utilização
@@ -133,7 +133,7 @@ rescue CpfDV::DomainError
 - **Exemplo:**
 
 ```ruby
-CpfDV::CpfCheckDigits.new(12_345_678_901) # levanta CpfDV::TypeMismatchError
+CpfDV::CpfCheckDigits.new(12_345_678_901)   # levanta CpfDV::TypeMismatchError
 ```
 
 - **Como resgatar:**
@@ -154,7 +154,7 @@ rescue TypeError
 - **Exemplo:**
 
 ```ruby
-CpfDV::CpfCheckDigits.new('12345678') # levanta CpfDV::InvalidLengthError
+CpfDV::CpfCheckDigits.new('12345678')   # levanta CpfDV::InvalidLengthError
 ```
 
 - **Como resgatar:**
@@ -175,7 +175,7 @@ rescue CpfDV::DomainError
 - **Exemplo:**
 
 ```ruby
-CpfDV::CpfCheckDigits.new('111111111') # levanta CpfDV::ValidationError
+CpfDV::CpfCheckDigits.new('111111111')   # levanta CpfDV::ValidationError
 ```
 
 - **Como resgatar:**

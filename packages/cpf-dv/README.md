@@ -65,10 +65,10 @@ require 'cpf-dv'
 
 check_digits = CpfDV::CpfCheckDigits.new('054496519')
 
-check_digits.first   # => '1'
-check_digits.second  # => '0'
-check_digits.both    # => '10'
-check_digits.cpf     # => '05449651910'
+check_digits.first    # => '1'
+check_digits.second   # => '0'
+check_digits.both     # => '10'
+check_digits.cpf      # => '05449651910'
 ```
 
 
@@ -162,7 +162,7 @@ rescue CpfDV::DomainError
 - **Example:**
 
 ```ruby
-CpfDV::CpfCheckDigits.new(12_345_678_901) # raises CpfDV::TypeMismatchError
+CpfDV::CpfCheckDigits.new(12_345_678_901)   # raises CpfDV::TypeMismatchError
 ```
 
 - **How to rescue it:**
@@ -183,7 +183,7 @@ rescue TypeError
 - **Example:**
 
 ```ruby
-CpfDV::CpfCheckDigits.new('12345678') # raises CpfDV::InvalidLengthError
+CpfDV::CpfCheckDigits.new('12345678')   # raises CpfDV::InvalidLengthError
 ```
 
 - **How to rescue it:**
@@ -204,7 +204,7 @@ rescue CpfDV::DomainError
 - **Example:**
 
 ```ruby
-CpfDV::CpfCheckDigits.new('111111111') # raises CpfDV::ValidationError
+CpfDV::CpfCheckDigits.new('111111111')   # raises CpfDV::ValidationError
 ```
 
 - **How to rescue it:**
