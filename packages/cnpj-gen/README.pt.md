@@ -41,12 +41,12 @@ require 'cnpj-gen'
 ```ruby
 require 'cnpj-gen'
 
-CnpjGen.cnpj_gen                    # => ex.: "AB123CDE000155" (14 caracteres alfanuméricos)
+CnpjGen.cnpj_gen                       # => ex.: "AB123CDE000155" (14 caracteres alfanuméricos)
 
-CnpjGen.cnpj_gen(format: true)      # => ex.: "AB.123.CDE/0001-55"
+CnpjGen.cnpj_gen(format: true)         # => ex.: "AB.123.CDE/0001-55"
 
-CnpjGen.cnpj_gen(prefix: '45623767')           # => ex.: "45623767ABCD96"
-CnpjGen.cnpj_gen(                              # => ex.: "45.623.767/ABCD-96"
+CnpjGen.cnpj_gen(prefix: '45623767')   # => ex.: "45623767ABCD96"
+CnpjGen.cnpj_gen(                      # => ex.: "45.623.767/ABCD-96"
   prefix: '45623767',
   format: true
 )
@@ -95,9 +95,9 @@ require 'cnpj-gen'
 
 generator = CnpjGen::CnpjGenerator.new(type: 'numeric', format: true)
 
-generator.generate                    # => ex.: "73.008.535/0005-06"
+generator.generate                       # => ex.: "73.008.535/0005-06"
 generator.generate(prefix: '12345678')   # sobrescrita apenas nesta chamada
-generator.options                     # opções padrão atuais (CnpjGen::CnpjGeneratorOptions)
+generator.options                        # opções padrão atuais (CnpjGen::CnpjGeneratorOptions)
 ```
 
 - **`initialize(options = nil, **keywords)`**: Opções padrão opcionais. Quando `options` é fornecido isoladamente (instância de `CnpjGen::CnpjGeneratorOptions` ou `Hash`), ele determina as opções padrão; uma instância de `CnpjGen::CnpjGeneratorOptions` é armazenada por referência (mutações posteriores afetam futuras chamadas de `generate` que não passarem opções por chamada), enquanto um `Hash` cria uma nova instância. Quando `options` é omitido (`nil`), as opções padrão são construídas exclusivamente a partir dos argumentos nomeados (`format:`, `prefix:`, `type:`). Passar `options` junto com qualquer argumento nomeado não `nil` gera `InvalidArgumentCombinationError`, em vez de ignorar os argumentos nomeados silenciosamente.
@@ -111,9 +111,9 @@ require 'cnpj-gen'
 
 generator = CnpjGen::CnpjGenerator.new(format: true)
 
-generator.generate              # CNPJ formatado
-generator.generate(format: false)  # somente nesta chamada: sem formato
-generator.generate              # volta ao padrão da instância
+generator.generate                  # CNPJ formatado
+generator.generate(format: false)   # somente nesta chamada: sem formato
+generator.generate                  # volta ao padrão da instância
 ```
 
 ### `CnpjGen::CnpjGeneratorOptions` (classe)
@@ -261,8 +261,8 @@ rescue ArgumentError
 - **Exemplo:**
 
 ```ruby
-CnpjGen.cnpj_gen(prefix: '000000000001') # levanta CnpjGen::ValidationError
-CnpjGen.cnpj_gen(type: 'invalid')        # levanta CnpjGen::ValidationError
+CnpjGen.cnpj_gen(prefix: '000000000001')   # levanta CnpjGen::ValidationError
+CnpjGen.cnpj_gen(type: 'invalid')          # levanta CnpjGen::ValidationError
 ```
 
 - **Como resgatar:**
