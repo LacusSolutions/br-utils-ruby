@@ -70,9 +70,9 @@ require 'cnpj-fmt'
 
 cnpj = '03603568000195'
 
-CnpjFmt.cnpj_fmt(cnpj)                    # => "03.603.568/0001-95"
-CnpjFmt.cnpj_fmt(cnpj, hidden: true)      # => "03.603.***/****-**"
-CnpjFmt.cnpj_fmt(                         # => "03603568|0001_95"
+CnpjFmt.cnpj_fmt(cnpj)                 # => "03.603.568/0001-95"
+CnpjFmt.cnpj_fmt(cnpj, hidden: true)   # => "03.603.***/****-**"
+CnpjFmt.cnpj_fmt(                      # => "03603568|0001_95"
   cnpj,
   dot_key: '',
   slash_key: '|',
@@ -119,15 +119,15 @@ require 'cnpj-fmt'
 
 cnpj = '03603568000195'
 
-CnpjFmt.cnpj_fmt(cnpj)                # => "03.603.568/0001-95"
-CnpjFmt.cnpj_fmt(cnpj, hidden: true)  # masked with defaults
-CnpjFmt.cnpj_fmt(                     # => "03603568|0001_95"
+CnpjFmt.cnpj_fmt(cnpj)                 # => "03.603.568/0001-95"
+CnpjFmt.cnpj_fmt(cnpj, hidden: true)   # masked with defaults
+CnpjFmt.cnpj_fmt(                      # => "03603568|0001_95"
   cnpj,
   dot_key: '',
   slash_key: '|',
   dash_key: '_'
 )
-CnpjFmt.cnpj_fmt(cnpj, {              # Hash form
+CnpjFmt.cnpj_fmt(cnpj, {               # Hash form
   hidden: true,
   hidden_key: '#'
 })
@@ -159,9 +159,9 @@ require 'cnpj-fmt'
 formatter = CnpjFmt::CnpjFormatter.new(hidden: true)
 cnpj = '03603568000195'
 
-formatter.format(cnpj)                 # uses instance masking
-formatter.format(cnpj, hidden: false)  # this call only: unmasked
-formatter.format(cnpj)                 # back to instance defaults
+formatter.format(cnpj)                  # uses instance masking
+formatter.format(cnpj, hidden: false)   # this call only: unmasked
+formatter.format(cnpj)                  # back to instance defaults
 ```
 
 Alphanumeric input and array input:
@@ -283,7 +283,7 @@ rescue CnpjFmt::DomainError
 - **Example:**
 
 ```ruby
-CnpjFmt::CnpjFormatter.new.format(12_345) # raises CnpjFmt::TypeMismatchError
+CnpjFmt::CnpjFormatter.new.format(12_345)   # raises CnpjFmt::TypeMismatchError
 ```
 
 - **How to rescue it:**
@@ -307,10 +307,10 @@ rescue TypeError
 CnpjFmt::CnpjFormatter.new.format(
   'short',
   on_fail: ->(_value, error) {
-    error # => #<CnpjFmt::InvalidLengthError ...> (a DomainError)
+    error   # => #<CnpjFmt::InvalidLengthError ...> (a DomainError)
     'invalid'
   }
-) # => "invalid"
+)   # => "invalid"
 
 ```
 
@@ -358,7 +358,7 @@ rescue ArgumentError
 - **Example:**
 
 ```ruby
-CnpjFmt::CnpjFormatterOptions.new(hidden_start: 14) # raises CnpjFmt::OutOfRangeError
+CnpjFmt::CnpjFormatterOptions.new(hidden_start: 14)   # raises CnpjFmt::OutOfRangeError
 ```
 
 - **How to rescue it:**
@@ -379,7 +379,7 @@ rescue CnpjFmt::DomainError
 - **Example:**
 
 ```ruby
-CnpjFmt::CnpjFormatterOptions.new(dot_key: 'å') # raises CnpjFmt::ValidationError
+CnpjFmt::CnpjFormatterOptions.new(dot_key: 'å')   # raises CnpjFmt::ValidationError
 ```
 
 - **How to rescue it:**

@@ -54,12 +54,12 @@ require 'cpf-gen'
 ```ruby
 require 'cpf-gen'
 
-CpfGen.cpf_gen                    # => e.g. "47844241055" (11-digit numeric)
+CpfGen.cpf_gen                        # => e.g. "47844241055" (11-digit numeric)
 
-CpfGen.cpf_gen(format: true)      # => e.g. "005.265.352-88"
+CpfGen.cpf_gen(format: true)          # => e.g. "005.265.352-88"
 
-CpfGen.cpf_gen(prefix: '528250911')           # => e.g. "52825091138"
-CpfGen.cpf_gen(                              # => e.g. "528.250.911-38"
+CpfGen.cpf_gen(prefix: '528250911')   # => e.g. "52825091138"
+CpfGen.cpf_gen(                       # => e.g. "528.250.911-38"
   prefix: '528250911',
   format: true
 )
@@ -104,9 +104,9 @@ require 'cpf-gen'
 
 generator = CpfGen::CpfGenerator.new(format: true)
 
-generator.generate                    # => e.g. "005.265.352-88"
-generator.generate(prefix: '123456')  # override for this call only
-generator.options                     # current default options (CpfGen::CpfGeneratorOptions)
+generator.generate                     # => e.g. "005.265.352-88"
+generator.generate(prefix: '123456')   # override for this call only
+generator.options                      # current default options (CpfGen::CpfGeneratorOptions)
 ```
 
 - **`initialize(options = nil, **keywords)`**: Optional default options. When `options` is given (a `CpfGen::CpfGeneratorOptions` instance or a `Hash`) alone, it determines the default options; a `CpfGen::CpfGeneratorOptions` instance is stored by reference (mutating it later affects future `generate` calls that do not pass per-call options), while a `Hash` builds a new instance. When `options` is omitted (`nil`), the default options are built exclusively from the keyword arguments (`format:`, `prefix:`). Passing `options` together with any non-`nil` keyword raises `InvalidArgumentCombinationError` instead of silently ignoring the keywords.
@@ -120,9 +120,9 @@ require 'cpf-gen'
 
 generator = CpfGen::CpfGenerator.new(format: true)
 
-generator.generate              # formatted CPF
-generator.generate(format: false)  # this call only: unformatted
-generator.generate              # formatted again (instance defaults preserved)
+generator.generate                  # formatted CPF
+generator.generate(format: false)   # this call only: unformatted
+generator.generate                  # formatted again (instance defaults preserved)
 ```
 
 ### `CpfGen::CpfGeneratorOptions` (class)
@@ -136,10 +136,10 @@ options = CpfGen::CpfGeneratorOptions.new(
   prefix: '123456',
   format: true
 )
-options.prefix   # => "123456"
-options.format   # => true
-options.set(format: false)  # merge and return self
-options.all      # => { format: false, prefix: "123456" }
+options.prefix               # => "123456"
+options.format               # => true
+options.set(format: false)   # merge and return self
+options.all                  # => { format: false, prefix: "123456" }
 
 # Resetting a property to its default value requires the literal constant —
 # a bare `nil` on a setter raises TypeMismatchError:
@@ -220,7 +220,7 @@ rescue CpfGen::DomainError
 - **Example:**
 
 ```ruby
-CpfGen.cpf_gen(prefix: 123) # raises CpfGen::TypeMismatchError
+CpfGen.cpf_gen(prefix: 123)   # raises CpfGen::TypeMismatchError
 ```
 
 - **How to rescue it:**
@@ -267,8 +267,8 @@ rescue ArgumentError
 - **Example:**
 
 ```ruby
-CpfGen.cpf_gen(prefix: '000000000') # raises CpfGen::ValidationError
-CpfGen.cpf_gen(prefix: '999999999') # raises CpfGen::ValidationError
+CpfGen.cpf_gen(prefix: '000000000')   # raises CpfGen::ValidationError
+CpfGen.cpf_gen(prefix: '999999999')   # raises CpfGen::ValidationError
 ```
 
 - **How to rescue it:**

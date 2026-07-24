@@ -56,12 +56,12 @@ require 'cnpj-gen'
 ```ruby
 require 'cnpj-gen'
 
-CnpjGen.cnpj_gen                    # => e.g. "AB123CDE000155" (14-char alphanumeric)
+CnpjGen.cnpj_gen                       # => e.g. "AB123CDE000155" (14-char alphanumeric)
 
-CnpjGen.cnpj_gen(format: true)      # => e.g. "AB.123.CDE/0001-55"
+CnpjGen.cnpj_gen(format: true)         # => e.g. "AB.123.CDE/0001-55"
 
-CnpjGen.cnpj_gen(prefix: '45623767')           # => e.g. "45623767ABCD96"
-CnpjGen.cnpj_gen(                              # => e.g. "45.623.767/ABCD-96"
+CnpjGen.cnpj_gen(prefix: '45623767')   # => e.g. "45623767ABCD96"
+CnpjGen.cnpj_gen(                      # => e.g. "45.623.767/ABCD-96"
   prefix: '45623767',
   format: true
 )
@@ -110,9 +110,9 @@ require 'cnpj-gen'
 
 generator = CnpjGen::CnpjGenerator.new(type: 'numeric', format: true)
 
-generator.generate                    # => e.g. "73.008.535/0005-06"
+generator.generate                       # => e.g. "73.008.535/0005-06"
 generator.generate(prefix: '12345678')   # override for this call only
-generator.options                     # current default options (CnpjGen::CnpjGeneratorOptions)
+generator.options                        # current default options (CnpjGen::CnpjGeneratorOptions)
 ```
 
 - **`initialize(options = nil, **keywords)`**: Optional default options. When `options` is given (a `CnpjGen::CnpjGeneratorOptions` instance or a `Hash`) alone, it determines the default options; a `CnpjGen::CnpjGeneratorOptions` instance is stored by reference (mutating it later affects future `generate` calls that do not pass per-call options), while a `Hash` builds a new instance. When `options` is omitted (`nil`), the default options are built exclusively from the keyword arguments (`format:`, `prefix:`, `type:`). Passing `options` together with any non-`nil` keyword raises `InvalidArgumentCombinationError` instead of silently ignoring the keywords.
@@ -126,9 +126,9 @@ require 'cnpj-gen'
 
 generator = CnpjGen::CnpjGenerator.new(format: true)
 
-generator.generate              # formatted CNPJ
-generator.generate(format: false)  # this call only: unformatted
-generator.generate              # formatted again (instance defaults preserved)
+generator.generate                  # formatted CNPJ
+generator.generate(format: false)   # this call only: unformatted
+generator.generate                  # formatted again (instance defaults preserved)
 ```
 
 ### `CnpjGen::CnpjGeneratorOptions` (class)
@@ -143,11 +143,11 @@ options = CnpjGen::CnpjGeneratorOptions.new(
   type: 'numeric',
   format: true
 )
-options.prefix   # => "AB123XYZ"
-options.type     # => "numeric"
-options.format   # => true
-options.set(format: false)  # merge and return self
-options.all      # => { format: false, prefix: "AB123XYZ", type: "numeric" }
+options.prefix               # => "AB123XYZ"
+options.type                 # => "numeric"
+options.format               # => true
+options.set(format: false)   # merge and return self
+options.all                  # => { format: false, prefix: "AB123XYZ", type: "numeric" }
 
 # Resetting a property to its default value requires the literal constant —
 # a bare `nil` on a setter raises TypeMismatchError:
@@ -229,7 +229,7 @@ rescue CnpjGen::DomainError
 - **Example:**
 
 ```ruby
-CnpjGen.cnpj_gen(prefix: 123) # raises CnpjGen::TypeMismatchError
+CnpjGen.cnpj_gen(prefix: 123)   # raises CnpjGen::TypeMismatchError
 ```
 
 - **How to rescue it:**
@@ -276,8 +276,8 @@ rescue ArgumentError
 - **Example:**
 
 ```ruby
-CnpjGen.cnpj_gen(prefix: '000000000001') # raises CnpjGen::ValidationError
-CnpjGen.cnpj_gen(type: 'invalid')        # raises CnpjGen::ValidationError
+CnpjGen.cnpj_gen(prefix: '000000000001')   # raises CnpjGen::ValidationError
+CnpjGen.cnpj_gen(type: 'invalid')          # raises CnpjGen::ValidationError
 ```
 
 - **How to rescue it:**
