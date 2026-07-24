@@ -68,10 +68,10 @@ require 'cnpj-dv'
 
 check_digits = CnpjDV::CnpjCheckDigits.new('914157320007')
 
-check_digits.first   # => '9'
-check_digits.second  # => '3'
-check_digits.both    # => '93'
-check_digits.cnpj    # => '91415732000793'
+check_digits.first    # => '9'
+check_digits.second   # => '3'
+check_digits.both     # => '93'
+check_digits.cnpj     # => '91415732000793'
 ```
 
 With alphanumeric CNPJ (new format):
@@ -81,10 +81,10 @@ require 'cnpj-dv'
 
 check_digits = CnpjDV::CnpjCheckDigits.new('MGKGMJ9X0001')
 
-check_digits.first   # => '6'
-check_digits.second  # => '8'
-check_digits.both    # => '68'
-check_digits.cnpj    # => 'MGKGMJ9X000168'
+check_digits.first    # => '6'
+check_digits.second   # => '8'
+check_digits.both     # => '68'
+check_digits.cnpj     # => 'MGKGMJ9X000168'
 ```
 
 
@@ -178,7 +178,7 @@ rescue CnpjDV::DomainError
 - **Example:**
 
 ```ruby
-CnpjDV::CnpjCheckDigits.new(12_345_678_000_100) # raises CnpjDV::TypeMismatchError
+CnpjDV::CnpjCheckDigits.new(12_345_678_000_100)   # raises CnpjDV::TypeMismatchError
 ```
 
 - **How to rescue it:**
@@ -199,7 +199,7 @@ rescue TypeError
 - **Example:**
 
 ```ruby
-CnpjDV::CnpjCheckDigits.new('12345678901') # raises CnpjDV::InvalidLengthError
+CnpjDV::CnpjCheckDigits.new('12345678901')   # raises CnpjDV::InvalidLengthError
 ```
 
 - **How to rescue it:**
@@ -220,7 +220,7 @@ rescue CnpjDV::DomainError
 - **Example:**
 
 ```ruby
-CnpjDV::CnpjCheckDigits.new('000000000001') # raises CnpjDV::ValidationError
+CnpjDV::CnpjCheckDigits.new('000000000001')   # raises CnpjDV::ValidationError
 ```
 
 - **How to rescue it:**
