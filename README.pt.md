@@ -57,9 +57,9 @@ require 'cnpj-fmt'
 
 cnpj = '03603568000195'
 
-CnpjFmt.cnpj_fmt(cnpj)                    # => "03.603.568/0001-95"
-CnpjFmt.cnpj_fmt(cnpj, hidden: true)      # => "03.603.***/****-**"
-CnpjFmt.cnpj_fmt(                         # => "03603568|0001_95"
+CnpjFmt.cnpj_fmt(cnpj)                 # => "03.603.568/0001-95"
+CnpjFmt.cnpj_fmt(cnpj, hidden: true)   # => "03.603.***/****-**"
+CnpjFmt.cnpj_fmt(                      # => "03603568|0001_95"
   cnpj,
   dot_key: '',
   slash_key: '|',
@@ -106,15 +106,15 @@ require 'cnpj-fmt'
 
 cnpj = '03603568000195'
 
-CnpjFmt.cnpj_fmt(cnpj)                # => "03.603.568/0001-95"
+CnpjFmt.cnpj_fmt(cnpj)                 # => "03.603.568/0001-95"
 CnpjFmt.cnpj_fmt(cnpj, hidden: true)   # mascarado com padrões
-CnpjFmt.cnpj_fmt(                     # => "03603568|0001_95"
+CnpjFmt.cnpj_fmt(                      # => "03603568|0001_95"
   cnpj,
   dot_key: '',
   slash_key: '|',
   dash_key: '_'
 )
-CnpjFmt.cnpj_fmt(cnpj, {              # forma com Hash
+CnpjFmt.cnpj_fmt(cnpj, {               # forma com Hash
   hidden: true,
   hidden_key: '#'
 })
@@ -146,9 +146,9 @@ require 'cnpj-fmt'
 formatter = CnpjFmt::CnpjFormatter.new(hidden: true)
 cnpj = '03603568000195'
 
-formatter.format(cnpj)                 # usa mascaramento da instância
-formatter.format(cnpj, hidden: false)  # só nesta chamada: sem máscara
-formatter.format(cnpj)                 # volta aos padrões da instância
+formatter.format(cnpj)                  # usa mascaramento da instância
+formatter.format(cnpj, hidden: false)   # só nesta chamada: sem máscara
+formatter.format(cnpj)                  # volta aos padrões da instância
 ```
 
 Entrada alfanumérica e array:
@@ -159,7 +159,7 @@ require 'cnpj-fmt'
 formatter = CnpjFmt::CnpjFormatter.new
 
 formatter.format('RK0CMT3W000100')   # => "RK.0CM.T3W/0001-00"
-formatter.format([                     # => "RK.0CM.T3W/0001-00"
+formatter.format([                   # => "RK.0CM.T3W/0001-00"
   'RK',
   '0CM',
   'T3W',
@@ -270,7 +270,7 @@ rescue CnpjFmt::DomainError
 - **Exemplo:**
 
 ```ruby
-CnpjFmt::CnpjFormatter.new.format(12_345) # levanta CnpjFmt::TypeMismatchError
+CnpjFmt::CnpjFormatter.new.format(12_345)   # levanta CnpjFmt::TypeMismatchError
 ```
 
 - **Como resgatar:**
@@ -294,10 +294,10 @@ rescue TypeError
 CnpjFmt::CnpjFormatter.new.format(
   'short',
   on_fail: ->(_value, error) {
-    error # => #<CnpjFmt::InvalidLengthError ...> (um DomainError)
+    error   # => #<CnpjFmt::InvalidLengthError ...> (um DomainError)
     'invalid'
   }
-) # => "invalid"
+)   # => "invalid"
 ```
 
 - **Como resgatar:** Trate dentro do `on_fail` (caso típico), ou resgate se você o reerguer:
@@ -344,7 +344,7 @@ rescue ArgumentError
 - **Exemplo:**
 
 ```ruby
-CnpjFmt::CnpjFormatterOptions.new(hidden_start: 14) # levanta CnpjFmt::OutOfRangeError
+CnpjFmt::CnpjFormatterOptions.new(hidden_start: 14)   # levanta CnpjFmt::OutOfRangeError
 ```
 
 - **Como resgatar:**
@@ -365,7 +365,7 @@ rescue CnpjFmt::DomainError
 - **Exemplo:**
 
 ```ruby
-CnpjFmt::CnpjFormatterOptions.new(dot_key: 'å') # levanta CnpjFmt::ValidationError
+CnpjFmt::CnpjFormatterOptions.new(dot_key: 'å')   # levanta CnpjFmt::ValidationError
 ```
 
 - **Como resgatar:**
