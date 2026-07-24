@@ -67,9 +67,9 @@ require 'cpf-fmt'
 
 cpf = '03603568195'
 
-CpfFmt.cpf_fmt(cpf)                    # => "036.035.681-95"
-CpfFmt.cpf_fmt(cpf, hidden: true)      # => "036.***.***-**"
-CpfFmt.cpf_fmt(                        # => "036035681_95"
+CpfFmt.cpf_fmt(cpf)                 # => "036.035.681-95"
+CpfFmt.cpf_fmt(cpf, hidden: true)   # => "036.***.***-**"
+CpfFmt.cpf_fmt(                     # => "036035681_95"
   cpf,
   dot_key: '',
   dash_key: '_'
@@ -115,14 +115,14 @@ require 'cpf-fmt'
 
 cpf = '03603568195'
 
-CpfFmt.cpf_fmt(cpf)                # => "036.035.681-95"
-CpfFmt.cpf_fmt(cpf, hidden: true)  # masked with defaults
-CpfFmt.cpf_fmt(                    # => "036035681_95"
+CpfFmt.cpf_fmt(cpf)                 # => "036.035.681-95"
+CpfFmt.cpf_fmt(cpf, hidden: true)   # masked with defaults
+CpfFmt.cpf_fmt(                     # => "036035681_95"
   cpf,
   dot_key: '',
   dash_key: '_'
 )
-CpfFmt.cpf_fmt(cpf, {              # Hash form
+CpfFmt.cpf_fmt(cpf, {               # Hash form
   hidden: true,
   hidden_key: '#'
 })
@@ -137,7 +137,7 @@ formatter = CpfFmt::CpfFormatter.new
 cpf = '12345678910'
 
 formatter.format(cpf)   # => "123.456.789-10"
-formatter.format(        # => "123.###.###-##"
+formatter.format(       # => "123.###.###-##"
   cpf,
   hidden: true,
   hidden_key: '#',
@@ -154,9 +154,9 @@ require 'cpf-fmt'
 formatter = CpfFmt::CpfFormatter.new(hidden: true)
 cpf = '12345678910'
 
-formatter.format(cpf)                 # uses instance masking
-formatter.format(cpf, hidden: false)  # this call only: unmasked
-formatter.format(cpf)                 # back to instance defaults
+formatter.format(cpf)                  # uses instance masking
+formatter.format(cpf, hidden: false)   # this call only: unmasked
+formatter.format(cpf)                  # back to instance defaults
 ```
 
 Array input:
@@ -274,7 +274,7 @@ rescue CpfFmt::DomainError
 - **Example:**
 
 ```ruby
-CpfFmt::CpfFormatter.new.format(12_345) # raises CpfFmt::TypeMismatchError
+CpfFmt::CpfFormatter.new.format(12_345)   # raises CpfFmt::TypeMismatchError
 ```
 
 - **How to rescue it:**
@@ -298,10 +298,10 @@ rescue TypeError
 CpfFmt::CpfFormatter.new.format(
   'short',
   on_fail: ->(_value, error) {
-    error # => #<CpfFmt::InvalidLengthError ...> (a DomainError)
+    error   # => #<CpfFmt::InvalidLengthError ...> (a DomainError)
     'invalid'
   }
-) # => "invalid"
+)   # => "invalid"
 
 ```
 
@@ -349,7 +349,7 @@ rescue ArgumentError
 - **Example:**
 
 ```ruby
-CpfFmt::CpfFormatterOptions.new(hidden_start: 11) # raises CpfFmt::OutOfRangeError
+CpfFmt::CpfFormatterOptions.new(hidden_start: 11)   # raises CpfFmt::OutOfRangeError
 ```
 
 - **How to rescue it:**
@@ -370,7 +370,7 @@ rescue CpfFmt::DomainError
 - **Example:**
 
 ```ruby
-CpfFmt::CpfFormatterOptions.new(dot_key: 'å') # raises CpfFmt::ValidationError
+CpfFmt::CpfFormatterOptions.new(dot_key: 'å')   # raises CpfFmt::ValidationError
 ```
 
 - **How to rescue it:**
