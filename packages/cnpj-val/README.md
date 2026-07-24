@@ -61,11 +61,11 @@ validator.is_valid('98765432000198')       # => true
 validator.is_valid('98.765.432/0001-98')   # => true
 validator.is_valid('98765432000199')       # => false
 
-validator.is_valid('1QB5UKALPYFP59')                         # => true (alphanumeric)
-validator.is_valid('1QB5UKALpyfp59')                         # => false (default is case-sensitive)
-validator.is_valid('1QB5UKALpyfp59', case_sensitive: false)  # => true
+validator.is_valid('1QB5UKALPYFP59')                          # => true (alphanumeric)
+validator.is_valid('1QB5UKALpyfp59')                          # => false (default is case-sensitive)
+validator.is_valid('1QB5UKALpyfp59', case_sensitive: false)   # => true
 
-validator.is_valid('96206256120884')              # => true (numeric)
+validator.is_valid('96206256120884')                    # => true (numeric)
 validator.is_valid('1QB5UKALPYFP59', type: 'numeric')   # => false (letters stripped → length ≠ 14)
 ```
 
@@ -74,9 +74,9 @@ Functional helper:
 ```ruby
 require 'cnpj-val'
 
-CnpjVal.cnpj_val('98765432000198')      # => true
-CnpjVal.cnpj_val('98.765.432/0001-98')  # => true
-CnpjVal.cnpj_val('98765432000199')      # => false
+CnpjVal.cnpj_val('98765432000198')       # => true
+CnpjVal.cnpj_val('98.765.432/0001-98')   # => true
+CnpjVal.cnpj_val('98765432000199')       # => false
 ```
 
 ## Usage
@@ -102,7 +102,11 @@ validator = CnpjVal::CnpjValidator.new(type: 'numeric')
 
 validator.is_valid('98.765.432/0001-98')   # => true
 validator.is_valid('1QB5UKALPYFP59')       # => false (letters stripped → length ≠ 14)
-validator.is_valid('1QB5UKALpyfp59', type: 'alphanumeric', case_sensitive: false)  # => true
+validator.is_valid(                        # => true
+  '1QB5UKALpyfp59',
+  type: 'alphanumeric',
+  case_sensitive: false
+)
 ```
 
 Default options on the instance; per-call overrides:
@@ -112,9 +116,9 @@ require 'cnpj-val'
 
 validator = CnpjVal::CnpjValidator.new(case_sensitive: false)
 
-validator.is_valid('1qb5ukalpyfp59')                  # => true (instance defaults)
-validator.is_valid('1qb5ukalpyfp59', case_sensitive: true)  # this call only: false
-validator.is_valid('1qb5ukalpyfp59')                  # => true again
+validator.is_valid('1qb5ukalpyfp59')                         # => true (instance defaults)
+validator.is_valid('1qb5ukalpyfp59', case_sensitive: true)   # this call only: false
+validator.is_valid('1qb5ukalpyfp59')                         # => true again
 ```
 
 ### `CnpjVal::CnpjValidatorOptions`
@@ -128,10 +132,10 @@ Holds validator settings (`case_sensitive`, `type`). Construct with an optional 
 require 'cnpj-val'
 
 options = CnpjVal::CnpjValidatorOptions.new(case_sensitive: false, type: 'numeric')
-options.case_sensitive   # => false
-options.type             # => "numeric"
-options.set({ type: 'alphanumeric' })  # merge and return self
-options.all              # => frozen snapshot of current options
+options.case_sensitive                  # => false
+options.type                            # => "numeric"
+options.set({ type: 'alphanumeric' })   # merge and return self
+options.all                             # => frozen snapshot of current options
 ```
 
 ### Functional helper
@@ -141,13 +145,13 @@ options.all              # => frozen snapshot of current options
 ```ruby
 require 'cnpj-val'
 
-CnpjVal.cnpj_val('98765432000198')                              # => true
-CnpjVal.cnpj_val('1QB5UKALpyfp59', case_sensitive: false)       # => true
-CnpjVal.cnpj_val('1QB5UKALPYFP59', type: 'numeric')           # => false
-CnpjVal.cnpj_val('1QB5UKALpyfp59', {                            # Hash form
+CnpjVal.cnpj_val('98765432000198')                          # => true
+CnpjVal.cnpj_val('1QB5UKALpyfp59', case_sensitive: false)   # => true
+CnpjVal.cnpj_val('1QB5UKALPYFP59', type: 'numeric')         # => false
+CnpjVal.cnpj_val('1QB5UKALpyfp59', {                        # Hash form
   type: 'alphanumeric',
   case_sensitive: false,
-})                                                              # => true
+})                                                          # => true
 ```
 
 ### Input formats
@@ -159,8 +163,8 @@ CnpjVal.cnpj_val('1QB5UKALpyfp59', {                            # Hash form
 ```ruby
 require 'cnpj-val'
 
-CnpjVal.cnpj_val(['1', 'Q', 'B', '5', 'U', 'K', 'A', 'L', 'P', 'Y', 'F', 'P', '5', '9'])  # => true
-CnpjVal.cnpj_val(['1Q.B5U', 'KAL', 'PYFP-59'])  # => true
+CnpjVal.cnpj_val(['1', 'Q', 'B', '5', 'U', 'K', 'A', 'L', 'P', 'Y', 'F', 'P', '5', '9'])   # => true
+CnpjVal.cnpj_val(['1Q.B5U', 'KAL', 'PYFP-59'])   # => true
 ```
 
 ### Validation options
@@ -239,8 +243,8 @@ rescue CnpjVal::DomainError
 - **Example:**
 
 ```ruby
-CnpjVal.cnpj_val(12_345_678_000_198) # raises CnpjVal::TypeMismatchError
-CnpjVal.cnpj_val('98765432000198', type: 123) # raises CnpjVal::TypeMismatchError
+CnpjVal.cnpj_val(12_345_678_000_198)            # raises CnpjVal::TypeMismatchError
+CnpjVal.cnpj_val('98765432000198', type: 123)   # raises CnpjVal::TypeMismatchError
 ```
 
 - **How to rescue it:**
@@ -287,7 +291,7 @@ rescue ArgumentError
 - **Example:**
 
 ```ruby
-CnpjVal.cnpj_val('98765432000198', type: 'invalid') # raises CnpjVal::ValidationError
+CnpjVal.cnpj_val('98765432000198', type: 'invalid')   # raises CnpjVal::ValidationError
 ```
 
 - **How to rescue it:**
