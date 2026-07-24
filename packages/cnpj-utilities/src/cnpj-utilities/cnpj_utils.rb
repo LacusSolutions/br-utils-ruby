@@ -49,8 +49,8 @@ class CnpjUtils
 
     def resolve_settings(settings, keywords)
       keyword_settings = compact_settings(keywords)
-      raise_ambiguous_settings! if settings && !keyword_settings.empty?
-      return normalize_settings(settings) if settings
+      raise_ambiguous_settings! if !settings.nil? && !keyword_settings.empty?
+      return normalize_settings(settings) unless settings.nil?
 
       keyword_settings
     end
@@ -102,7 +102,7 @@ class CnpjUtils
     end
 
     def ensure_exclusive_options!(options, keywords, option_keys)
-      return unless options
+      return if options.nil?
       return if keywords.none? { |_key, value| !value.nil? }
 
       raise_ambiguous_options!(option_keys)
@@ -295,7 +295,7 @@ class CnpjUtils
   #   character
   def format(cnpj_input, options = nil, **keywords)
     Helpers.ensure_exclusive_options!(options, keywords, FORMATTER_OPTION_KEYS)
-    return @formatter.format(cnpj_input, options) if options
+    return @formatter.format(cnpj_input, options) unless options.nil?
 
     keyword_overrides = Helpers.compact_keyword_overrides(keywords, FORMATTER_OPTION_KEYS)
     return @formatter.format(cnpj_input, **keyword_overrides) unless keyword_overrides.empty?
@@ -329,7 +329,7 @@ class CnpjUtils
   #   allowed
   def generate(options = nil, **keywords)
     Helpers.ensure_exclusive_options!(options, keywords, GENERATOR_OPTION_KEYS)
-    return @generator.generate(options) if options
+    return @generator.generate(options) unless options.nil?
 
     keyword_overrides = Helpers.compact_keyword_overrides(keywords, GENERATOR_OPTION_KEYS)
     return @generator.generate(**keyword_overrides) unless keyword_overrides.empty?
@@ -361,7 +361,7 @@ class CnpjUtils
   # rubocop:disable Naming/PredicatePrefix -- public API matches JS/Python `is_valid`
   def is_valid(cnpj_input, options = nil, **keywords)
     Helpers.ensure_exclusive_options!(options, keywords, VALIDATOR_OPTION_KEYS)
-    return @validator.is_valid(cnpj_input, options) if options
+    return @validator.is_valid(cnpj_input, options) unless options.nil?
 
     keyword_overrides = Helpers.compact_keyword_overrides(keywords, VALIDATOR_OPTION_KEYS)
     return @validator.is_valid(cnpj_input, **keyword_overrides) unless keyword_overrides.empty?
