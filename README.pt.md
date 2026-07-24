@@ -54,9 +54,9 @@ require 'cpf-fmt'
 
 cpf = '03603568195'
 
-CpfFmt.cpf_fmt(cpf)                    # => "036.035.681-95"
-CpfFmt.cpf_fmt(cpf, hidden: true)      # => "036.***.***-**"
-CpfFmt.cpf_fmt(                        # => "036035681_95"
+CpfFmt.cpf_fmt(cpf)                  # => "036.035.681-95"
+CpfFmt.cpf_fmt(cpf, hidden: true)    # => "036.***.***-**"
+CpfFmt.cpf_fmt(                      # => "036035681_95"
   cpf,
   dot_key: '',
   dash_key: '_'
@@ -102,14 +102,14 @@ require 'cpf-fmt'
 
 cpf = '03603568195'
 
-CpfFmt.cpf_fmt(cpf)                # => "036.035.681-95"
-CpfFmt.cpf_fmt(cpf, hidden: true)  # mascarado com padrões
-CpfFmt.cpf_fmt(                    # => "036035681_95"
+CpfFmt.cpf_fmt(cpf)                 # => "036.035.681-95"
+CpfFmt.cpf_fmt(cpf, hidden: true)   # mascarado com padrões
+CpfFmt.cpf_fmt(                     # => "036035681_95"
   cpf,
   dot_key: '',
   dash_key: '_'
 )
-CpfFmt.cpf_fmt(cpf, {              # forma com Hash
+CpfFmt.cpf_fmt(cpf, {               # forma com Hash
   hidden: true,
   hidden_key: '#'
 })
@@ -124,7 +124,7 @@ formatter = CpfFmt::CpfFormatter.new
 cpf = '12345678910'
 
 formatter.format(cpf)   # => "123.456.789-10"
-formatter.format(        # => "123.###.###-##"
+formatter.format(       # => "123.###.###-##"
   cpf,
   hidden: true,
   hidden_key: '#',
@@ -141,9 +141,9 @@ require 'cpf-fmt'
 formatter = CpfFmt::CpfFormatter.new(hidden: true)
 cpf = '12345678910'
 
-formatter.format(cpf)                 # usa mascaramento da instância
-formatter.format(cpf, hidden: false)  # só nesta chamada: sem máscara
-formatter.format(cpf)                 # volta aos padrões da instância
+formatter.format(cpf)                  # usa mascaramento da instância
+formatter.format(cpf, hidden: false)   # só nesta chamada: sem máscara
+formatter.format(cpf)                  # volta aos padrões da instância
 ```
 
 Entrada em array:
@@ -153,7 +153,7 @@ require 'cpf-fmt'
 
 formatter = CpfFmt::CpfFormatter.new
 
-formatter.format([                   # => "123.456.789-10"
+formatter.format([   # => "123.456.789-10"
   '123',
   '456',
   '789',
@@ -261,7 +261,7 @@ rescue CpfFmt::DomainError
 - **Exemplo:**
 
 ```ruby
-CpfFmt::CpfFormatter.new.format(12_345) # levanta CpfFmt::TypeMismatchError
+CpfFmt::CpfFormatter.new.format(12_345)   # levanta CpfFmt::TypeMismatchError
 ```
 
 - **Como resgatar:**
@@ -285,10 +285,10 @@ rescue TypeError
 CpfFmt::CpfFormatter.new.format(
   'short',
   on_fail: ->(_value, error) {
-    error # => #<CpfFmt::InvalidLengthError ...> (um DomainError)
+    error   # => #<CpfFmt::InvalidLengthError ...> (um DomainError)
     'invalid'
   }
-) # => "invalid"
+)   # => "invalid"
 ```
 
 - **Como resgatar:** Trate dentro do `on_fail` (caso típico), ou resgate se você o reerguer:
@@ -335,7 +335,7 @@ rescue ArgumentError
 - **Exemplo:**
 
 ```ruby
-CpfFmt::CpfFormatterOptions.new(hidden_start: 11) # levanta CpfFmt::OutOfRangeError
+CpfFmt::CpfFormatterOptions.new(hidden_start: 11)   # levanta CpfFmt::OutOfRangeError
 ```
 
 - **Como resgatar:**
@@ -356,7 +356,7 @@ rescue CpfFmt::DomainError
 - **Exemplo:**
 
 ```ruby
-CpfFmt::CpfFormatterOptions.new(dot_key: 'å') # levanta CpfFmt::ValidationError
+CpfFmt::CpfFormatterOptions.new(dot_key: 'å')   # levanta CpfFmt::ValidationError
 ```
 
 - **Como resgatar:**
