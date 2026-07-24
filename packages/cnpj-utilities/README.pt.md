@@ -262,18 +262,20 @@ Após `require 'cnpj-utilities'`:
 
 #### Definidos por `cnpj-utilities`
 
-Os erros definidos por esta gem são apenas de **uso indevido da API** (tipo incorreto ou combinação inválida de argumentos). Todo erro customizado inclui o módulo marcador `CnpjUtils::Error`.
+Os erros definidos por esta gem são apenas de **uso indevido da API** (tipo incorreto ou combinação inválida de argumentos). Todo erro customizado inclui o módulo marcador `CnpjUtils::Error`. Esta gem **não** define `CnpjUtils::DomainError` nem folhas de domínio — falhas de domínio vêm apenas dos [pacotes incluídos](#propagados-dos-pacotes-incluídos) e mantêm os namespaces desses pacotes (`CnpjFmt::…`, `CnpjGen::…`, `CnpjVal::…`).
+
+`rescue CnpjUtils::Error` captura **apenas** erros que esta gem lança. **Não** captura erros de componentes que propagam inalterados.
 
 ##### Resumo
 
 | Classe | Herda de | Categoria | Condição de disparo |
 |--------|----------|-----------|---------------------|
-| `CnpjUtils::TypeMismatchError` | `TypeError` (+ `include Error`) | Uso indevido da API | Argumento `settings` de `CnpjUtils.new` não é um `Hash` |
-| `CnpjUtils::InvalidArgumentCombinationError` | `ArgumentError` (+ `include Error`) | Uso indevido da API | `Hash` de settings/options (ou instância de opções) passado junto com qualquer argumento nomeado não-`nil` |
+| `CnpjUtils::TypeMismatchError` | `CnpjUtils::TypeMismatchError < TypeError < StandardError` (+ `include CnpjUtils::Error`) | Uso indevido da API | Argumento `settings` não-`nil` de `CnpjUtils.new` não é um `Hash` |
+| `CnpjUtils::InvalidArgumentCombinationError` | `CnpjUtils::InvalidArgumentCombinationError < ArgumentError < StandardError` (+ `include CnpjUtils::Error`) | Uso indevido da API | `Hash`/instância de settings/options não-`nil` passado junto com qualquer argumento nomeado não-`nil` |
 
 ##### `CnpjUtils::Error` (módulo marcador)
 
-- **Herança:** módulo marcador misturado em todo erro da biblioteca via `include` (não é uma classe).
+- **Herança:** módulo marcador misturado em todo erro customizado que esta gem lança via `include` (não é uma classe).
 - **Categoria:** N/A (apenas alvo de `rescue`) — não é um modo de falha por si só.
 - **Quando é lançado:** Nunca é lançado diretamente; incluído em todo erro customizado que esta gem lança.
 - **Exemplo:** N/A
@@ -281,12 +283,13 @@ Os erros definidos por esta gem são apenas de **uso indevido da API** (tipo inc
 
 ```ruby
 rescue CnpjUtils::Error
-  # TypeMismatchError, InvalidArgumentCombinationError e quaisquer erros customizados futuros desta gem
+  # TypeMismatchError e InvalidArgumentCombinationError apenas desta gem
+  # (não CnpjFmt::*, CnpjGen::* nem CnpjVal::*)
 ```
 
 ##### `CnpjUtils::TypeMismatchError`
 
-- **Herança:** `CnpjUtils::TypeMismatchError < TypeError` (inclui `CnpjUtils::Error`)
+- **Herança:** `CnpjUtils::TypeMismatchError < TypeError < StandardError` (inclui `CnpjUtils::Error`)
 - **Categoria:** Uso indevido da API — o chamador passou um valor do tipo errado.
 - **Quando é lançado:** Quando `CnpjUtils.new` recebe um argumento `settings` não-`nil` que não é um `Hash`.
 - **Exemplo:**
@@ -303,16 +306,13 @@ rescue CnpjUtils::TypeMismatchError
 
 rescue TypeError
   # erros nativos de tipo, incluindo TypeMismatchError desta gem
-
-rescue CnpjUtils::Error
-  # qualquer erro lançado por esta gem
 ```
 
 ##### `CnpjUtils::InvalidArgumentCombinationError`
 
-- **Herança:** `CnpjUtils::InvalidArgumentCombinationError < ArgumentError` (inclui `CnpjUtils::Error`)
+- **Herança:** `CnpjUtils::InvalidArgumentCombinationError < ArgumentError < StandardError` (inclui `CnpjUtils::Error`)
 - **Categoria:** Uso indevido da API — o chamador misturou padrões de argumentos mutuamente exclusivos.
-- **Quando é lançado:** Quando `CnpjUtils.new`, `#format`, `#generate`, `#is_valid` ou os helpers de classe recebem ao mesmo tempo um `Hash`/instância de settings/options e qualquer argumento nomeado não-`nil`.
+- **Quando é lançado:** Quando `CnpjUtils.new`, `#format`, `#generate`, `#is_valid` ou os helpers de classe recebem ao mesmo tempo um `Hash`/instância de settings/options não-`nil` e qualquer argumento nomeado não-`nil`.
 - **Exemplo:**
 
 ```ruby
@@ -331,28 +331,62 @@ rescue CnpjUtils::InvalidArgumentCombinationError
 
 rescue ArgumentError
   # erros nativos de argumento, incluindo InvalidArgumentCombinationError desta gem
-
-rescue CnpjUtils::Error
-  # qualquer erro lançado por esta gem
 ```
 
 ##### Granularidade de rescue
 
+Cada nível é mostrado como exemplo isolado (não os una numa única escada de `rescue` — um handler nativo amplo tornaria as cláusulas mais estreitas inalcançáveis).
+
 ```ruby
-# 1) Superclasse nativa — também captura os erros de uso indevido correspondentes desta gem.
+require 'cnpj-utilities'
+
+# 1) Uma classe nativa — captura erros de uso indevido daquele tipo,
+#    inclusive outros TypeError/ArgumentError já tratados no código do consumidor.
+begin
+  CnpjUtils.new('not-a-hash')
 rescue TypeError
-  # CnpjUtils::TypeMismatchError e qualquer outro TypeError
+  # CnpjUtils::TypeMismatchError e qualquer outro TypeError (da biblioteca ou não)
+end
 
+begin
+  CnpjUtils.new({ formatter: { hidden: true } }, generator: { format: true })
 rescue ArgumentError
-  # CnpjUtils::InvalidArgumentCombinationError e qualquer outro ArgumentError
+  # CnpjUtils::InvalidArgumentCombinationError e qualquer outro ArgumentError (da biblioteca ou não)
+end
+```
 
-# 2) CnpjUtils::Error — captura tudo o que esta gem lança.
+```ruby
+require 'cnpj-utilities'
+
+# 2) CnpjUtils::DomainError — não se aplica: esta gem não define DomainError
+#    (nem folhas de domínio). Falhas de domínio vêm só dos pacotes incluídos.
+# begin
+#   CnpjUtils.new.format(12_345)
+# rescue CnpjUtils::DomainError  # NameError — constante não definida
+# end
+```
+
+```ruby
+require 'cnpj-utilities'
+
+# 3) CnpjUtils::Error — captura tudo o que esta gem lança, independentemente da ancestralidade nativa.
+#    Não captura erros CnpjFmt::*, CnpjGen::* nem CnpjVal::*.
+begin
+  CnpjUtils.new('not-a-hash')
 rescue CnpjUtils::Error
-  # TypeMismatchError, InvalidArgumentCombinationError, …
+  # todo erro customizado que inclui CnpjUtils::Error
+end
+```
 
-# 3) Folha específica — captura apenas aquele modo de falha.
+```ruby
+require 'cnpj-utilities'
+
+# 4) Classe folha específica — captura apenas aquele modo de falha.
+begin
+  CnpjUtils.new('not-a-hash')
 rescue CnpjUtils::TypeMismatchError
-  # apenas TypeMismatchError
+  # apenas CnpjUtils::TypeMismatchError
+end
 ```
 
 #### Propagados dos pacotes incluídos
